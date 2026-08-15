@@ -74,10 +74,23 @@ showing/downloading anything. Sources: **Text** or **one File** (`SourceSelector
 
 ### Camera
 
-Both scanners (`QRScanner`, `TransferScanner`) follow the same lifecycle: `Html5Qrcode.start()` in
-an effect whose cleanup calls `stopScanner()` (from `src/lib/camera.ts`), a `finished` flag covers
-the start/unmount race, and restarts bump a `session` counter. Default camera is
-`facingMode: 'environment'`. Preserve this pattern when touching camera code.
+The two scanners run different engines but share one lifecycle shape: the camera starts in an
+effect whose cleanup releases it, a `finished` flag covers the start/unmount race, and restarts bump
+a `session` counter. Default camera is `facingMode: 'environment'`, and camera identity is built
+only by `buildVideoConstraints` (`src/lib/camera.ts`). Preserve this pattern when touching camera
+code.
+
+- **Quick QR** (`QRScanner`) uses `html5-qrcode` directly, with `stopScanner()` in the cleanup.
+- **Large Transfer** (`useTransferScanner` — all imperative work lives there, `TransferScanner.tsx`
+  only renders) uses `src/lib/scan/`: `getUserMedia` → `requestVideoFrameCallback` →
+  `computeRoi` → one nine-argument `drawImage` onto a canvas **sized in camera pixels** →
+  `getImageData` → RGBA transferred to a worker running `zxing-wasm`. One decode in flight; frames
+  arriving meanwhile are skipped before any pixel work. `html5-qrcode` stays as an automatic
+  fallback behind a dynamic `import()`.
+- Sizing that canvas ourselves is the whole point: `html5-qrcode` derives it from the viewfinder's
+  CSS width, which left dense symbols at ~3 px/module and capped the decode rate at 27 %. Don't
+  reintroduce anything that couples the decoded region to on-screen size.
+- The `.wasm` is served from the bundle, never a CDN — the app must work offline.
 
 ### Styling
 

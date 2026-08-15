@@ -17,6 +17,21 @@ export const FRAME_MS_PRESETS = [500, 400, 300, 250, 200] as const
 export const MAX_QR_VERSION = { reliable: 22, balanced: 22, fast: 23 } as const
 
 /**
+ * Quiet zone in modules on each side of the symbol, as the QR standard requires. The sender
+ * currently renders less than this; the receiver assumes the standard value because it has to cope
+ * with the widest symbol it could be shown.
+ */
+export const QUIET_ZONE_MODULES = 4
+
+/**
+ * Widest symbol the receiver can be asked to read, in modules including the quiet zone. A symbol
+ * of version `v` is `4 * v + 17` modules per side. This is what sizes the scan region: the receiver
+ * never learns which profile the sender used, so it has to budget for the densest one.
+ */
+export const WORST_CASE_MODULES =
+  4 * Math.max(...Object.values(MAX_QR_VERSION)) + 17 + 2 * QUIET_ZONE_MODULES
+
+/**
  * Hard technical limit on the bytes that actually travel through the QR frames (after the
  * compression decision). Above this the app refuses to transfer, to protect memory and the main
  * thread (≈2 MB ⇒ a few thousand frames at most).

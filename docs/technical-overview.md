@@ -31,8 +31,9 @@ TypeScript** and plain CSS. A navbar switches between two sections:
 
 The build (`npm run build`) produces a 100% static site in `dist/` servable from any file server.
 
-Runtime dependencies: `react`, `react-dom`, `qrcode` (generation), `html5-qrcode` (camera
-reading) and, only for the Large Transfer editor/viewer, individual CodeMirror 6 packages
+Runtime dependencies: `react`, `react-dom`, `qrcode` (generation), `zxing-wasm` (the Large Transfer
+receiver's decoder, ZXing compiled to WebAssembly), `html5-qrcode` (Quick QR's scanner and the
+receiver's fallback) and, only for the Large Transfer editor/viewer, individual CodeMirror 6 packages
 (`@codemirror/state`, `view`, `commands`, `search`, `language`, `lang-markdown`, `lang-json`,
 `@lezer/highlight`). Compression and hashing use native browser APIs (`CompressionStream`,
 `crypto.subtle`), no extra libraries.
@@ -71,9 +72,12 @@ flowchart TD
     Receiver --> Received[ReceivedContent.tsx]
     Received --> Editor
     SendFlow & Receiver --> Lib[lib/transfer/*<br/>protocol · compression · chunking · checksum · encoding]
+    Receiver --> ScanLib[lib/scan/*<br/>roi · captureLoop · worker decoder]
     Scan & Receiver --> Cam[lib/camera.ts]
     Gen & AQR -->|qrcode| QR([QR canvas / PNG data URLs])
-    Scan & Receiver -->|html5-qrcode| Camera([camera / getUserMedia])
+    ScanLib -->|zxing-wasm| Worker([decode worker])
+    Scan --> |html5-qrcode| Camera([camera / getUserMedia])
+    ScanLib --> Camera
 ```
 
 `App` owns the global state (active section and mode, theme, language) and applies it via
@@ -105,27 +109,34 @@ lives in `src/lib/transfer/` and has no React dependency.**
 | `src/components/large-transfer/TransferSummary.tsx`   | Live summary: original / transfer size, compression, frames and loop for the profile; size warnings                                                    | `lib/transfer/config`           |
 | `src/components/large-transfer/AnimatedQR.tsx`        | Loops the pre-rendered frames, speed presets, fullscreen                                                                                               | —                               |
 | `src/components/large-transfer/qrFrames.ts`           | Renders every frame once as a PNG data URL (yields to the event loop periodically)                                                                     | `qrcode`                        |
-| `src/components/large-transfer/TransferScanner.tsx`   | Continuous scanning, `ChunkCollector`, progress, auto-finish, verification, camera release                                                             | `html5-qrcode`, `lib/transfer`  |
+| `src/components/large-transfer/TransferScanner.tsx`   | Renders the receiver states; all imperative work lives in `useTransferScanner.ts`                                                                      | `useTransferScanner`            |
+| `src/components/large-transfer/useTransferScanner.ts` | Camera lifecycle, engine choice and fallback, `ChunkCollector`, progress, auto-finish, verification                                                    | `lib/scan`, `lib/transfer`      |
+| `src/lib/scan/*`                                      | Capture at camera resolution: ROI sizing, frame loop, WASM decode worker, legacy fallback                                                              | `zxing-wasm`                    |
 | `src/components/large-transfer/ReceivedContent.tsx`   | "Transfer complete" screen: Copy all / View content / Scan another + read-only viewer                                                                  | `LargeTextEditor`               |
 | `src/lib/transfer/*`                                  | Pure pipeline: `encoding`, `compression`, `chunking`, `checksum`, `protocol`, `filename`, `profiles`, `transfer`, `formatDetection`, `config`, `types` | Web APIs only                   |
 | `src/lib/settingsStorage.ts`                          | Preferred transfer profile in `localStorage` (the only persisted value)                                                                                | —                               |
-| `src/lib/camera.ts`                                   | Shared camera helpers: `describeCameraError`, `stopScanner`, default `facingMode: environment`                                                         | `html5-qrcode` types            |
+| `src/lib/camera.ts`                                   | Shared camera helpers: `buildVideoConstraints`, `listCameras`, `describeCameraError`, `stopScanner`, default `facingMode: environment`                 | `html5-qrcode` types            |
 | `src/lib/format.ts`                                   | `formatBytes`, `formatNumber`, `formatSeconds`                                                                                                         | —                               |
 | `src/i18n.ts`                                         | Typed es/en dictionary, `LangContext`, `useI18n()` hook                                                                                                | —                               |
 | `src/styles.css`                                      | All styling: CSS variables, dark mode, responsive layout, CodeMirror palette                                                                           | —                               |
 
-Detail not visible from the table — **camera lifecycle** (`QRScanner`, `TransferScanner`): the
-effect that starts the scanner returns a cleanup that calls `stop()` + `clear()`, with a `finished`
-flag covering the race between the async `start()` and unmount (if the user switches tabs while the
-camera is starting, the `MediaStream` is still released). Retries, "Scan again" and "Cancel" are
-modeled by incrementing a `session` counter the effects depend on. In `TransferScanner` the camera
-is also stopped automatically as soon as the last chunk arrives, before verification.
+Detail not visible from the table — **camera lifecycle**, identical in both scanners even though
+they now run different engines: the effect that starts the camera returns a cleanup that stops it,
+with a `finished` flag covering the race between the async start and unmount (if the user switches
+tabs while the camera is starting, the `MediaStream` is still released). Retries, "Scan again" and
+"Cancel" are modeled by incrementing a `session` counter the effects depend on. In the receiver the
+camera is also stopped automatically as soon as the last chunk arrives, before verification. Quick
+QR calls `html5-qrcode`'s `stop()` + `clear()`; the receiver stops the `MediaStream` tracks and
+terminates the decode worker.
 
 ## Technical Decisions
 
 - **Lazy-loaded heavy sections**: `QRScanner` (`html5-qrcode`) and the whole `LargeTransfer`
   section (CodeMirror + scanner) are loaded with `React.lazy`, so the initial bundle only carries
-  Quick QR generation. Vite emits a shared chunk for `html5-qrcode` used by both scanners.
+  Quick QR generation. `html5-qrcode` sits in its own chunk, reached by Quick QR or — through a
+  dynamic `import()` — by the receiver's fallback, so a working WASM pipeline never downloads it.
+  The `.wasm` binary is emitted as a bundle asset and served locally: `zxing-wasm` otherwise
+  resolves it against a CDN in production builds, which would break an app meant to work offline.
 - **Protocol/bytes outside React**: `src/lib/transfer/` is plain TypeScript over `Uint8Array`, so it
   is unit-tested in Node and could later move to a Web Worker without touching components.
 - **Native compression and hashing**: `CompressionStream("gzip")` / `DecompressionStream("gzip")` and

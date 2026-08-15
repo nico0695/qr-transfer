@@ -296,6 +296,64 @@ body {
   border-radius: 10px;
 }
 
+/*
+ * Framed viewfinder, used only by the WASM engine. It must not apply to the legacy one: that
+ * scanner derives its crop from `videoWidth / clientWidth`, so forcing a height on the element
+ * would silently shift the region it analyses.
+ *
+ * A square viewport with `cover` shows the centred square of side min(width, height) of the
+ * stream, and the decoded region is the centred square of `--scan-crop` of that same side — so the
+ * guide lands on exactly the analysed area at any resolution or orientation.
+ */
+.camera-region.is-framed {
+  position: relative;
+  aspect-ratio: 1;
+}
+
+.camera-region.is-framed video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.scan-guide {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: var(--scan-crop);
+  height: var(--scan-crop);
+  border: 2px solid rgb(255 255 255 / 0.85);
+  border-radius: 10px;
+  /* Dims everything outside the box without four extra elements. */
+  box-shadow: 0 0 0 100vmax rgb(0 0 0 / 0.4);
+  pointer-events: none;
+}
+
+.scan-guide-hit {
+  position: absolute;
+  inset: -2px;
+  border: 2px solid #35c46a;
+  border-radius: 10px;
+  opacity: 0;
+  animation: scan-hit 700ms ease-out;
+}
+
+@keyframes scan-hit {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scan-guide-hit {
+    animation: none;
+    opacity: 0.9;
+  }
+}
+
 .hint {
   margin: 0;
   color: var(--text-muted);
@@ -969,12 +1027,16 @@ a.button {
 .scan-debug dd {
   margin: 0;
   font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
 }
 
-.scan-debug-sightings {
-  margin: 0.5rem 0 0;
+/* One value per frame index: unbounded, so it takes the full row and scrolls on its own. */
+.scan-debug [data-field='sightings'] {
+  grid-column: 1 / -1;
+}
+
+.scan-debug [data-field='sightings'] dd {
   max-height: 4.5rem;
   overflow-y: auto;
-  overflow-wrap: anywhere;
   color: var(--text-muted);
 }

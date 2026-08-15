@@ -4,6 +4,23 @@ export const DEFAULT_CAMERA = { facingMode: 'environment' } as const
 
 export type CameraSelection = string | typeof DEFAULT_CAMERA
 
+/** A camera the user can pick. Same shape html5-qrcode used, without depending on it. */
+export interface CameraOption {
+  id: string
+  label: string
+}
+
+/**
+ * Cameras available for selection. Must run *after* a stream has been granted: without permission
+ * `enumerateDevices` returns entries with empty labels, which are useless in a picker.
+ */
+export async function listCameras(): Promise<CameraOption[]> {
+  const devices = await navigator.mediaDevices.enumerateDevices()
+  return devices
+    .filter((device) => device.kind === 'videoinput')
+    .map((device) => ({ id: device.deviceId, label: device.label }))
+}
+
 /**
  * Scan tunables for the Large Transfer receiver. They live here, next to the camera lifecycle,
  * because they describe the capture side rather than the transfer protocol.
@@ -12,6 +29,9 @@ export type CameraSelection = string | typeof DEFAULT_CAMERA
  * decode finishes, so the real period is `decodeDuration + 1000 / fps` and the effective rate is
  * always below `fps`. The 1000/fps part is dead time added on top of every decode, which is why
  * this is well above the library default of 2.
+ *
+ * Only the legacy engine uses it. The WASM capture loop decodes as fast as each frame allows and
+ * drops the rest, so it has no configurable rate.
  */
 export const SCAN_FPS = 25
 
@@ -35,9 +55,23 @@ export const SCAN_HEIGHT_IDEAL = 1080
  * which doubles the work per tick and fires the error callback twice — useless for a
  * screen-to-camera transfer, and it would make the scan statistics uncountable.
  */
-export function buildScanConfig(camera: CameraSelection): Html5QrcodeCameraScanConfig {
+/**
+ * Video constraints for a camera choice: which camera, and how much resolution to ask it for.
+ *
+ * Both scan engines go through here so the camera identity is assembled once. Width and height are
+ * `ideal`, never `exact`, so a camera that cannot deliver 1080p still starts instead of rejecting.
+ */
+export function buildVideoConstraints(camera: CameraSelection): MediaTrackConstraints {
   const identity: MediaTrackConstraints =
     typeof camera === 'string' ? { deviceId: { exact: camera } } : { facingMode: camera.facingMode }
+  return {
+    ...identity,
+    width: { ideal: SCAN_WIDTH_IDEAL },
+    height: { ideal: SCAN_HEIGHT_IDEAL },
+  }
+}
+
+export function buildScanConfig(camera: CameraSelection): Html5QrcodeCameraScanConfig {
   return {
     fps: SCAN_FPS,
     disableFlip: true,
@@ -45,11 +79,7 @@ export function buildScanConfig(camera: CameraSelection): Html5QrcodeCameraScanC
       const size = Math.floor(Math.min(viewfinderWidth, viewfinderHeight) * SCAN_BOX_RATIO)
       return { width: size, height: size }
     },
-    videoConstraints: {
-      ...identity,
-      width: { ideal: SCAN_WIDTH_IDEAL },
-      height: { ideal: SCAN_HEIGHT_IDEAL },
-    },
+    videoConstraints: buildVideoConstraints(camera),
   }
 }
 

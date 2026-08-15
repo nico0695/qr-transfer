@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ScanStats, formatScanReport } from './scanStats'
+import { SCAN_FIELDS, ScanStats, formatScanReport } from './scanStats'
 
 const FPS = 25
 
@@ -90,6 +90,54 @@ describe('ScanStats', () => {
     ])
   })
 
+  it('averages decode durations across both outcomes, not just the empty ones', () => {
+    // Timing only the captures that found nothing would report the cost of failing to decode,
+    // which is not the same number and is the one that was accidentally reported once.
+    const stats = new ScanStats(0, FPS)
+    stats.recordDecodeDuration(40)
+    stats.recordDecode(100, 1, 'accepted')
+    stats.recordDecodeDuration(60)
+    stats.recordFailure(200)
+    expect(stats.snapshot().measuredDecodeMs).toBeCloseTo(50)
+  })
+
+  it('leaves the measured duration null for an engine that cannot time itself', () => {
+    // html5-qrcode gives no hook around its decode, so only the estimate is available there.
+    const stats = new ScanStats(0, FPS)
+    stats.recordDecodeDuration(null)
+    stats.recordDecode(100, 1, 'accepted')
+    stats.recordDecodeDuration(undefined)
+    stats.recordFailure(200)
+    expect(stats.snapshot().measuredDecodeMs).toBeNull()
+  })
+
+  it('ignores nonsensical durations rather than poisoning the average', () => {
+    const stats = new ScanStats(0, FPS)
+    stats.recordDecodeDuration(Number.NaN)
+    stats.recordDecodeDuration(-5)
+    expect(stats.snapshot().measuredDecodeMs).toBeNull()
+    stats.recordDecodeDuration(20)
+    expect(stats.snapshot().measuredDecodeMs).toBe(20)
+  })
+
+  it('counts a duration without counting a capture', () => {
+    // The two are recorded by different callbacks; mixing them would double-count the tick.
+    const stats = new ScanStats(0, FPS)
+    stats.recordDecodeDuration(30)
+    expect(stats.snapshot().attempts).toBe(0)
+    expect(stats.snapshot().measuredDecodeMs).toBe(30)
+  })
+
+  it('remembers which engine and geometry produced the run', () => {
+    // Without this a number from iOS cannot be told apart from one produced by a silent fallback.
+    const stats = new ScanStats(0, FPS)
+    expect(stats.snapshot().engine).toBeNull()
+    expect(stats.snapshot().roiSize).toBeNull()
+    stats.recordEngine('wasm', 540)
+    expect(stats.snapshot().engine).toBe('wasm')
+    expect(stats.snapshot().roiSize).toBe(540)
+  })
+
   it('keeps the negotiated resolution once the camera reports it', () => {
     const stats = new ScanStats(0, FPS)
     expect(stats.snapshot().resolution).toBeNull()
@@ -174,7 +222,58 @@ describe('formatScanReport', () => {
     expect(report).toContain('completed      no')
     expect(report).toContain('frames         ?')
     expect(report).toContain('video          unknown')
+    expect(report).toContain('engine         unknown')
     expect(report).not.toContain('NaN')
     expect(report).not.toContain('undefined')
+  })
+
+  it('names the engine and shows what the region bought in pixels per module', () => {
+    const stats = new ScanStats(0, FPS)
+    stats.recordEngine('wasm', 540)
+    stats.recordDecodeDuration(45)
+    stats.recordDecode(100, 1, 'accepted')
+
+    const report = formatScanReport(stats.snapshot())
+    expect(report).toContain('engine         wasm')
+    expect(report).toContain('roi            540px · 4.6 px/module')
+    expect(report).toContain('decode         45 ms')
+  })
+
+  it('marks the legacy decode figure as an estimate rather than passing it off as measured', () => {
+    const stats = new ScanStats(0, FPS)
+    stats.recordEngine('legacy', null)
+    stats.recordFailure(0)
+    stats.recordFailure(140)
+
+    const report = formatScanReport(stats.snapshot())
+    expect(report).toContain('engine         legacy')
+    expect(report).toContain('roi            viewfinder')
+    expect(report).toContain('decode         ~100 ms (est)')
+  })
+})
+
+describe('SCAN_FIELDS', () => {
+  it('is the single source the report is built from', () => {
+    // The overlay renders this same list, so a field added here shows up in both places at once.
+    // Keeping two hand-written lists in sync is what let them drift apart before.
+    const report = formatScanReport(new ScanStats(0, FPS).snapshot())
+    for (const field of SCAN_FIELDS) {
+      expect(report).toContain(field.label)
+    }
+  })
+
+  it('renders every field as a string, even with nothing scanned', () => {
+    const snapshot = new ScanStats(0, FPS).snapshot()
+    for (const field of SCAN_FIELDS) {
+      const value = field.render(snapshot)
+      expect(typeof value).toBe('string')
+      expect(value).not.toContain('NaN')
+      expect(value).not.toContain('undefined')
+    }
+  })
+
+  it('uses labels that are unique, since they key the rendered rows', () => {
+    const labels = SCAN_FIELDS.map((field) => field.label)
+    expect(new Set(labels).size).toBe(labels.length)
   })
 })
