@@ -39,8 +39,19 @@ export interface RoiOptions {
   maxDecodeSize?: number
 }
 
-/** Slightly tighter than the 0.95 the previous scanner used, to leave the symbol some border. */
-const DEFAULT_CROP_RATIO = 0.9
+/**
+ * Fraction of the frame's shorter side that is cropped and decoded.
+ *
+ * Exported because the on-screen guide is drawn from this same number. If the two had separate
+ * constants the guide would eventually point at a region that is not the one being analysed, which
+ * is worse than showing no guide at all.
+ *
+ * It is also a decode parameter, not just a framing one: the crop is always reduced to
+ * `maxDecodeSize`, so a tighter crop enlarges the symbol in the decoded image. A QR appearing 600px
+ * wide in a 1080-wide stream lands on 2.85 px/module at 0.9, and 3.42 at 0.75 — same phone, same
+ * distance. The cost is that the user has to aim more carefully, which is what the guide is for.
+ */
+export const DEFAULT_CROP_RATIO = 0.75
 
 /** With `WORST_CASE_MODULES` (117) this is ~4.6 pixels per module. Retune with measurements. */
 const DEFAULT_MAX_DECODE_SIZE = 540

@@ -171,6 +171,19 @@ once the header arrived — "photo.jpg · 420 KB" or "Text · 21 KB"; missing fr
 - Progress counts **unique** frames (header included), not detections.
 - `ChunkCollector` (pure class) stores data chunks by index, keeps the header metadata, locks the
   transfer id, dedupes and reports `missingIndexes` / `isComplete`.
+- **Capture** (`src/lib/scan/`): `getUserMedia` → `<video>` → a loop on `requestVideoFrameCallback`
+  (falling back to `requestAnimationFrame`). Each frame is cropped and downscaled by a single
+  nine-argument `drawImage` onto a canvas sized from `computeRoi` **in camera pixels**, and the RGBA
+  buffer is transferred to a worker running ZXing compiled to WebAssembly. One decode is in flight
+  at a time; frames arriving meanwhile are skipped before any pixel work is paid for.
+- Sizing the canvas ourselves is the point: `html5-qrcode` derives it from the viewfinder's CSS
+  width, which left dense symbols at ~3 pixels per module — the floor below which no decoder works.
+  The region targets ~4.6.
+- The viewfinder is square with `object-fit: cover`, and the guide box is drawn at the same
+  `DEFAULT_CROP_RATIO` the crop uses, so the box frames exactly the region being decoded. Each
+  accepted frame briefly highlights it in green, fading out on its own.
+- `html5-qrcode` remains as an automatic fallback, loaded with a dynamic `import()` only if the
+  WASM pipeline fails to start. `?scanner=legacy` forces it; `?debug=1` reports which engine ran.
 - **Complete, text** — "Transfer complete", characters, size, "✓ Verified", **Copy all**,
   **View content** (read-only CodeMirror viewer), **Scan another**.
 - **Complete, file** — sanitized filename, size, MIME, "✓ Verified", image preview when the MIME is
@@ -289,7 +302,16 @@ scanning is reliable, **Fast** halves the loop time. Requires a browser with `Co
   and settings), `SendFlow`, `SourceSelector`, `LargeTextEditor` + `codemirrorSetup.ts`,
   `FileInput`, `FilePreview`, `usePreparedPayload.ts`, `TransferSummary`, `TransferSettings`,
   `AnimatedQR`, `qrFrames.ts`, `TransferScanner`, `ReceivedContent`, `ReceivedFile`.
-- `src/lib/camera.ts` — camera helpers shared with Quick QR's scanner.
+- `src/lib/scan/` — receiver capture pipeline, no React:
+  - `roi.ts` — `computeRoi` (crop and decode size in camera pixels), `pixelsPerModule`.
+  - `captureLoop.ts` — camera, frame loop and pixel handling for the WASM engine.
+  - `decoder.worker.ts` / `workerDecoder.ts` — ZXing WASM off the main thread.
+  - `readerOptions.ts` — reader options tuned for speed; `singleFlight.ts` — one decode at a time.
+  - `engine.ts` — the interface both engines implement; `legacyEngine.ts` — the `html5-qrcode`
+    fallback, only ever reached through a dynamic import.
+- `src/lib/camera.ts` — camera helpers shared with Quick QR's scanner: `buildVideoConstraints`
+  (single source of the camera identity), `buildScanConfig`, `listCameras`, `describeCameraError`,
+  `stopScanner`.
 
 ## Verification
 

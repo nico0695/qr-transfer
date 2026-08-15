@@ -16,10 +16,16 @@ export interface DecodeRequest extends ScanFrame {
 }
 
 export interface DecodeResponse {
+  type: 'decoded'
   id: number
   text: string | null
   error?: string
 }
+
+/** Sent once, so the main thread knows whether this worker can decode at all. */
+export type InitResponse = { type: 'ready' } | { type: 'init-error'; error: string }
+
+export type WorkerEvent = DecodeResponse | InitResponse
 
 /**
  * Only the two members this file uses. `DedicatedWorkerGlobalScope` lives in the `webworker` lib,
@@ -27,7 +33,7 @@ export interface DecodeResponse {
  */
 interface WorkerScope {
   addEventListener(type: 'message', listener: (event: MessageEvent<DecodeRequest>) => void): void
-  postMessage(message: DecodeResponse): void
+  postMessage(message: WorkerEvent): void
 }
 
 const worker = self as unknown as WorkerScope
@@ -47,14 +53,26 @@ function prepare(): Promise<unknown> {
 // jsDelivr default whenever it runs before any overrides were cached, so caching them as early as
 // possible is what makes that path unreachable. It also gets the ~1 MB binary compiling while the
 // camera is still starting.
-void prepare()
+// The result is announced rather than left implicit. A failed instantiation memoises a rejected
+// promise, so without this every later capture would simply come back empty and the receiver would
+// scan forever without ever decoding — and without falling back to the other engine, which is only
+// chosen while starting up.
+void prepare().then(
+  () => worker.postMessage({ type: 'ready' }),
+  (error: unknown) =>
+    worker.postMessage({
+      type: 'init-error',
+      error: error instanceof Error ? error.message : String(error),
+    }),
+)
 
 worker.addEventListener('message', (event: MessageEvent<DecodeRequest>) => {
   const { id, buffer, width, height } = event.data
   void decode(buffer, width, height).then(
-    (text) => worker.postMessage({ id, text } satisfies DecodeResponse),
+    (text) => worker.postMessage({ type: 'decoded', id, text } satisfies DecodeResponse),
     (error: unknown) =>
       worker.postMessage({
+        type: 'decoded',
         id,
         text: null,
         error: error instanceof Error ? error.message : String(error),

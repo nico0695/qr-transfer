@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { WORST_CASE_MODULES } from '../transfer/config'
-import { computeRoi, pixelsPerModule, type ScanRoi } from './roi'
+import { DEFAULT_CROP_RATIO, computeRoi, pixelsPerModule, type ScanRoi } from './roi'
 
 /** The guarantee that protects against WebKit silently shrinking an out-of-bounds bitmap. */
 function expectInsideFrame(roi: ScanRoi, width: number, height: number) {
@@ -93,8 +93,18 @@ describe('computeRoi', () => {
   })
 
   it('falls back to the crop size when the cap is nonsense', () => {
-    expect(computeRoi(1920, 1080, { maxDecodeSize: 0 })!.size).toBe(972)
-    expect(computeRoi(1920, 1080, { maxDecodeSize: Number.NaN })!.size).toBe(972)
+    const side = Math.floor(1080 * DEFAULT_CROP_RATIO)
+    expect(computeRoi(1920, 1080, { maxDecodeSize: 0 })!.size).toBe(side)
+    expect(computeRoi(1920, 1080, { maxDecodeSize: Number.NaN })!.size).toBe(side)
+  })
+
+  it('crops exactly the fraction the on-screen guide is drawn from', () => {
+    // The guide is positioned at this same ratio. If the default stopped matching it, the box on
+    // screen would frame a region other than the one actually decoded.
+    const roi = computeRoi(1080, 1920)!
+    expect(roi.sw / 1080).toBeCloseTo(DEFAULT_CROP_RATIO, 3)
+    const landscape = computeRoi(1920, 1080)!
+    expect(landscape.sw / 1080).toBeCloseTo(DEFAULT_CROP_RATIO, 3)
   })
 })
 

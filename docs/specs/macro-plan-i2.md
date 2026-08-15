@@ -168,9 +168,13 @@ El módulo nuevo (`src/lib/scan/`, puro salvo por el acceso a DOM/media):
 550×550 (≈5 px/módulo) costaría ~290 ms. Eso baja las capturas/s de 6.4 a ~3.2, pero si el éxito
 sube de 27 % a 80 % los decodes útiles/s pasan de 1.7 a ~2.6. Es una mejora, pero modesta.
 
-**Por eso `BarcodeDetector` no es un "nice to have" en esta etapa, es la mitad del punto.** El
-detector nativo está acelerado por hardware y típicamente cuesta un orden de magnitud menos que
-ZXing en JS. Con nativo, 550×550 debería costar ~20-40 ms, y ahí sí los decodes/s se multiplican.
+> **Corrección (etapa 1 ya implementada).** Acá decía que `BarcodeDetector` era "la mitad del
+> punto". **Es falso para este proyecto:** está detrás de un flag desactivado por defecto desde
+> Safari 17 y roto desde iOS 18 (WebKit #281848), y Chrome iOS y Firefox iOS son WebKit, así que en
+> iOS no está disponible bajo ninguna circunstancia. Tampoco existe en Firefox ni en Chrome/Edge
+> sobre Windows y Linux. Con el requisito de Android e iOS indistinto, el camino real es
+> `requestVideoFrameCallback` + un decoder WASM, que es lo que se implementó. Medido en dispositivo:
+> **11 ms por decode**, sin usar nada nativo.
 
 **Recomendación:** hacer el ROI **adaptativo y medido, no fijado a ojo**. El receptor conoce el
 `total` del header y, tras el primer decode exitoso, puede estimar la versión del símbolo. Una

@@ -103,10 +103,20 @@ export class ScanStats {
   }
 
   /** A capture tick that found no readable code. */
-  recordFailure(now: number, decodeMs?: number | null): void {
+  recordFailure(now: number): void {
     this.failures += 1
-    this.recordDuration(decodeMs)
     this.tick(now)
+  }
+
+  /**
+   * How long one decode took, whatever it returned. Separate from the counters on purpose: a
+   * capture that decodes and one that comes up empty both cost time, and averaging only the empty
+   * ones would report the cost of failing rather than the cost of decoding.
+   */
+  recordDecodeDuration(decodeMs: number | null | undefined): void {
+    if (typeof decodeMs !== 'number' || !Number.isFinite(decodeMs) || decodeMs < 0) return
+    this.decodeMsCount += 1
+    this.decodeMsTotal += decodeMs
   }
 
   /** Which engine is running, and the geometry it settled on. */
@@ -115,16 +125,9 @@ export class ScanStats {
     this.roiSize = roiSize
   }
 
-  private recordDuration(decodeMs?: number | null): void {
-    if (typeof decodeMs !== 'number' || !Number.isFinite(decodeMs) || decodeMs < 0) return
-    this.decodeMsCount += 1
-    this.decodeMsTotal += decodeMs
-  }
-
   /** A capture tick that decoded a frame, with what the collector decided to do with it. */
-  recordDecode(now: number, index: number, outcome: DecodeOutcome, decodeMs?: number | null): void {
+  recordDecode(now: number, index: number, outcome: DecodeOutcome): void {
     this.decodes += 1
-    this.recordDuration(decodeMs)
     if (outcome === 'accepted') this.accepted += 1
     else if (outcome === 'duplicate') this.duplicates += 1
     else this.ignored += 1

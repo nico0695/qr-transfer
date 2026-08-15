@@ -39,6 +39,12 @@ export type ReceiverState =
 
 export interface TransferScannerApi {
   state: ReceiverState
+  /**
+   * Which engine is running, known as soon as it starts. Not a debug-only concern: the framed
+   * viewfinder applies only to the WASM engine, because forcing a height on the video would move
+   * the region html5-qrcode analyses without telling anyone.
+   */
+  engine: EngineName | null
   cameras: CameraOption[]
   selection: CameraSelection | null
   stats: ScanStatsSnapshot | null
@@ -59,6 +65,7 @@ export function useTransferScanner(): TransferScannerApi {
   const [state, setState] = useState<ReceiverState>({ status: 'idle' })
   const [session, setSession] = useState(0)
   const [stats, setStats] = useState<ScanStatsSnapshot | null>(null)
+  const [engine, setEngine] = useState<EngineName | null>(null)
   const collectorRef = useRef(new ChunkCollector())
 
   useEffect(() => {
@@ -68,8 +75,9 @@ export function useTransferScanner(): TransferScannerApi {
     if (container === null) return
 
     let finished = false
-    let engine: ScanEngine | null = null
+    let running: ScanEngine | null = null
     setState({ status: 'idle' })
+    setEngine(null)
 
     const scanStats = DEBUG_ENABLED ? new ScanStats(performance.now(), SCAN_FPS) : null
     // Sampling runs on this timer, never on the scan path, so measuring cannot slow down decoding.
@@ -91,7 +99,7 @@ export function useTransferScanner(): TransferScannerApi {
     const finish = async () => {
       finished = true
       setState({ status: 'assembling', progress: progressOf() })
-      await engine?.stop()
+      await running?.stop()
       try {
         const metadata = collector.metadata
         if (metadata === null) throw new Error('Header frame missing')
@@ -110,8 +118,11 @@ export function useTransferScanner(): TransferScannerApi {
 
     const callbacks: Omit<EngineOptions, 'container' | 'camera'> = {
       onAttempt: (outcome, decodeMs) => {
-        if (finished || outcome !== 'empty') return
-        scanStats?.recordFailure(performance.now(), decodeMs)
+        if (finished) return
+        // Timed for both outcomes: a capture that decodes and one that comes up empty both cost
+        // the decoder time, and averaging only the empty ones reports the cost of failing.
+        scanStats?.recordDecodeDuration(decodeMs)
+        if (outcome === 'empty') scanStats?.recordFailure(performance.now())
       },
       onText: (text) => {
         if (finished) return
@@ -121,7 +132,7 @@ export function useTransferScanner(): TransferScannerApi {
           const version = detectProtocolVersion(text)
           if (version !== null && version !== PROTOCOL_VERSION) {
             finished = true
-            void engine?.stop()
+            void running?.stop()
             setState({ status: 'error', key: 'incompatibleSender' })
           }
           return
@@ -136,7 +147,7 @@ export function useTransferScanner(): TransferScannerApi {
       onReady: () => {},
     }
 
-    const start = async () => {
+    const start = async (): Promise<{ name: EngineName; instance: ScanEngine }> => {
       const options = (name: EngineName): EngineOptions => ({
         ...callbacks,
         container,
@@ -149,7 +160,7 @@ export function useTransferScanner(): TransferScannerApi {
 
       if (!FORCE_LEGACY_SCANNER && supportsCaptureLoop()) {
         try {
-          return await startCaptureLoop(options('wasm'))
+          return { name: 'wasm', instance: await startCaptureLoop(options('wasm')) }
         } catch (err: unknown) {
           // A denied or missing camera would fail identically on the old engine, and retrying
           // would only replace a precise message with a generic one.
@@ -158,35 +169,47 @@ export function useTransferScanner(): TransferScannerApi {
         }
       }
       const { startLegacyEngine } = await import('../../lib/scan/legacyEngine')
-      return await startLegacyEngine(options('legacy'))
+      return { name: 'legacy', instance: await startLegacyEngine(options('legacy')) }
     }
 
     start()
       .then(async (started) => {
-        engine = started
+        running = started.instance
         if (finished) {
           // The component unmounted (or completed) while the camera was starting.
-          await started.stop()
+          await started.instance.stop()
           return
         }
+        // Set here rather than from onReady so the viewfinder is already framed when the first
+        // frame paints.
+        setEngine(started.name)
         setState((current) => (current.status === 'idle' ? { status: 'scanning' } : current))
-        setCameras(await listCameras())
+        try {
+          setCameras(await listCameras())
+        } catch {
+          // Only the camera picker depends on this. Letting it reject would abort a session that
+          // is already scanning perfectly well, and report it as a camera error.
+        }
       })
       .catch((err: unknown) => {
         if (finished) return
         finished = true
+        // `running` is set only after `start()` resolves, so this covers a failure during startup;
+        // anything already running is released here rather than waiting for unmount.
+        void running?.stop()
         setState({ status: 'error', key: describeCameraError(err) })
       })
 
     return () => {
       finished = true
       if (refresh !== 0) window.clearInterval(refresh)
-      void engine?.stop()
+      void running?.stop()
     }
   }, [selection, session])
 
   return {
     state,
+    engine,
     cameras,
     selection,
     stats,
@@ -194,6 +217,7 @@ export function useTransferScanner(): TransferScannerApi {
     restart: () => {
       setState({ status: 'idle' })
       setStats(null)
+      setEngine(null)
       setSession((value) => value + 1)
     },
   }

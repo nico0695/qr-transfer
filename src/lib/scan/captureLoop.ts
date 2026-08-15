@@ -47,9 +47,15 @@ export async function startCaptureLoop(options: EngineOptions): Promise<ScanEngi
   let decoder
   try {
     decoder = createWorkerDecoder()
+    // Waiting here is what makes the fallback real. The WASM module instantiates asynchronously,
+    // so resolving before it is ready would mean a failed initialisation surfaces later — as every
+    // capture coming back empty, forever, long after the caller stopped being able to choose the
+    // other engine.
+    await decoder.ready
   } catch (error) {
     // The stream is already open at this point; leaving it would keep the camera light on while
     // the caller falls back to the other engine.
+    decoder?.dispose()
     for (const track of stream.getTracks()) track.stop()
     video.remove()
     throw error

@@ -90,28 +90,42 @@ describe('ScanStats', () => {
     ])
   })
 
-  it('averages measured decode durations when the engine reports them', () => {
+  it('averages decode durations across both outcomes, not just the empty ones', () => {
+    // Timing only the captures that found nothing would report the cost of failing to decode,
+    // which is not the same number and is the one that was accidentally reported once.
     const stats = new ScanStats(0, FPS)
-    stats.recordDecode(100, 1, 'accepted', 40)
-    stats.recordFailure(200, 60)
+    stats.recordDecodeDuration(40)
+    stats.recordDecode(100, 1, 'accepted')
+    stats.recordDecodeDuration(60)
+    stats.recordFailure(200)
     expect(stats.snapshot().measuredDecodeMs).toBeCloseTo(50)
   })
 
   it('leaves the measured duration null for an engine that cannot time itself', () => {
     // html5-qrcode gives no hook around its decode, so only the estimate is available there.
     const stats = new ScanStats(0, FPS)
+    stats.recordDecodeDuration(null)
     stats.recordDecode(100, 1, 'accepted')
-    stats.recordFailure(200, null)
+    stats.recordDecodeDuration(undefined)
+    stats.recordFailure(200)
     expect(stats.snapshot().measuredDecodeMs).toBeNull()
   })
 
   it('ignores nonsensical durations rather than poisoning the average', () => {
     const stats = new ScanStats(0, FPS)
-    stats.recordFailure(100, Number.NaN)
-    stats.recordFailure(200, -5)
+    stats.recordDecodeDuration(Number.NaN)
+    stats.recordDecodeDuration(-5)
     expect(stats.snapshot().measuredDecodeMs).toBeNull()
-    stats.recordFailure(300, 20)
+    stats.recordDecodeDuration(20)
     expect(stats.snapshot().measuredDecodeMs).toBe(20)
+  })
+
+  it('counts a duration without counting a capture', () => {
+    // The two are recorded by different callbacks; mixing them would double-count the tick.
+    const stats = new ScanStats(0, FPS)
+    stats.recordDecodeDuration(30)
+    expect(stats.snapshot().attempts).toBe(0)
+    expect(stats.snapshot().measuredDecodeMs).toBe(30)
   })
 
   it('remembers which engine and geometry produced the run', () => {
@@ -216,7 +230,8 @@ describe('formatScanReport', () => {
   it('names the engine and shows what the region bought in pixels per module', () => {
     const stats = new ScanStats(0, FPS)
     stats.recordEngine('wasm', 540)
-    stats.recordDecode(100, 1, 'accepted', 45)
+    stats.recordDecodeDuration(45)
+    stats.recordDecode(100, 1, 'accepted')
 
     const report = formatScanReport(stats.snapshot())
     expect(report).toContain('engine         wasm')
