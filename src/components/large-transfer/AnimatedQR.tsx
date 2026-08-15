@@ -5,11 +5,18 @@ import { FRAME_MS_PRESETS } from '../../lib/transfer/config'
 interface AnimatedQRProps {
   images: readonly string[]
   frameMs: number
+  profileName: string
   onFrameMsChange: (ms: number) => void
   onStop: () => void
 }
 
-export function AnimatedQR({ images, frameMs, onFrameMsChange, onStop }: AnimatedQRProps) {
+export function AnimatedQR({
+  images,
+  frameMs,
+  profileName,
+  onFrameMsChange,
+  onStop,
+}: AnimatedQRProps) {
   const t = useI18n()
   const [index, setIndex] = useState(0)
   const [fullscreen, setFullscreen] = useState(false)
@@ -53,7 +60,9 @@ export function AnimatedQR({ images, frameMs, onFrameMsChange, onStop }: Animate
         </p>
       </div>
       <div className="transfer-controls">
-        <p className="hint">{t.loopingEvery(frameMs)}</p>
+        <p className="hint">
+          {profileName} · {t.loopingEvery(frameMs)}
+        </p>
         <div className="speed">
           <button
             type="button"
@@ -86,7 +95,11 @@ export function AnimatedQR({ images, frameMs, onFrameMsChange, onStop }: Animate
             {t.stopTransfer}
           </button>
         </div>
-        {!fullscreen && <p className="hint">{t.transferHint}</p>}
+        {!fullscreen && (
+          <p className="hint">
+            {t.transferHint} {t.brightnessHint}
+          </p>
+        )}
       </div>
     </section>
   )

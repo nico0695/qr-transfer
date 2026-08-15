@@ -1,16 +1,18 @@
 # QR Transfer
 
-Minimalist web application for transferring text between devices using QR codes.
-Everything runs in the browser: no backend, no database, no storage — the text
-never leaves your device.
+Minimalist web application for transferring text and files between devices using QR codes.
+Everything runs in the browser: no backend, no database, no uploads — the content never leaves
+your device (the only thing stored locally is your preferred transfer profile).
 
 - **Quick QR**
   - **Generate QR**: type text (up to 2000 characters) and a QR code is generated in real time.
   - **Scan QR**: scan a QR code with the camera and copy the resulting text.
-- **Large Transfer**: paste a large text (KBs to hundreds of KB — Markdown, JSON, logs, configs…),
-  it is gzip-compressed, split into chunks and shown as an animated loop of QR codes; the other
-  device scans continuously, collects the frames in any order, verifies the checksum and rebuilds
-  the exact original text. See [Large Transfer](docs/large-transfer.md).
+- **Large Transfer**: paste a large text (Markdown, JSON, logs, configs…) or pick **one file**
+  (documents, images, archives, small binaries); it is compressed when that helps, split into
+  chunks and shown as an animated loop of QR codes with a Reliable / Balanced / Fast profile; the
+  other device scans continuously, collects the frames in any order, verifies the SHA-256 and
+  rebuilds the exact original — text to copy/view, files to download (images with preview). See
+  [Large Transfer](docs/large-transfer.md).
 
 Documentation: [Technical Overview](docs/technical-overview.md) ·
 [Transfer Flow](docs/qr-transfer-flow.md) · [Large Transfer](docs/large-transfer.md)
@@ -52,10 +54,16 @@ caddy file-server --root dist
 # Example with nginx: point `root` at the contents of dist/
 ```
 
+## Browser support
+
+- Camera scanning needs `getUserMedia` (see below).
+- Large Transfer uses the native `CompressionStream` / `DecompressionStream` APIs and
+  `crypto.subtle`: Chrome/Edge 80+, Safari 16.4+, Firefox 113+.
+
 ## HTTPS and the camera
 
 Camera access (`getUserMedia`) requires a **secure context**:
 
 - In development it works on `http://localhost` (browsers treat it as secure).
-- In production the application must be served over **HTTPS**, otherwise Scan QR
-  mode will not be able to access the camera.
+- In production the application must be served over **HTTPS**, otherwise Scan QR and
+  Large Transfer → Receive will not be able to access the camera.

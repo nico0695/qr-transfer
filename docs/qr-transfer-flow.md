@@ -1,7 +1,8 @@
-# Text Transfer via QR — Flow
+# Text Transfer via QR — Flow (Quick QR)
 
-> How transferring text between two devices with QR Transfer works:
+> How transferring a short text between two devices with the **Quick QR** section works:
 > what each end does, which rules apply, and what happens when something fails.
+> For large texts (animated multi-QR loop) see [large-transfer.md](./large-transfer.md).
 
 ## Table of Contents
 
@@ -19,8 +20,8 @@
 
 ## Overview
 
-A user types text on one device (**Generate QR** mode) and another device reads it with its camera
-(**Scan QR** mode). The "transfer" is optical: the QR code is displayed on device A's screen and
+In the **Quick QR** section a user types text on one device (**Generate QR** mode) and another
+device reads it with its camera (**Scan QR** mode). The "transfer" is optical: the QR code is displayed on device A's screen and
 device B's camera decodes it. **No data travels over the network or is stored anywhere** — closing
 the tab makes the text disappear.
 
@@ -39,7 +40,8 @@ and a camera.
 
 ## Non-Goals
 
-- It does not transfer files or images — text only.
+- It does not transfer files or images — text only (use **Large Transfer** for files).
+- It does not handle long texts: above the single-QR capacity, use **Large Transfer**.
 - It does not interpret the content: a scanned URL is shown as text, not opened.
 - It keeps no history and syncs nothing — every transfer is ephemeral.
 
@@ -88,7 +90,7 @@ sequenceDiagram
 | The QR contains a URL                            | Shown as plain text; never opened or redirected                                         |
 | Decoded QR with no text                          | "The QR code does not contain any readable text" message + Try again                    |
 | Multiple cameras available                       | Simple selector; back camera by default (`facingMode: environment`)                     |
-| Switching tabs (or modes) with the camera on     | The camera stops and the stream is released, even if it was still starting              |
+| Switching tabs, sections or modes with camera on | The camera stops and the stream is released, even if it was still starting              |
 | Switching language with an error on screen       | The error message is translated live                                                    |
 
 ## Errors
@@ -105,17 +107,18 @@ Messages are simple and translated (es/en); stack traces are never shown.
 
 ## Verification
 
-There are no automated tests: the flow is verified manually (generate with Unicode/emoji, scan
+This flow has no automated UI tests: it is verified manually (generate with Unicode/emoji, scan
 from another device, confirm the text is identical, copy, re-scan, camera shutdown). The repo's
-automated checks cover code quality only (`typecheck`, `lint`, `build`). Real scanning between two
-physical devices remains a manual test for the user — it has not been verified in this repo's
-development environment.
+automated checks (`typecheck`, `lint`, `test`, `build`) cover code quality and the Large Transfer
+pure logic. Real scanning between two physical devices remains a manual test for the user — it has
+not been verified in this repo's development environment.
 
 ## Limitations
 
 - Both devices must be physically together (screen facing camera).
 - Scan mode requires HTTPS in production (secure context for `getUserMedia`).
-- Long texts produce dense QR codes, harder to scan with low-quality cameras.
+- Long texts produce dense QR codes, harder to scan with low-quality cameras; beyond 2000
+  characters use Large Transfer.
 - The transfer is one-directional at a time: to reply, the roles are swapped manually.
 
 ## Summary

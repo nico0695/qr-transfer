@@ -1,17 +1,29 @@
 import { useState } from 'react'
 import { useI18n } from '../../i18n'
-import { DEFAULT_FRAME_MS } from '../../lib/transfer/config'
+import { loadPreferredProfile, savePreferredProfile } from '../../lib/settingsStorage'
+import { DEFAULT_SETTINGS, type TransferSettings } from '../../lib/transfer/profiles'
 import { SendFlow } from './SendFlow'
 import { TransferScanner } from './TransferScanner'
+import type { SourceKind } from './usePreparedPayload'
 
 type Direction = 'send' | 'receive'
 
 export default function LargeTransfer() {
   const t = useI18n()
   const [direction, setDirection] = useState<Direction>('send')
-  // Kept here so switching between Send and Receive does not lose the draft or speed setting.
+  // Kept here so switching Send↔Receive or Text↔File does not lose the draft, file or settings.
+  const [source, setSource] = useState<SourceKind>('text')
   const [text, setText] = useState('')
-  const [frameMs, setFrameMs] = useState(DEFAULT_FRAME_MS)
+  const [file, setFile] = useState<File | null>(null)
+  const [settings, setSettings] = useState<TransferSettings>(() => ({
+    ...DEFAULT_SETTINGS,
+    profile: loadPreferredProfile() ?? DEFAULT_SETTINGS.profile,
+  }))
+
+  const updateSettings = (next: TransferSettings) => {
+    setSettings(next)
+    if (next.profile !== settings.profile) savePreferredProfile(next.profile)
+  }
 
   return (
     <div className="large-transfer">
@@ -37,10 +49,14 @@ export default function LargeTransfer() {
       </div>
       {direction === 'send' ? (
         <SendFlow
+          source={source}
+          onSourceChange={setSource}
           text={text}
           onTextChange={setText}
-          frameMs={frameMs}
-          onFrameMsChange={setFrameMs}
+          file={file}
+          onFileChange={setFile}
+          settings={settings}
+          onSettingsChange={updateSettings}
         />
       ) : (
         <TransferScanner />

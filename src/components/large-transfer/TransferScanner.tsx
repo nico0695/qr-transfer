@@ -8,9 +8,12 @@ import {
   type CameraErrorKey,
   type CameraSelection,
 } from '../../lib/camera'
-import { decodeFrame } from '../../lib/transfer/protocol'
+import { formatBytes } from '../../lib/format'
+import { PROTOCOL_VERSION, decodeFrame, detectProtocolVersion } from '../../lib/transfer/protocol'
 import { ChunkCollector, assembleTransfer } from '../../lib/transfer/transfer'
+import type { ReceivedTransfer, TransferMetadata } from '../../lib/transfer/types'
 import { ReceivedContent } from './ReceivedContent'
+import { ReceivedFile } from './ReceivedFile'
 
 const REGION_ID = 'large-transfer-scanner-region'
 const SCAN_FPS = 15
@@ -19,6 +22,8 @@ interface Progress {
   received: number
   total: number
   missing: number[]
+  /** Known once the header frame has been scanned. */
+  metadata: TransferMetadata | null
 }
 
 type ReceiverState =
@@ -26,8 +31,8 @@ type ReceiverState =
   | { status: 'scanning' }
   | { status: 'receiving'; progress: Progress }
   | { status: 'assembling'; progress: Progress }
-  | { status: 'complete'; text: string }
-  | { status: 'error'; key: CameraErrorKey | 'verificationFailed' }
+  | { status: 'complete'; result: ReceivedTransfer }
+  | { status: 'error'; key: CameraErrorKey | 'verificationFailed' | 'incompatibleSender' }
 
 export function TransferScanner() {
   const t = useI18n()
@@ -74,6 +79,7 @@ export function TransferScanner() {
       received: collector.received,
       total: collector.total,
       missing: collector.missingIndexes,
+      metadata: collector.metadata,
     })
 
     const finish = async () => {
@@ -82,12 +88,10 @@ export function TransferScanner() {
       setState({ status: 'assembling', progress })
       await stopScanner(scanner)
       try {
-        const text = await assembleTransfer(
-          collector.chunkMap,
-          collector.total,
-          collector.checksum ?? '',
-        )
-        setState({ status: 'complete', text })
+        const metadata = collector.metadata
+        if (metadata === null) throw new Error('Header frame missing')
+        const result = await assembleTransfer(collector.chunkMap, collector.total, metadata)
+        setState({ status: 'complete', result })
       } catch {
         setState({ status: 'error', key: 'verificationFailed' })
       }
@@ -106,7 +110,15 @@ export function TransferScanner() {
         (decodedText) => {
           if (finished) return
           const frame = decodeFrame(decodedText)
-          if (frame === null) return
+          if (frame === null) {
+            const version = detectProtocolVersion(decodedText)
+            if (version !== null && version !== PROTOCOL_VERSION) {
+              finished = true
+              void stopScanner(scanner)
+              setState({ status: 'error', key: 'incompatibleSender' })
+            }
+            return
+          }
           if (collector.add(frame) !== 'accepted') return
           if (collector.isComplete) {
             void finish()
@@ -147,7 +159,11 @@ export function TransferScanner() {
     state.status === 'idle' || state.status === 'scanning' || state.status === 'receiving'
 
   if (state.status === 'complete') {
-    return <ReceivedContent text={state.text} onScanAnother={restart} />
+    return state.result.type === 'text' ? (
+      <ReceivedContent text={state.result.text} onScanAnother={restart} />
+    ) : (
+      <ReceivedFile file={state.result} onScanAnother={restart} />
+    )
   }
 
   return (
@@ -185,7 +201,9 @@ export function TransferScanner() {
           <p className="error">
             {state.key === 'verificationFailed'
               ? `${t.verificationFailed} ${t.scanAgainHint}`
-              : t[state.key]}
+              : state.key === 'incompatibleSender'
+                ? t.incompatibleSender
+                : t[state.key]}
           </p>
           <div className="actions">
             <button type="button" className="button" onClick={restart}>
@@ -211,6 +229,13 @@ function ReceiveProgress({ progress, label }: { progress: Progress; label: strin
   return (
     <div className="progress">
       <p className="progress-count">{t.framesProgress(progress.received, progress.total)}</p>
+      {progress.metadata !== null && (
+        <p className="hint progress-meta">
+          {progress.metadata.type === 'file'
+            ? `${progress.metadata.filename} · ${formatBytes(progress.metadata.originalSize)}`
+            : `${t.sourceText} · ${formatBytes(progress.metadata.originalSize)}`}
+        </p>
+      )}
       <div
         className="progress-bar"
         role="progressbar"

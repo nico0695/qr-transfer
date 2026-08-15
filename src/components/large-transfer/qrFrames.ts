@@ -1,5 +1,5 @@
 import QRCode from 'qrcode'
-import { QR_ERROR_CORRECTION } from '../../lib/transfer/config'
+import type { ErrorCorrectionLevel } from '../../lib/transfer/profiles'
 
 const YIELD_EVERY = 8
 
@@ -9,18 +9,13 @@ const YIELD_EVERY = 8
  */
 export async function renderFrameImages(
   frames: readonly string[],
+  errorCorrectionLevel: ErrorCorrectionLevel,
   isCancelled: () => boolean,
 ): Promise<string[]> {
   const images: string[] = []
   for (let i = 0; i < frames.length; i++) {
     if (isCancelled()) return images
-    images.push(
-      await QRCode.toDataURL(frames[i], {
-        errorCorrectionLevel: QR_ERROR_CORRECTION,
-        margin: 2,
-        scale: 6,
-      }),
-    )
+    images.push(await QRCode.toDataURL(frames[i], { errorCorrectionLevel, margin: 2, scale: 6 }))
     if (i % YIELD_EVERY === YIELD_EVERY - 1) {
       await new Promise((resolve) => window.setTimeout(resolve, 0))
     }
