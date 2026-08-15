@@ -22,8 +22,12 @@ TypeScript** and plain CSS. It has two modes: **Generate QR** (a textarea genera
 live) and **Scan QR** (the camera reads a QR code and shows its text). The build
 (`npm run build`) produces a 100% static site in `dist/` servable from any file server.
 
-Runtime dependencies — only four: `react`, `react-dom`, `qrcode` (generation) and
-`html5-qrcode` (camera reading).
+Runtime dependencies: `react`, `react-dom`, `qrcode` (generation), `html5-qrcode` (camera
+reading) and, for the Large Transfer editor/viewer, the CodeMirror 6 packages
+(`@codemirror/state|view|commands|search|language|lang-markdown|lang-json`, `@lezer/highlight`).
+
+A third section, **Large Transfer** (navbar), sends large texts as an animated loop of QR codes:
+see [large-transfer.md](./large-transfer.md).
 
 ## Purpose and Scope
 
