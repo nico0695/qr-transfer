@@ -8,6 +8,15 @@
 export const FRAME_MS_PRESETS = [500, 400, 300, 250, 200] as const
 
 /**
+ * Highest QR symbol version each profile's frames may reach. A version is `4 * v + 17` modules per
+ * side, so a lower ceiling means physically larger modules and more camera pixels per module —
+ * the parameter that decides whether a frame decodes at all. `profiles.test.ts` derives the actual
+ * version from a worst-case frame and asserts it against these, so a future chunk-size tweak
+ * cannot silently push a profile back into the density range that made fast transfers unreliable.
+ */
+export const MAX_QR_VERSION = { reliable: 22, balanced: 22, fast: 23 } as const
+
+/**
  * Hard technical limit on the bytes that actually travel through the QR frames (after the
  * compression decision). Above this the app refuses to transfer, to protect memory and the main
  * thread (≈2 MB ⇒ a few thousand frames at most).

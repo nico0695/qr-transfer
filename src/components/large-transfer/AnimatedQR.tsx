@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useI18n } from '../../i18n'
 import { FRAME_MS_PRESETS } from '../../lib/transfer/config'
+import { useFrameLoop } from './useFrameLoop'
 
 interface AnimatedQRProps {
   images: readonly string[]
@@ -18,15 +19,9 @@ export function AnimatedQR({
   onStop,
 }: AnimatedQRProps) {
   const t = useI18n()
-  const [index, setIndex] = useState(0)
   const [fullscreen, setFullscreen] = useState(false)
   const total = images.length
-
-  useEffect(() => {
-    if (total <= 1) return
-    const timer = window.setInterval(() => setIndex((i) => (i + 1) % total), frameMs)
-    return () => window.clearInterval(timer)
-  }, [total, frameMs])
+  const { index, imageRef } = useFrameLoop(images, frameMs)
 
   useEffect(() => {
     if (!fullscreen) return
@@ -49,9 +44,10 @@ export function AnimatedQR({
   return (
     <section className={`transfer${fullscreen ? ' is-fullscreen' : ''}`}>
       <div className="transfer-stage">
+        {/* `src` is assigned by useFrameLoop through the ref, never rendered from state. */}
         <img
+          ref={imageRef}
           className="transfer-qr"
-          src={images[index]}
           alt={`QR frame ${index + 1} of ${total}`}
           draggable={false}
         />

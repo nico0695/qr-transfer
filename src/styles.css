@@ -586,7 +586,10 @@ a.button {
   aspect-ratio: 1;
   background: #fff;
   border-radius: 10px;
-  image-rendering: pixelated;
+  /* Deliberately interpolated, not `pixelated`: the image is rescaled by a non-integer factor
+     (CSS size and device pixel ratio), and nearest-neighbour turns that into modules of uneven
+     width, which is exactly what stops a camera from decoding the frame. */
+  image-rendering: auto;
   user-select: none;
 }
 
@@ -940,4 +943,38 @@ a.button {
     border-radius: 12px 12px 0 0;
     border-bottom: none;
   }
+}
+
+/* Diagnostics overlay for the transfer scanner (?debug=1). Not part of the product surface. */
+.scan-debug {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+}
+
+.scan-debug dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.25rem 1rem;
+  margin: 0;
+}
+
+.scan-debug dt {
+  color: var(--text-muted);
+}
+
+.scan-debug dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.scan-debug-sightings {
+  margin: 0.5rem 0 0;
+  max-height: 4.5rem;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  color: var(--text-muted);
 }

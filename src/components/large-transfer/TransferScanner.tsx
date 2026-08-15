@@ -3,20 +3,27 @@ import { Html5Qrcode, Html5QrcodeSupportedFormats, type CameraDevice } from 'htm
 import { useI18n } from '../../i18n'
 import {
   DEFAULT_CAMERA,
+  SCAN_FPS,
+  buildScanConfig,
   describeCameraError,
   stopScanner,
   type CameraErrorKey,
   type CameraSelection,
 } from '../../lib/camera'
+import { copyText } from '../../lib/clipboard'
+import { DEBUG_ENABLED } from '../../lib/debug'
 import { formatBytes } from '../../lib/format'
 import { PROTOCOL_VERSION, decodeFrame, detectProtocolVersion } from '../../lib/transfer/protocol'
+import { ScanStats, formatScanReport, type ScanStatsSnapshot } from '../../lib/transfer/scanStats'
 import { ChunkCollector, assembleTransfer } from '../../lib/transfer/transfer'
 import type { ReceivedTransfer, TransferMetadata } from '../../lib/transfer/types'
 import { ReceivedContent } from './ReceivedContent'
 import { ReceivedFile } from './ReceivedFile'
 
 const REGION_ID = 'large-transfer-scanner-region'
-const SCAN_FPS = 15
+
+/** How often the debug overlay refreshes, in ms. Never on the scan path. */
+const DEBUG_REFRESH_MS = 500
 
 interface Progress {
   received: number
@@ -41,6 +48,7 @@ export function TransferScanner() {
   const [state, setState] = useState<ReceiverState>({ status: 'idle' })
   const [session, setSession] = useState(0)
   const collectorRef = useRef(new ChunkCollector())
+  const [stats, setStats] = useState<ScanStatsSnapshot | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -75,6 +83,16 @@ export function TransferScanner() {
     let finished = false
     setState({ status: 'idle' })
 
+    const scanStats = DEBUG_ENABLED ? new ScanStats(performance.now(), SCAN_FPS) : null
+    // Sampling runs on this timer, never on the scan path, so measuring cannot slow down decoding.
+    const refresh =
+      scanStats === null
+        ? 0
+        : window.setInterval(() => {
+            scanStats.sample(performance.now())
+            setStats(scanStats.snapshot())
+          }, DEBUG_REFRESH_MS)
+
     const progressOf = (): Progress => ({
       received: collector.received,
       total: collector.total,
@@ -91,6 +109,12 @@ export function TransferScanner() {
         const metadata = collector.metadata
         if (metadata === null) throw new Error('Header frame missing')
         const result = await assembleTransfer(collector.chunkMap, collector.total, metadata)
+        if (scanStats !== null) {
+          scanStats.recordComplete(performance.now())
+          // Freeze the instrument on its final numbers: this is the measurement worth keeping.
+          window.clearInterval(refresh)
+          setStats(scanStats.snapshot())
+        }
         setState({ status: 'complete', result })
       } catch {
         setState({ status: 'error', key: 'verificationFailed' })
@@ -99,18 +123,14 @@ export function TransferScanner() {
 
     scanner
       .start(
+        // Ignored while `videoConstraints` is valid, but kept as the library's fallback path.
         selection,
-        {
-          fps: SCAN_FPS,
-          qrbox: (width, height) => {
-            const size = Math.floor(Math.min(width, height) * 0.85)
-            return { width: size, height: size }
-          },
-        },
+        buildScanConfig(selection),
         (decodedText) => {
           if (finished) return
           const frame = decodeFrame(decodedText)
           if (frame === null) {
+            scanStats?.recordFailure(performance.now())
             const version = detectProtocolVersion(decodedText)
             if (version !== null && version !== PROTOCOL_VERSION) {
               finished = true
@@ -119,7 +139,10 @@ export function TransferScanner() {
             }
             return
           }
-          if (collector.add(frame) !== 'accepted') return
+          const outcome = collector.add(frame)
+          scanStats?.recordDecode(performance.now(), frame.index, outcome)
+          scanStats?.recordTotalFrames(frame.total)
+          if (outcome !== 'accepted') return
           if (collector.isComplete) {
             void finish()
           } else {
@@ -127,7 +150,8 @@ export function TransferScanner() {
           }
         },
         () => {
-          // No QR code in this frame; keep scanning.
+          // No QR code in this capture; keep scanning.
+          scanStats?.recordFailure(performance.now())
         },
       )
       .then(() => {
@@ -135,6 +159,16 @@ export function TransferScanner() {
           // The component unmounted (or completed) while the camera was starting.
           void stopScanner(scanner)
         } else {
+          if (scanStats !== null) {
+            try {
+              const track = scanner.getRunningTrackSettings()
+              if (track.width !== undefined && track.height !== undefined) {
+                scanStats.recordResolution(track.width, track.height)
+              }
+            } catch {
+              // Scanner already stopped; the resolution is simply unknown.
+            }
+          }
           setState((current) => (current.status === 'idle' ? { status: 'scanning' } : current))
         }
       })
@@ -146,12 +180,14 @@ export function TransferScanner() {
 
     return () => {
       finished = true
+      if (refresh !== 0) window.clearInterval(refresh)
       void stopScanner(scanner)
     }
   }, [selection, session])
 
   const restart = () => {
     setState({ status: 'idle' })
+    setStats(null)
     setSession((value) => value + 1)
   }
 
@@ -159,10 +195,17 @@ export function TransferScanner() {
     state.status === 'idle' || state.status === 'scanning' || state.status === 'receiving'
 
   if (state.status === 'complete') {
-    return state.result.type === 'text' ? (
-      <ReceivedContent text={state.result.text} onScanAnother={restart} />
-    ) : (
-      <ReceivedFile file={state.result} onScanAnother={restart} />
+    // The overlay deliberately survives completion: the final numbers are the ones worth having,
+    // and unmounting them here is what forced the first measurement to be read mid-scan.
+    return (
+      <>
+        {state.result.type === 'text' ? (
+          <ReceivedContent text={state.result.text} onScanAnother={restart} />
+        ) : (
+          <ReceivedFile file={state.result} onScanAnother={restart} />
+        )}
+        {DEBUG_ENABLED && stats !== null && <ScanDebug stats={stats} />}
+      </>
     )
   }
 
@@ -212,6 +255,7 @@ export function TransferScanner() {
           </div>
         </div>
       )}
+      {DEBUG_ENABLED && stats !== null && <ScanDebug stats={stats} />}
       {showCamera && (
         <div className="actions actions-center">
           <button type="button" className="button" onClick={restart}>
@@ -220,6 +264,84 @@ export function TransferScanner() {
         </div>
       )}
     </section>
+  )
+}
+
+/**
+ * Diagnostics for tuning the optical channel, shown only with `?debug=1`. Labels are fixed
+ * technical English on purpose: this is an instrument, not part of the product surface, so it
+ * stays out of the translated dictionary.
+ */
+function ScanDebug({ stats }: { stats: ScanStatsSnapshot }) {
+  const [copied, setCopied] = useState<'idle' | 'ok' | 'failed'>('idle')
+  const seenOnce = stats.sightings.filter((entry) => entry.count === 1).length
+
+  const copy = async () => {
+    const ok = await copyText(formatScanReport(stats))
+    setCopied(ok ? 'ok' : 'failed')
+    window.setTimeout(() => setCopied('idle'), 2000)
+  }
+
+  return (
+    <div className="scan-debug">
+      <dl>
+        <div>
+          <dt>elapsed</dt>
+          <dd>
+            {`${(stats.elapsedMs / 1000).toFixed(1)}s`}
+            {stats.completedAtMs !== null && ` · done ${(stats.completedAtMs / 1000).toFixed(1)}s`}
+          </dd>
+        </div>
+        <div>
+          <dt>frames</dt>
+          <dd>{`${stats.accepted} / ${stats.totalFrames ?? '?'}`}</dd>
+        </div>
+        <div>
+          <dt>video</dt>
+          <dd>
+            {stats.resolution === null
+              ? 'unknown'
+              : `${stats.resolution.width}×${stats.resolution.height}`}
+          </dd>
+        </div>
+        <div>
+          <dt>captures/s</dt>
+          <dd>{stats.attemptsPerSecond.toFixed(1)}</dd>
+        </div>
+        <div>
+          <dt>decodes/s</dt>
+          <dd>{stats.decodesPerSecond.toFixed(1)}</dd>
+        </div>
+        <div>
+          <dt>decode rate</dt>
+          <dd>{(stats.decodeRate * 100).toFixed(1)}%</dd>
+        </div>
+        <div>
+          <dt>tick</dt>
+          <dd>{`${stats.meanTickMs.toFixed(0)} ms (~${stats.estimatedDecodeMs.toFixed(0)} decode)`}</dd>
+        </div>
+        <div>
+          <dt>attempts</dt>
+          <dd>{`${stats.decodes} ok / ${stats.attempts}`}</dd>
+        </div>
+        <div>
+          <dt>duplicates</dt>
+          <dd>{stats.duplicates}</dd>
+        </div>
+        <div>
+          <dt>seen once</dt>
+          <dd>{`${seenOnce} of ${stats.sightings.length}`}</dd>
+        </div>
+      </dl>
+      <p className="scan-debug-sightings">
+        {stats.sightings.map((entry) => `${entry.index}:${entry.count}`).join(' ')}
+      </p>
+      <div className="actions actions-center">
+        <button type="button" className="button button-small" onClick={() => void copy()}>
+          {copied === 'ok' ? 'copied' : copied === 'failed' ? 'copy failed' : 'copy report'}
+        </button>
+      </div>
+    </div>
   )
 }
 

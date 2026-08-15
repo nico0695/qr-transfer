@@ -2,11 +2,19 @@
  * Transfer profiles: the only knobs exposed to users. Each preset fixes the technical parameters
  * (chunk size, error correction, frame duration); the UI never shows those numbers directly.
  *
- * Measured with `qrcode` (byte mode) for a v2 data frame (~26-char header + Base64URL payload),
- * and verified end-to-end by decoding the rendered PNGs with `html5-qrcode`:
- *   reliable  400 B @ Q → QR version 22 (105 modules)  larger modules, 25% recovery
- *   balanced  750 B @ M → QR version 26 (121 modules)  same density as the original v1 default
- *   fast     1000 B @ L → QR version 26 (121 modules)  same density, more data per frame
+ * Symbol density decides whether a frame decodes at all: fewer modules means more camera pixels
+ * per module. Reliable is the profile users report as working, so its 105-module symbol is the
+ * known-good reference the other two are pulled back towards. Chunk sizes are the largest that
+ * still fit under each profile's ceiling in `MAX_QR_VERSION`, measured with `qrcode` in byte mode
+ * (Base64URL payloads are mixed-case, so QR cannot use its denser alphanumeric mode) over a
+ * worst-case data frame. `profiles.test.ts` derives and asserts these, so they cannot drift:
+ *   reliable  400 B @ Q → QR version 22 (105 modules)  25% recovery
+ *   balanced  550 B @ M → QR version 22 (105 modules)  15% recovery
+ *   fast      600 B @ M → QR version 23 (109 modules)  15% recovery
+ *
+ * Previously balanced (750 B @ M) and fast (1000 B @ L) both rendered 121-module symbols, and fast
+ * paired that densest symbol with the weakest error correction — the worst possible combination
+ * for a noisy optical channel. Speed, not density, is now what separates the three profiles.
  */
 import { FRAME_MS_PRESETS } from './config'
 
@@ -25,8 +33,8 @@ export interface TransferProfile {
 
 export const TRANSFER_PROFILES: Record<TransferProfileId, TransferProfile> = {
   reliable: { id: 'reliable', frameMs: 400, chunkSize: 400, errorCorrection: 'Q' },
-  balanced: { id: 'balanced', frameMs: 300, chunkSize: 750, errorCorrection: 'M' },
-  fast: { id: 'fast', frameMs: 200, chunkSize: 1000, errorCorrection: 'L' },
+  balanced: { id: 'balanced', frameMs: 300, chunkSize: 550, errorCorrection: 'M' },
+  fast: { id: 'fast', frameMs: 200, chunkSize: 600, errorCorrection: 'M' },
 }
 
 export const PROFILE_IDS: readonly TransferProfileId[] = ['balanced', 'reliable', 'fast']
