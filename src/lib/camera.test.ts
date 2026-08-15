@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_CAMERA, SCAN_FPS, buildScanConfig } from './camera'
+import { DEFAULT_CAMERA, SCAN_FPS, buildScanConfig, buildVideoConstraints } from './camera'
 
 describe('buildScanConfig', () => {
   it('disables the mirrored decode pass', () => {
@@ -60,5 +60,33 @@ describe('buildScanConfig', () => {
     const square = qrbox(600, 600)
     expect(square.width).toBe(square.height)
     expect(square.width).toBeLessThan(600)
+  })
+})
+
+describe('buildVideoConstraints', () => {
+  it('carries the camera identity, whichever way it was chosen', () => {
+    expect(buildVideoConstraints('camera-1')).toMatchObject({ deviceId: { exact: 'camera-1' } })
+    expect(buildVideoConstraints(DEFAULT_CAMERA)).toMatchObject({ facingMode: 'environment' })
+  })
+
+  it('picks exactly one identity, never both', () => {
+    expect(buildVideoConstraints('camera-1')).not.toHaveProperty('facingMode')
+    expect(buildVideoConstraints(DEFAULT_CAMERA)).not.toHaveProperty('deviceId')
+  })
+
+  it('requests a high resolution as ideal, never exact', () => {
+    for (const camera of [DEFAULT_CAMERA, 'camera-1'] as const) {
+      const constraints = buildVideoConstraints(camera)
+      expect(constraints.width).toEqual({ ideal: 1920 })
+      expect(constraints.height).toEqual({ ideal: 1080 })
+    }
+  })
+
+  it('is the single source both engines share', () => {
+    // The capture loop passes these to getUserMedia directly while buildScanConfig nests them for
+    // html5-qrcode. Assembling the identity twice is how the two would drift apart.
+    for (const camera of [DEFAULT_CAMERA, 'camera-1'] as const) {
+      expect(buildScanConfig(camera).videoConstraints).toEqual(buildVideoConstraints(camera))
+    }
   })
 })

@@ -15,3 +15,18 @@ function readDebugFlag(): boolean {
     return false
   }
 }
+
+/**
+ * Forces the previous scanner (`?scanner=legacy`), so both engines can be compared on the same
+ * phone at the same distance. Without it a before/after would mean comparing two sessions with
+ * different framing, which is what made the first measurement of this iteration useless.
+ */
+export const FORCE_LEGACY_SCANNER = readParam('scanner') === 'legacy'
+
+function readParam(name: string): string | null {
+  try {
+    return new URLSearchParams(window.location.search).get(name)
+  } catch {
+    return null
+  }
+}

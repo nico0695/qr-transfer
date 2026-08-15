@@ -90,6 +90,40 @@ describe('ScanStats', () => {
     ])
   })
 
+  it('averages measured decode durations when the engine reports them', () => {
+    const stats = new ScanStats(0, FPS)
+    stats.recordDecode(100, 1, 'accepted', 40)
+    stats.recordFailure(200, 60)
+    expect(stats.snapshot().measuredDecodeMs).toBeCloseTo(50)
+  })
+
+  it('leaves the measured duration null for an engine that cannot time itself', () => {
+    // html5-qrcode gives no hook around its decode, so only the estimate is available there.
+    const stats = new ScanStats(0, FPS)
+    stats.recordDecode(100, 1, 'accepted')
+    stats.recordFailure(200, null)
+    expect(stats.snapshot().measuredDecodeMs).toBeNull()
+  })
+
+  it('ignores nonsensical durations rather than poisoning the average', () => {
+    const stats = new ScanStats(0, FPS)
+    stats.recordFailure(100, Number.NaN)
+    stats.recordFailure(200, -5)
+    expect(stats.snapshot().measuredDecodeMs).toBeNull()
+    stats.recordFailure(300, 20)
+    expect(stats.snapshot().measuredDecodeMs).toBe(20)
+  })
+
+  it('remembers which engine and geometry produced the run', () => {
+    // Without this a number from iOS cannot be told apart from one produced by a silent fallback.
+    const stats = new ScanStats(0, FPS)
+    expect(stats.snapshot().engine).toBeNull()
+    expect(stats.snapshot().roiSize).toBeNull()
+    stats.recordEngine('wasm', 540)
+    expect(stats.snapshot().engine).toBe('wasm')
+    expect(stats.snapshot().roiSize).toBe(540)
+  })
+
   it('keeps the negotiated resolution once the camera reports it', () => {
     const stats = new ScanStats(0, FPS)
     expect(stats.snapshot().resolution).toBeNull()
@@ -174,8 +208,32 @@ describe('formatScanReport', () => {
     expect(report).toContain('completed      no')
     expect(report).toContain('frames         ?')
     expect(report).toContain('video          unknown')
+    expect(report).toContain('engine         unknown')
     expect(report).not.toContain('NaN')
     expect(report).not.toContain('undefined')
+  })
+
+  it('names the engine and shows what the region bought in pixels per module', () => {
+    const stats = new ScanStats(0, FPS)
+    stats.recordEngine('wasm', 540)
+    stats.recordDecode(100, 1, 'accepted', 45)
+
+    const report = formatScanReport(stats.snapshot())
+    expect(report).toContain('engine         wasm')
+    expect(report).toContain('roi            540px · 4.6 px/module')
+    expect(report).toContain('decode         45 ms')
+  })
+
+  it('marks the legacy decode figure as an estimate rather than passing it off as measured', () => {
+    const stats = new ScanStats(0, FPS)
+    stats.recordEngine('legacy', null)
+    stats.recordFailure(0)
+    stats.recordFailure(140)
+
+    const report = formatScanReport(stats.snapshot())
+    expect(report).toContain('engine         legacy')
+    expect(report).toContain('roi            viewfinder')
+    expect(report).toContain('decode         ~100 ms (est)')
   })
 })
 

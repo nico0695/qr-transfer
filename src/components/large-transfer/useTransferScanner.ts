@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
-import { Html5Qrcode, Html5QrcodeSupportedFormats, type CameraDevice } from 'html5-qrcode'
 import {
   DEFAULT_CAMERA,
   SCAN_FPS,
-  buildScanConfig,
   describeCameraError,
-  stopScanner,
+  listCameras,
   type CameraErrorKey,
+  type CameraOption,
   type CameraSelection,
 } from '../../lib/camera'
-import { DEBUG_ENABLED } from '../../lib/debug'
+import { DEBUG_ENABLED, FORCE_LEGACY_SCANNER } from '../../lib/debug'
+import { startCaptureLoop, supportsCaptureLoop } from '../../lib/scan/captureLoop'
+import type { EngineName, EngineOptions, ScanEngine } from '../../lib/scan/engine'
 import { PROTOCOL_VERSION, decodeFrame, detectProtocolVersion } from '../../lib/transfer/protocol'
 import { ScanStats, type ScanStatsSnapshot } from '../../lib/transfer/scanStats'
 import { ChunkCollector, assembleTransfer } from '../../lib/transfer/transfer'
@@ -38,7 +39,7 @@ export type ReceiverState =
 
 export interface TransferScannerApi {
   state: ReceiverState
-  cameras: CameraDevice[]
+  cameras: CameraOption[]
   selection: CameraSelection | null
   stats: ScanStatsSnapshot | null
   selectCamera(selection: CameraSelection): void
@@ -53,44 +54,21 @@ export interface TransferScannerApi {
  * contract is the seam. Whatever drives the camera, the states it produces stay the same.
  */
 export function useTransferScanner(): TransferScannerApi {
-  const [cameras, setCameras] = useState<CameraDevice[]>([])
-  const [selection, setSelection] = useState<CameraSelection | null>(null)
+  const [cameras, setCameras] = useState<CameraOption[]>([])
+  const [selection, setSelection] = useState<CameraSelection>(DEFAULT_CAMERA)
   const [state, setState] = useState<ReceiverState>({ status: 'idle' })
   const [session, setSession] = useState(0)
   const [stats, setStats] = useState<ScanStatsSnapshot | null>(null)
   const collectorRef = useRef(new ChunkCollector())
 
   useEffect(() => {
-    let cancelled = false
-    Html5Qrcode.getCameras()
-      .then((devices) => {
-        if (cancelled) return
-        setCameras(devices)
-        if (devices.length === 0) {
-          setState({ status: 'error', key: 'errorNoCamera' })
-        } else {
-          setSelection((previous) => previous ?? DEFAULT_CAMERA)
-        }
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return
-        setState({ status: 'error', key: describeCameraError(err) })
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [session])
-
-  useEffect(() => {
-    if (selection === null) return
     const collector = collectorRef.current
     collector.reset()
-    const scanner = new Html5Qrcode(SCAN_REGION_ID, {
-      formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
-      useBarCodeDetectorIfSupported: true,
-      verbose: false,
-    })
+    const container = document.getElementById(SCAN_REGION_ID)
+    if (container === null) return
+
     let finished = false
+    let engine: ScanEngine | null = null
     setState({ status: 'idle' })
 
     const scanStats = DEBUG_ENABLED ? new ScanStats(performance.now(), SCAN_FPS) : null
@@ -112,9 +90,8 @@ export function useTransferScanner(): TransferScannerApi {
 
     const finish = async () => {
       finished = true
-      const progress = progressOf()
-      setState({ status: 'assembling', progress })
-      await stopScanner(scanner)
+      setState({ status: 'assembling', progress: progressOf() })
+      await engine?.stop()
       try {
         const metadata = collector.metadata
         if (metadata === null) throw new Error('Header frame missing')
@@ -131,55 +108,69 @@ export function useTransferScanner(): TransferScannerApi {
       }
     }
 
-    scanner
-      .start(
-        // Ignored while `videoConstraints` is valid, but kept as the library's fallback path.
-        selection,
-        buildScanConfig(selection),
-        (decodedText) => {
-          if (finished) return
-          const frame = decodeFrame(decodedText)
-          if (frame === null) {
-            scanStats?.recordFailure(performance.now())
-            const version = detectProtocolVersion(decodedText)
-            if (version !== null && version !== PROTOCOL_VERSION) {
-              finished = true
-              void stopScanner(scanner)
-              setState({ status: 'error', key: 'incompatibleSender' })
-            }
-            return
-          }
-          const outcome = collector.add(frame)
-          scanStats?.recordDecode(performance.now(), frame.index, outcome)
-          scanStats?.recordTotalFrames(frame.total)
-          if (outcome !== 'accepted') return
-          if (collector.isComplete) {
-            void finish()
-          } else {
-            setState({ status: 'receiving', progress: progressOf() })
-          }
-        },
-        () => {
+    const callbacks: Omit<EngineOptions, 'container' | 'camera'> = {
+      onAttempt: (outcome, decodeMs) => {
+        if (finished || outcome !== 'empty') return
+        scanStats?.recordFailure(performance.now(), decodeMs)
+      },
+      onText: (text) => {
+        if (finished) return
+        const frame = decodeFrame(text)
+        if (frame === null) {
           scanStats?.recordFailure(performance.now())
+          const version = detectProtocolVersion(text)
+          if (version !== null && version !== PROTOCOL_VERSION) {
+            finished = true
+            void engine?.stop()
+            setState({ status: 'error', key: 'incompatibleSender' })
+          }
+          return
+        }
+        const outcome = collector.add(frame)
+        scanStats?.recordDecode(performance.now(), frame.index, outcome)
+        scanStats?.recordTotalFrames(frame.total)
+        if (outcome !== 'accepted') return
+        if (collector.isComplete) void finish()
+        else setState({ status: 'receiving', progress: progressOf() })
+      },
+      onReady: () => {},
+    }
+
+    const start = async () => {
+      const options = (name: EngineName): EngineOptions => ({
+        ...callbacks,
+        container,
+        camera: selection,
+        onReady: (info) => {
+          if (info.width > 0) scanStats?.recordResolution(info.width, info.height)
+          scanStats?.recordEngine(name, info.roiSize)
         },
-      )
-      .then(() => {
+      })
+
+      if (!FORCE_LEGACY_SCANNER && supportsCaptureLoop()) {
+        try {
+          return await startCaptureLoop(options('wasm'))
+        } catch (err: unknown) {
+          // A denied or missing camera would fail identically on the old engine, and retrying
+          // would only replace a precise message with a generic one.
+          const reason = describeCameraError(err)
+          if (reason === 'errorPermission' || reason === 'errorNoCamera') throw err
+        }
+      }
+      const { startLegacyEngine } = await import('../../lib/scan/legacyEngine')
+      return await startLegacyEngine(options('legacy'))
+    }
+
+    start()
+      .then(async (started) => {
+        engine = started
         if (finished) {
           // The component unmounted (or completed) while the camera was starting.
-          void stopScanner(scanner)
-        } else {
-          if (scanStats !== null) {
-            try {
-              const track = scanner.getRunningTrackSettings()
-              if (track.width !== undefined && track.height !== undefined) {
-                scanStats.recordResolution(track.width, track.height)
-              }
-            } catch {
-              // Scanner already stopped; the resolution is simply unknown.
-            }
-          }
-          setState((current) => (current.status === 'idle' ? { status: 'scanning' } : current))
+          await started.stop()
+          return
         }
+        setState((current) => (current.status === 'idle' ? { status: 'scanning' } : current))
+        setCameras(await listCameras())
       })
       .catch((err: unknown) => {
         if (finished) return
@@ -190,7 +181,7 @@ export function useTransferScanner(): TransferScannerApi {
     return () => {
       finished = true
       if (refresh !== 0) window.clearInterval(refresh)
-      void stopScanner(scanner)
+      void engine?.stop()
     }
   }, [selection, session])
 

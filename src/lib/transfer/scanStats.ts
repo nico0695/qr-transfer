@@ -8,14 +8,18 @@
  *   one callback — success or error — runs per capture tick, so `attempts = decodes + failures` is
  *   exact. Without that flag a failed tick fires the error callback twice and these counts would
  *   be meaningless.
- * - The decode itself cannot be timed from outside. The interval between consecutive callbacks
- *   can, and it equals `decodeDuration + 1000 / fps`, so subtracting the known scheduling delay
- *   gives a usable estimate of how long decoding actually takes.
+ * - The decode itself cannot be timed from outside *that library*. The interval between
+ *   consecutive callbacks can, and it equals `decodeDuration + 1000 / fps`, so subtracting the
+ *   known scheduling delay gives a usable estimate. The WASM engine owns its loop and times the
+ *   decode directly, so it reports a real duration and the estimate is ignored.
  * - "Frames missing per loop pass" is not computable: the receiver never learns the sender's frame
  *   duration. Sightings per frame index answer the same diagnostic question — if the same frames
  *   are always the ones going missing, their sighting counts stay at zero while their neighbours
  *   climb.
  */
+
+import { WORST_CASE_MODULES } from './config'
+import type { EngineName } from '../scan/engine'
 
 /** What the collector did with a frame that decoded successfully. */
 export type DecodeOutcome = 'accepted' | 'duplicate' | 'ignored'
@@ -51,6 +55,12 @@ export interface ScanStatsSnapshot {
   meanTickMs: number
   /** Mean tick minus the scheduling delay the library adds: roughly the decode cost. */
   estimatedDecodeMs: number
+  /** Mean measured decode cost, or null for an engine that cannot time itself. */
+  measuredDecodeMs: number | null
+  /** Which implementation produced these numbers. */
+  engine: EngineName | null
+  /** Side of the square actually decoded, or null when the engine does not choose one. */
+  roiSize: number | null
   /** Negotiated capture resolution, once the camera has started. */
   resolution: { width: number; height: number } | null
   /** Times each frame index was read, including duplicates. Sorted by index. */
@@ -77,6 +87,10 @@ export class ScanStats {
   private sightings = new Map<number, number>()
   private totalFrames: number | null = null
   private completedAt: number | null = null
+  private decodeMsCount = 0
+  private decodeMsTotal = 0
+  private engine: EngineName | null = null
+  private roiSize: number | null = null
   private timeline: ScanTimelineRow[] = []
 
   /** @param scanFps the `fps` handed to the scanner, used to back out the scheduling delay. */
@@ -89,14 +103,28 @@ export class ScanStats {
   }
 
   /** A capture tick that found no readable code. */
-  recordFailure(now: number): void {
+  recordFailure(now: number, decodeMs?: number | null): void {
     this.failures += 1
+    this.recordDuration(decodeMs)
     this.tick(now)
   }
 
+  /** Which engine is running, and the geometry it settled on. */
+  recordEngine(engine: EngineName, roiSize: number | null): void {
+    this.engine = engine
+    this.roiSize = roiSize
+  }
+
+  private recordDuration(decodeMs?: number | null): void {
+    if (typeof decodeMs !== 'number' || !Number.isFinite(decodeMs) || decodeMs < 0) return
+    this.decodeMsCount += 1
+    this.decodeMsTotal += decodeMs
+  }
+
   /** A capture tick that decoded a frame, with what the collector decided to do with it. */
-  recordDecode(now: number, index: number, outcome: DecodeOutcome): void {
+  recordDecode(now: number, index: number, outcome: DecodeOutcome, decodeMs?: number | null): void {
     this.decodes += 1
+    this.recordDuration(decodeMs)
     if (outcome === 'accepted') this.accepted += 1
     else if (outcome === 'duplicate') this.duplicates += 1
     else this.ignored += 1
@@ -161,6 +189,9 @@ export class ScanStats {
       decodeRate: attempts === 0 ? 0 : this.decodes / attempts,
       meanTickMs,
       estimatedDecodeMs: meanTickMs === 0 ? 0 : Math.max(0, meanTickMs - schedulingMs),
+      measuredDecodeMs: this.decodeMsCount === 0 ? null : this.decodeMsTotal / this.decodeMsCount,
+      engine: this.engine,
+      roiSize: this.roiSize,
       resolution: this.resolution,
       sightings: [...this.sightings]
         .map(([index, count]) => ({ index, count }))
@@ -196,14 +227,29 @@ export const SCAN_FIELD_GROUPS: readonly (readonly ScanField[])[] = [
       render: (s) =>
         s.resolution === null ? 'unknown' : `${s.resolution.width}x${s.resolution.height}`,
     },
+    { label: 'engine', render: (s) => s.engine ?? 'unknown' },
+    {
+      // The quantity this whole iteration exists to move: below ~3.5 nothing decodes.
+      label: 'roi',
+      render: (s) =>
+        s.roiSize === null
+          ? 'viewfinder'
+          : `${s.roiSize}px · ${(s.roiSize / WORST_CASE_MODULES).toFixed(1)} px/module`,
+    },
   ],
   [
     { label: 'captures/s', render: (s) => s.attemptsPerSecond.toFixed(2) },
     { label: 'decodes/s', render: (s) => s.decodesPerSecond.toFixed(2) },
     { label: 'decode rate', render: (s) => `${(s.decodeRate * 100).toFixed(1)}%` },
+    { label: 'tick', render: (s) => `${s.meanTickMs.toFixed(0)} ms` },
     {
-      label: 'tick',
-      render: (s) => `${s.meanTickMs.toFixed(0)} ms (~${s.estimatedDecodeMs.toFixed(0)} decode)`,
+      // Measured when the engine owns its loop; otherwise backed out of the tick period, which is
+      // why the two are labelled differently rather than quietly averaged together.
+      label: 'decode',
+      render: (s) =>
+        s.measuredDecodeMs === null
+          ? `~${s.estimatedDecodeMs.toFixed(0)} ms (est)`
+          : `${s.measuredDecodeMs.toFixed(0)} ms`,
     },
   ],
   [
