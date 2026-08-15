@@ -172,33 +172,79 @@ export class ScanStats {
   }
 }
 
+/** One measurement, named once and rendered the same way wherever it is shown. */
+export interface ScanField {
+  label: string
+  render(snapshot: ScanStatsSnapshot): string
+}
+
+/**
+ * Every field, grouped for readability. Both the clipboard report and the debug overlay derive
+ * from this, so what you read on screen and what you paste afterwards cannot drift apart — they
+ * did once already, when each maintained its own copy of the list.
+ */
+export const SCAN_FIELD_GROUPS: readonly (readonly ScanField[])[] = [
+  [
+    { label: 'elapsed', render: (s) => fmtMs(s.elapsedMs) },
+    {
+      label: 'completed',
+      render: (s) => (s.completedAtMs === null ? 'no' : fmtMs(s.completedAtMs)),
+    },
+    { label: 'frames', render: (s) => String(s.totalFrames ?? '?') },
+    {
+      label: 'video',
+      render: (s) =>
+        s.resolution === null ? 'unknown' : `${s.resolution.width}x${s.resolution.height}`,
+    },
+  ],
+  [
+    { label: 'captures/s', render: (s) => s.attemptsPerSecond.toFixed(2) },
+    { label: 'decodes/s', render: (s) => s.decodesPerSecond.toFixed(2) },
+    { label: 'decode rate', render: (s) => `${(s.decodeRate * 100).toFixed(1)}%` },
+    {
+      label: 'tick',
+      render: (s) => `${s.meanTickMs.toFixed(0)} ms (~${s.estimatedDecodeMs.toFixed(0)} decode)`,
+    },
+  ],
+  [
+    { label: 'attempts', render: (s) => String(s.attempts) },
+    { label: 'decodes', render: (s) => String(s.decodes) },
+    { label: 'accepted', render: (s) => String(s.accepted) },
+    { label: 'duplicates', render: (s) => String(s.duplicates) },
+    { label: 'ignored', render: (s) => String(s.ignored) },
+    {
+      label: 'seen once',
+      render: (s) =>
+        `${s.sightings.filter((entry) => entry.count === 1).length} of ${s.sightings.length}`,
+    },
+  ],
+  [
+    {
+      label: 'sightings',
+      render: (s) => s.sightings.map((e) => `${e.index}:${e.count}`).join(' '),
+    },
+  ],
+]
+
+export const SCAN_FIELDS: readonly ScanField[] = SCAN_FIELD_GROUPS.flat()
+
+/** Column at which values line up in the plain-text report. */
+const LABEL_WIDTH = 15
+
 /**
  * Renders a snapshot as plain text for the clipboard. Reading numbers off a phone screen while
  * holding it steady enough to scan is not possible — the first measurement taken this way was
  * contaminated by the hand movement it required — so the run is copied out and read afterwards.
  */
 export function formatScanReport(snapshot: ScanStatsSnapshot): string {
-  const { resolution: res } = snapshot
-  const lines = [
-    '# QR Transfer scan report',
-    `elapsed        ${fmtMs(snapshot.elapsedMs)}`,
-    `completed      ${snapshot.completedAtMs === null ? 'no' : fmtMs(snapshot.completedAtMs)}`,
-    `frames         ${snapshot.totalFrames ?? '?'}`,
-    `video          ${res === null ? 'unknown' : `${res.width}x${res.height}`}`,
-    '',
-    `captures/s     ${snapshot.attemptsPerSecond.toFixed(2)}`,
-    `decodes/s      ${snapshot.decodesPerSecond.toFixed(2)}`,
-    `decode rate    ${(snapshot.decodeRate * 100).toFixed(1)}%`,
-    `tick           ${snapshot.meanTickMs.toFixed(0)} ms (~${snapshot.estimatedDecodeMs.toFixed(0)} decode)`,
-    '',
-    `attempts       ${snapshot.attempts}`,
-    `decodes        ${snapshot.decodes}`,
-    `accepted       ${snapshot.accepted}`,
-    `duplicates     ${snapshot.duplicates}`,
-    `ignored        ${snapshot.ignored}`,
-    '',
-    `sightings      ${snapshot.sightings.map((s) => `${s.index}:${s.count}`).join(' ')}`,
-  ]
+  const lines = ['# QR Transfer scan report']
+  for (const group of SCAN_FIELD_GROUPS) {
+    for (const field of group) {
+      lines.push(`${field.label.padEnd(LABEL_WIDTH)}${field.render(snapshot)}`)
+    }
+    lines.push('')
+  }
+  lines.pop()
   if (snapshot.timeline.length > 0) {
     lines.push('', 'timeline (ms, attempts, decodes, accepted)')
     for (const row of snapshot.timeline) {

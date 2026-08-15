@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ScanStats, formatScanReport } from './scanStats'
+import { SCAN_FIELDS, ScanStats, formatScanReport } from './scanStats'
 
 const FPS = 25
 
@@ -176,5 +176,31 @@ describe('formatScanReport', () => {
     expect(report).toContain('video          unknown')
     expect(report).not.toContain('NaN')
     expect(report).not.toContain('undefined')
+  })
+})
+
+describe('SCAN_FIELDS', () => {
+  it('is the single source the report is built from', () => {
+    // The overlay renders this same list, so a field added here shows up in both places at once.
+    // Keeping two hand-written lists in sync is what let them drift apart before.
+    const report = formatScanReport(new ScanStats(0, FPS).snapshot())
+    for (const field of SCAN_FIELDS) {
+      expect(report).toContain(field.label)
+    }
+  })
+
+  it('renders every field as a string, even with nothing scanned', () => {
+    const snapshot = new ScanStats(0, FPS).snapshot()
+    for (const field of SCAN_FIELDS) {
+      const value = field.render(snapshot)
+      expect(typeof value).toBe('string')
+      expect(value).not.toContain('NaN')
+      expect(value).not.toContain('undefined')
+    }
+  })
+
+  it('uses labels that are unique, since they key the rendered rows', () => {
+    const labels = SCAN_FIELDS.map((field) => field.label)
+    expect(new Set(labels).size).toBe(labels.length)
   })
 })

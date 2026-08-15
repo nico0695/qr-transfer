@@ -969,12 +969,16 @@ a.button {
 .scan-debug dd {
   margin: 0;
   font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
 }
 
-.scan-debug-sightings {
-  margin: 0.5rem 0 0;
+/* One value per frame index: unbounded, so it takes the full row and scrolls on its own. */
+.scan-debug [data-field='sightings'] {
+  grid-column: 1 / -1;
+}
+
+.scan-debug [data-field='sightings'] dd {
   max-height: 4.5rem;
   overflow-y: auto;
-  overflow-wrap: anywhere;
   color: var(--text-muted);
 }
