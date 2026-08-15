@@ -1,18 +1,21 @@
 # QR Transfer
 
-Aplicación web minimalista para transferir texto entre dispositivos usando códigos QR.
-Todo funciona en el navegador: no hay backend, base de datos ni almacenamiento — el texto
-nunca sale de tu dispositivo.
+Minimalist web application for transferring text between devices using QR codes.
+Everything runs in the browser: no backend, no database, no storage — the text
+never leaves your device.
 
-- **Generate QR**: escribí texto (hasta 2000 caracteres) y se genera un QR en tiempo real.
-- **Scan QR**: escaneá un QR con la cámara y copiá el texto obtenido.
+- **Generate QR**: type text (up to 2000 characters) and a QR code is generated in real time.
+- **Scan QR**: scan a QR code with the camera and copy the resulting text.
 
-## Requisitos
+Documentation: [Technical Overview](docs/technical-overview.md) ·
+[Transfer Flow](docs/qr-transfer-flow.md)
 
-- Node.js 20.19+ o 22.12+
+## Requirements
+
+- Node.js 20.19+ or 22.12+
 - npm
 
-## Instalación
+## Installation
 
 ```bash
 npm install
@@ -20,33 +23,33 @@ npm install
 
 ## Scripts
 
-| Comando                | Descripción                                    |
-| ---------------------- | ---------------------------------------------- |
-| `npm run dev`          | Servidor de desarrollo (http://localhost:5173) |
-| `npm run build`        | Build de producción en `dist/`                 |
-| `npm run preview`      | Sirve el build de `dist/` localmente           |
-| `npm run lint`         | Ejecuta ESLint                                 |
-| `npm run lint:fix`     | ESLint con autofix                             |
-| `npm run format`       | Formatea el código con Prettier                |
-| `npm run format:check` | Verifica el formato sin modificar archivos     |
-| `npm run typecheck`    | Verifica tipos con TypeScript                  |
+| Command                | Description                                |
+| ---------------------- | ------------------------------------------ |
+| `npm run dev`          | Development server (http://localhost:5173) |
+| `npm run build`        | Production build into `dist/`              |
+| `npm run preview`      | Serve the `dist/` build locally            |
+| `npm run lint`         | Run ESLint                                 |
+| `npm run lint:fix`     | ESLint with autofix                        |
+| `npm run format`       | Format the code with Prettier              |
+| `npm run format:check` | Check formatting without modifying files   |
+| `npm run typecheck`    | Type-check with TypeScript                 |
 
-## Deploy
+## Deployment
 
-`npm run build` genera una aplicación completamente estática en `dist/`. Se puede servir
-con cualquier static file server (nginx, Caddy, etc.):
+`npm run build` generates a fully static application in `dist/`. It can be served
+with any static file server (nginx, Caddy, etc.):
 
 ```bash
-# Ejemplo con Caddy
+# Example with Caddy
 caddy file-server --root dist
 
-# Ejemplo con nginx: apuntar `root` al contenido de dist/
+# Example with nginx: point `root` at the contents of dist/
 ```
 
-## HTTPS y cámara
+## HTTPS and the camera
 
-El acceso a la cámara (`getUserMedia`) requiere un **secure context**:
+Camera access (`getUserMedia`) requires a **secure context**:
 
-- En desarrollo funciona en `http://localhost` (los navegadores lo tratan como seguro).
-- En producción la aplicación debe servirse por **HTTPS**, de lo contrario el modo
-  Scan QR no podrá acceder a la cámara.
+- In development it works on `http://localhost` (browsers treat it as secure).
+- In production the application must be served over **HTTPS**, otherwise Scan QR
+  mode will not be able to access the camera.
