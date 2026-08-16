@@ -1,0 +1,7 @@
+.body {
+  font: var(--fs-data) var(--font-mono);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 40vh;
+  overflow-y: auto;
+}

@@ -1,16 +1,27 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import QRCode from 'qrcode'
-import { CopyButton } from './CopyButton'
+import styles from './QRGenerator.module.css'
+import { useStageSlot } from './app/AppShell'
+import { QrDisplay } from './app/OpticalStage/QrDisplay'
+import { TextEditor } from './app/TextEditor'
+import { Button } from './primitives/Button'
+import { useCopy } from '../hooks/useCopy'
 import { useI18n } from '../i18n'
 
 const MAX_LENGTH = 2000
 
-export function QRGenerator() {
+export interface QRGeneratorProps {
+  onShowStage: () => void
+}
+
+export function QRGenerator({ onShowStage }: QRGeneratorProps) {
   const t = useI18n()
+  const stageNode = useStageSlot()
   const [text, setText] = useState('')
   const [qrError, setQrError] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const qrPanelRef = useRef<HTMLDivElement | null>(null)
+  const { feedback, copy } = useCopy()
 
   const isEmpty = text === ''
   const atLimit = text.length >= MAX_LENGTH
@@ -36,47 +47,42 @@ export function QRGenerator() {
   }, [text, isEmpty])
 
   return (
-    <section className="panel generator">
-      <div className="generator-form">
-        <label className="field-label" htmlFor="qr-text">
-          {t.textLabel}
-        </label>
-        <textarea
-          id="qr-text"
-          className="textarea"
-          value={text}
-          maxLength={MAX_LENGTH}
-          placeholder={t.textPlaceholder}
-          onChange={(event) => setText(event.target.value)}
-        />
-        <div className="field-row">
-          <span className={atLimit ? 'counter counter-limit' : 'counter'}>
-            {text.length} / {MAX_LENGTH}
-            {atLimit && t.limitReached}
-          </span>
-          <div className="actions">
-            <button
-              type="button"
-              className="button mobile-only"
-              disabled={isEmpty || qrError}
-              onClick={() =>
-                qrPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-              }
-            >
-              {t.showQr}
-            </button>
-            <CopyButton text={text} />
-            <button type="button" className="button" onClick={() => setText('')} disabled={isEmpty}>
-              {t.clear}
-            </button>
-          </div>
-        </div>
-      </div>
-      <div className="qr-panel" ref={qrPanelRef}>
-        {isEmpty && <p className="qr-placeholder">{t.qrPlaceholder}</p>}
-        {!isEmpty && qrError && <p className="error">{t.qrTooLong}</p>}
-        <canvas ref={canvasRef} className="qr-canvas" hidden={isEmpty || qrError} />
-      </div>
-    </section>
+    <>
+      <TextEditor
+        title={t.textLabel}
+        value={text}
+        onChange={setText}
+        placeholder={t.textPlaceholder}
+        maxLength={MAX_LENGTH}
+        atLimit={atLimit}
+        limitReachedLabel={t.limitReached}
+        copyLabel={t.copy}
+        copiedLabel={t.copied}
+        copyFailedLabel={t.copyFailed}
+        copyFeedback={feedback}
+        onCopy={() => void copy(text)}
+        clearLabel={t.clear}
+        onClear={() => setText('')}
+      />
+      <Button
+        variant="secondary"
+        className={styles.showStageButton}
+        disabled={isEmpty || qrError}
+        onClick={onShowStage}
+      >
+        {t.showQr}
+      </Button>
+      {stageNode &&
+        createPortal(
+          <QrDisplay
+            isEmpty={isEmpty}
+            error={qrError}
+            errorLabel={t.qrTooLong}
+            placeholderLabel={t.qrPlaceholder}
+            canvasRef={canvasRef}
+          />,
+          stageNode,
+        )}
+    </>
   )
 }

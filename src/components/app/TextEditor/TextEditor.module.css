@@ -1,0 +1,43 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4) 0;
+}
+
+.title {
+  font: var(--fs-label) var(--font-ui);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--text-faint);
+}
+
+.actions {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.textarea {
+  min-height: 220px;
+  border: none;
+  resize: vertical;
+  background: transparent;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: 0 var(--sp-4) var(--sp-3);
+}
+
+.counter {
+  font: var(--fs-data) var(--font-mono);
+  color: var(--text-faint);
+}
+
+.counterLimit {
+  color: var(--warn);
+}

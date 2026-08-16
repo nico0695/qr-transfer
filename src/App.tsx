@@ -51,7 +51,7 @@ function QrTransferApp() {
   const compose =
     mode === 'quick' ? (
       role === 'send' ? (
-        <QRGenerator />
+        <QRGenerator onShowStage={() => setView('stage')} />
       ) : (
         <Suspense fallback={<p className="hint">{t.loadingScanner}</p>}>
           <QRScanner />
@@ -99,7 +99,6 @@ function QrTransferApp() {
             {compose}
           </>
         }
-        stage={null}
       />
     </LangContext>
   )
