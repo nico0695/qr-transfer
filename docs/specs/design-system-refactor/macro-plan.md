@@ -521,7 +521,7 @@ States: `pending` · `in progress` · `done` · `blocked` · `skipped`
 | #   | Stage                                  | Depends on | Risk     | Size | Status  | Commit    | Exit check                                                        |
 | --- | -------------------------------------- | ---------- | -------- | ---- | ------- | --------- | ----------------------------------------------------------------- |
 | 0   | Docs & source of truth                 | —          | low      | S    | done    | `cc63318` | DS v1.1 consistent; prototype versioned; docs aligned             |
-| 1   | Tokens, theme bootstrap, fonts, icons  | 0          | medium   | M    | pending |           | Offline bundle; no flash; contrast tests green                    |
+| 1   | Tokens, theme bootstrap, fonts, icons  | 0          | medium   | M    | done    | (pending) | Offline bundle; no flash; contrast tests green                    |
 | 2   | Primitives + demo page                 | 1          | medium   | L    | pending |           | 12 primitives on `?demo=primitives`; module 05 captured           |
 | 3   | Preferences store                      | 1          | low      | S    | pending |           | theme/lang/profile survive reload; legacy key migrated            |
 | 4   | App shell                              | 2, 3       | high     | L    | pending |           | No page scroll; switcher <900; Send/Receive drives both modes     |
@@ -535,10 +535,11 @@ States: `pending` · `in progress` · `done` · `blocked` · `skipped`
 
 ### Stage journal
 
-| Date       | Stage | Note                                                                                                                                                                                 |
-| ---------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 2026-08-15 | —     | Plan written; awaiting approval                                                                                                                                                      |
-| 2026-08-15 | 0     | DS v1.1 corrections applied in place; prototype versioned at `docs/design/prototype/`; `frontend-architecture.md`, `CLAUDE.md`, `technical-overview.md` aligned; exit criteria green |
+| Date       | Stage | Note                                                                                                                                                                                                                                                                                                   |
+| ---------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-08-15 | —     | Plan written; awaiting approval                                                                                                                                                                                                                                                                        |
+| 2026-08-15 | 0     | DS v1.1 corrections applied in place; prototype versioned at `docs/design/prototype/`; `frontend-architecture.md`, `CLAUDE.md`, `technical-overview.md` aligned; exit criteria green                                                                                                                   |
+| 2026-08-15 | 1     | Token layer, theme bootstrap, self-hosted fonts, lucide-react installed; legacy `styles.css` widened to `:root, :root[data-theme='light']` and 5 tokens aliased forward so both stylesheets agree on cascade specificity; verified visually in both themes with no console errors; exit criteria green |
 
 ---
 

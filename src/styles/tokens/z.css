@@ -1,0 +1,7 @@
+/* Values: docs/DESIGN_SYSTEM.md §2.8. Theme-invariant. */
+
+:root {
+  --z-header: 10;
+  --z-sheet: 200;
+  --z-fullscreen: 300;
+}

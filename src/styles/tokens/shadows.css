@@ -1,0 +1,14 @@
+/* Values: docs/DESIGN_SYSTEM.md §2.5. Dark is the default; light overrides via
+   [data-theme='light'] — light shadows are tighter/lower-opacity than dark. */
+
+:root {
+  --sh-qr: 0 24px 60px rgba(0, 0, 0, 0.45);
+  --sh-sheet: 0 -20px 60px rgba(0, 0, 0, 0.5);
+  --overlay-blur: 6px;
+}
+
+:root[data-theme='light'] {
+  --sh-qr: 0 12px 32px rgba(0, 0, 0, 0.14);
+  --sh-sheet: 0 -12px 32px rgba(0, 0, 0, 0.16);
+  --overlay-blur: 6px;
+}

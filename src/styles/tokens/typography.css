@@ -1,0 +1,15 @@
+/* Values: docs/DESIGN_SYSTEM.md §2.2. Theme-invariant. */
+
+:root {
+  --font-ui: 'Inter Variable', sans-serif;
+  --font-mono: 'JetBrains Mono Variable', monospace;
+
+  --fs-h1: 34px;
+  --fs-h2: 20px;
+  --fs-body: 14px;
+  --fs-ui: 13px;
+  --fs-ui-sm: 12.5px;
+  --fs-label: 10px;
+  --fs-data: 12px;
+  --fs-data-sm: 11px;
+}

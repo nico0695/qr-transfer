@@ -48,28 +48,37 @@ Convention: `ComponentName.module.css` with camelCase class names, imported as
 ## Design tokens
 
 Split `styles.css` into a small `src/styles/` folder, composed through one entry point via native
-`@import` (Vite bundles these at build time — no extra tooling):
+`@import` (Vite bundles these at build time — no extra tooling). **Landed in Stage 1** — this is
+the actual structure, not a proposal:
 
 ```
 src/styles/
-  index.css            # imports everything below, in this order
+  index.css            # imports everything below, in this order, then ../styles.css last
   tokens/
-    colors.css          # --bg/--surface/--text/--border/--danger/--focus/--primary... on :root
-                         # and :root[data-theme='dark'], same mechanism as today
-    typography.css       # font family + a small size/weight scale
-    spacing.css          # a spacing scale (today ad hoc rem values)
+    colors.css          # --bg/--surface/--text/--line/--danger/--accent... dark on bare :root,
+                         # light on :root[data-theme='light'] (dark-first, per DESIGN_SYSTEM.md §2.1)
+    typography.css       # font family + the fixed size/weight scale
+    spacing.css          # the spacing scale + layout constants
     radius.css            # border-radius scale
-    shadows.css            # elevation scale
+    shadows.css            # elevation scale, dark/light values
     motion.css              # --duration-fast/--duration-base/--duration-sheet, --easing-standard/--easing-out
     z.css                   # --z-header/--z-sheet/--z-fullscreen
-  base.css               # resets + body/html (top of today's styles.css)
-  layout.css              # app-shell rules that aren't component-scoped (.app, .header, breakpoint)
+  base.css               # resets + body/html + self-hosted font imports
+  layout.css              # app-shell rules that aren't component-scoped — lands in Stage 4
+  preloadFonts.ts          # preloads the two latin woff2 subsets via Vite's `?url` imports
 ```
 
 This is a minimal split, not one file per value — each file groups one kind of token. Every future
 component pulls values from these tokens instead of inventing new hex codes, rem values, or
 durations inline. Token _values_ are defined in [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md) §2 — this
 file only defines where they live.
+
+`src/styles.css` (the legacy stylesheet) is imported last and still controls every current screen —
+its `:root` block was widened to `:root, :root[data-theme='light']` so it has the same cascade
+specificity as the new tokens' light override in both themes, and five of its custom-property names
+(`--surface-muted`, `--hover`, `--focus`, `--primary`, `--primary-text`) now forward to the new
+tokens via `var()` rather than their own hex, per the macro plan's Stage 1 deliverable. It is
+deleted entirely in Stage 9.
 
 Beyond `src/styles/`, the redesign also introduces:
 

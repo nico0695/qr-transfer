@@ -1,0 +1,13 @@
+/* Values: docs/DESIGN_SYSTEM.md §2.6. Theme-invariant. */
+
+:root {
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-sheet: 280ms;
+  --easing-standard: ease;
+  --easing-out: ease-out;
+
+  --anim-scan-sweep: 2.4s linear infinite;
+  --anim-pulse: 2s ease-in-out infinite;
+  --anim-spin: 0.8s linear infinite;
+}

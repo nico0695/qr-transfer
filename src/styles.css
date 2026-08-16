@@ -1,16 +1,22 @@
-:root {
+/* :root[data-theme='light'] is listed explicitly (not left as the bare-:root default) so this
+   block has the same selector specificity as src/styles/tokens/colors.css's light override —
+   otherwise the two stylesheets would win asymmetrically per theme instead of this one
+   consistently controlling every screen until each is rewritten (design-system refactor,
+   docs/specs/design-system-refactor/macro-plan.md, Stage 1). */
+:root,
+:root[data-theme='light'] {
   color-scheme: light;
   --bg: #f6f7f8;
   --surface: #ffffff;
-  --surface-muted: #e9ebee;
-  --hover: #f0f1f3;
+  --surface-muted: var(--surface-2);
+  --hover: var(--surface-active);
   --text: #1a1d21;
   --text-muted: #5c6470;
   --border: #d6dade;
   --danger: #b3261e;
-  --focus: #3b6ea5;
-  --primary: #1a1d21;
-  --primary-text: #ffffff;
+  --focus: var(--accent);
+  --primary: var(--accent);
+  --primary-text: var(--on-accent);
   --cm-heading: #1f4b8f;
   --cm-link: #3b6ea5;
   --cm-code: #7a4d00;
@@ -27,15 +33,15 @@
   color-scheme: dark;
   --bg: #16181c;
   --surface: #1f2226;
-  --surface-muted: #26292e;
-  --hover: #2a2e33;
+  --surface-muted: var(--surface-2);
+  --hover: var(--surface-active);
   --text: #e8eaed;
   --text-muted: #9aa3ad;
   --border: #3a3f45;
   --danger: #f28b82;
-  --focus: #7ab3e8;
-  --primary: #e8eaed;
-  --primary-text: #16181c;
+  --focus: var(--accent);
+  --primary: var(--accent);
+  --primary-text: var(--on-accent);
   --cm-heading: #8fb8ee;
   --cm-link: #7ab3e8;
   --cm-code: #e6b566;
