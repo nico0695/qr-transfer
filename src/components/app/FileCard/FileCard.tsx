@@ -67,8 +67,8 @@ export function FileCard({
         <Button variant="secondary" size="sm" onClick={() => inputRef.current?.click()}>
           {changeLabel}
         </Button>
-        <Button variant="secondary" size="sm" onClick={onRemove}>
-          {removeLabel}
+        <Button variant="secondary" size="icon" aria-label={removeLabel} onClick={onRemove}>
+          <Icon name="x" size={16} />
         </Button>
       </div>
       <input

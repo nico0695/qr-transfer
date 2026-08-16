@@ -15,12 +15,12 @@ import { resolveSettings, type TransferSettings as Settings } from '../../lib/tr
 import { buildTransfer } from '../../lib/transfer/transfer'
 import type { PreparedTransfer } from '../../lib/transfer/types'
 import { AnimatedQR } from './AnimatedQR'
+import { LargeTextEditor } from './LargeTextEditor'
 import { renderFrameImages } from './qrFrames'
 import { SourceSelector } from './SourceSelector'
 import { TransferSettings } from './TransferSettings'
 import { TransferSummary } from './TransferSummary'
 import { usePreparedPayload, useTextBytes, type SourceKind } from './usePreparedPayload'
-import { LargeTextEditor } from './LargeTextEditor'
 import styles from './SendFlow.module.css'
 
 type SenderState =
@@ -158,7 +158,7 @@ export function SendFlow({
       <div className={styles.actions}>
         <Button variant="secondary" onClick={() => setSettingsOpen(true)}>
           <Icon name="settings" size={16} />
-          {t.settings}
+          {t.settings} · {t.profileNames[resolved.profile.id]}
         </Button>
         <Button variant="primary" disabled={!canStart} onClick={() => void start()}>
           {t.startTransfer}

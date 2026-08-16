@@ -6,8 +6,8 @@
 }
 
 .thumb {
-  width: 56px;
-  height: 56px;
+  width: calc(var(--sp-10) + var(--sp-4));
+  height: calc(var(--sp-10) + var(--sp-4));
   flex: none;
   border-radius: var(--r-control);
   background: var(--surface-2);
@@ -15,8 +15,8 @@
 }
 
 .thumbPlaceholder {
-  width: 56px;
-  height: 56px;
+  width: calc(var(--sp-10) + var(--sp-4));
+  height: calc(var(--sp-10) + var(--sp-4));
   flex: none;
   border-radius: var(--r-control);
   background: var(--surface-2);

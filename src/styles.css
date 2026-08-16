@@ -248,6 +248,16 @@ body {
   white-space: nowrap;
 }
 
+.actions-center {
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.actions-between {
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
 a.button {
   display: inline-block;
   text-decoration: none;
@@ -268,6 +278,21 @@ a.button {
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
+}
+
+.stats-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.stats-center {
+  justify-content: center;
 }
 
 .progress-count {
@@ -330,6 +355,12 @@ a.button {
 }
 
 /* ---------- Large Transfer: received file ---------- */
+
+.file-name {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
 
 .received-filename {
   max-width: 100%;

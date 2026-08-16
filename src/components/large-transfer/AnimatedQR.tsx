@@ -48,11 +48,11 @@ export function AnimatedQR({
   const canSlower = presetIndex > 0
   const canFaster = presetIndex >= 0 && presetIndex < FRAME_MS_PRESETS.length - 1
 
-  // The portal's *target* changes with `fullscreen` (stage pane vs document.body), but this is
-  // one call site rendering one stable element tree — React moves the existing DOM nodes to the
-  // new container rather than unmounting/remounting them, so the <img> (and useFrameLoop's ref
-  // to it) survives the toggle. Two separate createPortal calls for compact vs fullscreen would
-  // not have this guarantee.
+  // The portal's *target* changes with `fullscreen` (stage pane vs document.body). Keeping this
+  // as one call site rendering one element tree (rather than two separate createPortal calls for
+  // compact vs fullscreen) avoids ever having two <img>s fighting over useFrameLoop's ref — but
+  // the container swap can still remount the node React's side, which is why that ref is a
+  // callback ref: see useFrameLoop.ts for how a freshly (re)mounted node gets repainted.
   const target = fullscreen ? document.body : stageNode
   if (!target) return null
 
@@ -69,6 +69,8 @@ export function AnimatedQR({
         hint: (
           <>
             {profileName} · {t.loopingEvery(frameMs)}
+            <br />
+            {t.transferHint} {t.brightnessHint}
           </>
         ),
         fullscreen,
