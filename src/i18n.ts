@@ -45,7 +45,6 @@ const en = {
   viewStage: 'Stage',
   viewGroupLabel: 'View',
   // Large transfer — common
-  back: 'Back',
   cancel: 'Cancel',
   close: 'Close',
   done: 'Done',
@@ -178,7 +177,6 @@ const es: Messages = {
   viewStage: 'Vista',
   viewGroupLabel: 'Vista',
   // Large transfer — common
-  back: 'Volver',
   cancel: 'Cancelar',
   close: 'Cerrar',
   done: 'Listo',
