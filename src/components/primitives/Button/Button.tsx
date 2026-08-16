@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import { cx } from '../../../lib/cx'
 import { Spinner } from '../Spinner'
 import styles from './Button.module.css'
 
@@ -24,15 +25,13 @@ export function Button({
   className,
   ...rest
 }: ButtonProps) {
-  const classes = [
+  const classes = cx(
     styles.button,
     styles[size],
     styles[variant],
-    loading ? styles.loading : '',
+    loading && styles.loading,
     className,
-  ]
-    .filter(Boolean)
-    .join(' ')
+  )
 
   return (
     <button type="button" className={classes} disabled={disabled || loading} {...rest}>

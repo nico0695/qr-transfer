@@ -1,4 +1,5 @@
 import type { HTMLAttributes, ReactNode } from 'react'
+import { cx } from '../../../lib/cx'
 import styles from './Card.module.css'
 
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
@@ -16,15 +17,13 @@ export function Card({
   className,
   ...rest
 }: CardProps) {
-  const classes = [
+  const classes = cx(
     styles.card,
     styles[`padding-${padding}`],
     styles[`radius-${radius}`],
-    dashed ? styles.dashed : '',
+    dashed && styles.dashed,
     className,
-  ]
-    .filter(Boolean)
-    .join(' ')
+  )
 
   return (
     <div className={classes} {...rest}>

@@ -1,3 +1,4 @@
+import { cx } from '../../../lib/cx'
 import styles from './StatusDot.module.css'
 
 export interface StatusDotProps {
@@ -6,10 +7,5 @@ export interface StatusDotProps {
 }
 
 export function StatusDot({ live = false, className }: StatusDotProps) {
-  return (
-    <span
-      className={[styles.dot, live ? styles.live : '', className].filter(Boolean).join(' ')}
-      aria-hidden="true"
-    />
-  )
+  return <span className={cx(styles.dot, live && styles.live, className)} aria-hidden="true" />
 }
