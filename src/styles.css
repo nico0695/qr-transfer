@@ -80,19 +80,6 @@ body {
   line-height: 1.4;
 }
 
-.panel {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.field-label {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
-.select:focus-visible,
 .button:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 1px;
@@ -122,121 +109,10 @@ body {
   cursor: default;
 }
 
-.camera-select {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.select {
-  padding: 0.5rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface);
-  font: inherit;
-  color: inherit;
-}
-
-.camera-region {
-  width: 100%;
-  overflow: hidden;
-  border-radius: 10px;
-}
-
-.camera-region video {
-  width: 100%;
-  border-radius: 10px;
-}
-
-/*
- * Framed viewfinder, used only by the WASM engine. It must not apply to the legacy one: that
- * scanner derives its crop from `videoWidth / clientWidth`, so forcing a height on the element
- * would silently shift the region it analyses.
- *
- * A square viewport with `cover` shows the centred square of side min(width, height) of the
- * stream, and the decoded region is the centred square of `--scan-crop` of that same side — so the
- * guide lands on exactly the analysed area at any resolution or orientation.
- */
-.camera-region.is-framed {
-  position: relative;
-  aspect-ratio: 1;
-}
-
-.camera-region.is-framed video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.scan-guide {
-  position: absolute;
-  inset: 0;
-  margin: auto;
-  width: var(--scan-crop);
-  height: var(--scan-crop);
-  border: 2px solid rgb(255 255 255 / 0.85);
-  border-radius: 10px;
-  /* Dims everything outside the box without four extra elements. */
-  box-shadow: 0 0 0 100vmax rgb(0 0 0 / 0.4);
-  pointer-events: none;
-}
-
-.scan-guide-hit {
-  position: absolute;
-  inset: -2px;
-  border: 2px solid #35c46a;
-  border-radius: 10px;
-  opacity: 0;
-  animation: scan-hit 700ms ease-out;
-}
-
-@keyframes scan-hit {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .scan-guide-hit {
-    animation: none;
-    opacity: 0.9;
-  }
-}
-
 .hint {
   margin: 0;
   color: var(--text-muted);
   text-align: center;
-}
-
-.error {
-  margin: 0;
-  color: var(--danger);
-}
-
-.result {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.button-primary {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: var(--primary-text);
-}
-
-.button-primary:hover:enabled {
-  background: var(--primary);
-  opacity: 0.9;
-}
-
-.select-small {
-  padding: 0.3rem 0.45rem;
-  font-size: 0.875rem;
 }
 
 .visually-hidden {
@@ -253,130 +129,11 @@ body {
   flex-wrap: wrap;
 }
 
-.actions-between {
-  justify-content: space-between;
-  flex-wrap: wrap;
-}
-
-a.button {
-  display: inline-block;
-  text-decoration: none;
-  text-align: center;
-}
-
 /* ---------- Large Transfer: editor / viewer ---------- */
 
 .large-transfer {
   display: flex;
   flex-direction: column;
-}
-
-/* ---------- Large Transfer: receiver ---------- */
-
-.progress {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.stats-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem 1rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  font-size: 0.875rem;
-  color: var(--text-muted);
-}
-
-.stats-center {
-  justify-content: center;
-}
-
-.progress-count {
-  margin: 0;
-  font-size: 1.125rem;
-  font-variant-numeric: tabular-nums;
-}
-
-.progress-bar {
-  width: 100%;
-  max-width: 420px;
-  height: 0.5rem;
-  border-radius: 999px;
-  background: var(--surface-muted);
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: var(--text);
-  transition: width 120ms linear;
-}
-
-.progress-details {
-  font-size: 0.8125rem;
-  color: var(--text-muted);
-  text-align: center;
-}
-
-.progress-details p {
-  margin: 0.25rem 0 0;
-  word-break: break-word;
-}
-
-.received-summary {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1rem 0;
-  text-align: center;
-}
-
-.received-title {
-  margin: 0;
-  font-size: 1.25rem;
-}
-
-.verified {
-  color: var(--text);
-  font-weight: 600;
-}
-
-@media (min-width: 760px) {
-  .receiver {
-    width: 100%;
-    max-width: 640px;
-    margin-inline: auto;
-  }
-}
-
-/* ---------- Large Transfer: received file ---------- */
-
-.file-name {
-  margin: 0;
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-
-.received-filename {
-  max-width: 100%;
-}
-
-.received-image {
-  display: block;
-  max-width: min(100%, 420px);
-  max-height: 60svh;
-  border-radius: 8px;
-  background: var(--surface-muted);
-}
-
-.progress-meta {
-  margin: 0;
-  overflow-wrap: anywhere;
 }
 
 /* Diagnostics overlay for the transfer scanner (?debug=1). Not part of the product surface. */

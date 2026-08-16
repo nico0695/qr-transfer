@@ -121,7 +121,6 @@ const en = {
   missingFrames: 'Missing frames',
   assembling: 'Verifying and decompressing…',
   transferComplete: 'Transfer complete',
-  verified: 'Verified',
   verificationFailed: 'Transfer could not be verified.',
   scanAgainHint: 'Scan again.',
   incompatibleSender:
@@ -256,7 +255,6 @@ const es: Messages = {
   missingFrames: 'Códigos faltantes',
   assembling: 'Verificando y descomprimiendo…',
   transferComplete: 'Transferencia completa',
-  verified: 'Verificada',
   verificationFailed: 'No se pudo verificar la transferencia.',
   scanAgainHint: 'Escaneá de nuevo.',
   incompatibleSender:

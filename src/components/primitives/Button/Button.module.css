@@ -5,6 +5,7 @@
   gap: var(--sp-2);
   border-radius: var(--r-control);
   font: var(--fs-ui) var(--font-ui);
+  text-decoration: none;
   cursor: pointer;
   transition: background-color var(--duration-fast) var(--easing-standard);
   position: relative;

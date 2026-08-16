@@ -1,8 +1,10 @@
 # Large Transfer — Receive
 
 > Camera scanning → frame-by-frame progress → verified result (or an error). Source:
-> `src/components/large-transfer/{TransferScanner,ReceiveProgress,ReceivedContent,
-ReceivedFile}.tsx`, `src/components/large-transfer/useTransferScanner.ts`, `src/lib/scan/`.
+> `src/components/large-transfer/{TransferScanner,ReceivedContent,ReceivedFile}.tsx`,
+> `src/components/large-transfer/useTransferScanner.ts`,
+> `src/components/app/{OpticalStage/CameraScanner,ReceiveStatusPanel,ResultPanel}/`,
+> `src/lib/scan/`.
 
 ## Table of Contents
 
@@ -22,10 +24,14 @@ recoverable ("Try again" restarts the camera) and which aren't.
 
 ## Scanning
 
-Two scan engines share one lifecycle: the default draws its own crop guide sized in camera
-pixels (not CSS pixels — this is the fix documented in `docs/large-transfer.md` for a defect that
-capped decode rates); a legacy fallback (`html5-qrcode`, reachable via `?scanner=legacy` or when
-the primary engine's dependencies aren't available) has its own corner-bracket viewfinder.
+Two scan engines share one `CameraScanner` (`src/components/app/OpticalStage/CameraScanner/`) —
+the same component Quick QR's scanner uses — so both render identical brackets/sweep/badge. The
+default (WASM) engine crops in camera pixels, not CSS pixels (the fix documented in
+`docs/large-transfer.md` for a defect that capped decode rates); `CameraScanner`'s `framed` prop
+forces a square on-screen viewport only for this engine, so the visible guide box actually lines
+up with the region being analysed (`object-fit: cover`'s crop and the ROI's own crop only agree
+when the viewport is square). The legacy fallback (`html5-qrcode`, reachable via `?scanner=legacy`
+or when the primary engine's dependencies aren't available) reuses the exact same guide, unframed.
 
 | State                      | Trigger                                      | Desktop                                                                        | Mobile                                                                        |
 | -------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
@@ -41,10 +47,12 @@ not screenshotted this pass (see `README.md` coverage notes).
 
 ## Receiving
 
-Once the header frame is decoded, a progress block replaces the plain hint: frame count
-("4 / 14 frames"), the transfer's name/size once known ("photo.png · 15.4 KB" or "Text · N KB"),
-a progress bar, and — while the list is short enough to be useful (≤200 entries) — a collapsible
-list of specific missing frame indexes.
+Once the header frame is decoded, `ReceiveStatusPanel` (`src/components/app/ReceiveStatusPanel/`)
+shows: a status icon + title + right-aligned percent, the transfer's name/size once known
+("photo.png · 15.4 KB" or "Text · N KB"), a `ProgressBar` with the frame count ("4 / 14 frames") as
+its label, and — while the list is short enough to be useful (≤200 entries) — a collapsible list
+of missing frame indexes as `Chip`s. The camera's own badge (bottom-left of the viewfinder) mirrors
+the same percent instead of "Live" while frames are arriving.
 
 | State                    | Trigger                              | Desktop                                                                                      | Mobile                                                                                      |
 | ------------------------ | ------------------------------------ | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
@@ -53,17 +61,19 @@ list of specific missing frame indexes.
 | Missing-frames list open | Tap "Missing frames"                 | ![](../screens/60-large-transfer-receive/05-receiving-missing-frames-open.desktop.light.png) | ![](../screens/60-large-transfer-receive/05-receiving-missing-frames-open.mobile.light.png) |
 | Missing-frames — dark    |                                      | ![](../screens/60-large-transfer-receive/05-receiving-missing-frames-open.desktop.dark.png)  | ![](../screens/60-large-transfer-receive/05-receiving-missing-frames-open.mobile.dark.png)  |
 
-A short-lived green flash on the guide box confirms each newly-accepted frame
-(`.scan-guide-hit`, a 700 ms CSS fade, disabled under `prefers-reduced-motion`) — not
-screenshotted, it's a transient animation rather than a state. "Assembling" (verifying the
-checksum and decompressing, camera already released) reuses this exact layout with the label
-"Verifying and decompressing…" instead of "Receiving transfer…" — visually identical, not
-separately screenshotted.
+A short-lived green flash on the guide box confirms each newly-accepted frame (`CameraScanner`'s
+`hitKey` prop, a 700 ms CSS fade, disabled under `prefers-reduced-motion`) — not screenshotted,
+it's a transient animation rather than a state. "Assembling" (verifying the checksum and
+decompressing, camera already released) reuses this exact layout with the label "Verifying and
+decompressing…" instead of "Receiving transfer…" — visually identical, not separately
+screenshotted.
 
 ## Complete
 
 Once the checksum matches, the camera stops and the result replaces the scanner entirely. Text and
-file results are two different components with a shared "✓ Verified" treatment.
+file results are two different components (`ReceivedContent`, `ReceivedFile`) sharing one
+`ResultPanel` (`Feedback level="verified"` — its shield icon and green tone are what signal
+"verified", not a separate checkmark line).
 
 | State                           | Trigger                                  | Desktop                                                                                   | Mobile                                                                                   |
 | ------------------------------- | ---------------------------------------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
@@ -82,18 +92,18 @@ pattern as the text Copy button, not separately screenshotted.
 
 ## Errors
 
-| State                      | Trigger                            | Desktop                                                                                  | Mobile                                                                                   |
-| -------------------------- | ---------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| Verification failed        | Checksum mismatch after assembling | ![](../screens/60-large-transfer-receive/06-error-verification-failed.desktop.light.png) | ![](../screens/60-large-transfer-receive/06-error-verification-failed.mobile.light.png)  |
-| Verification failed — dark |                                    | ![](../screens/60-large-transfer-receive/06-error-verification-failed.desktop.dark.png)  | ![](../screens/60-large-transfer-receive/06-error-verification-failed.mobile.dark.png)   |
-| Incompatible sender        | A `QRT1                            | …` (or otherwise unsupported) frame scanned                                              | ![](../screens/60-large-transfer-receive/07-error-incompatible-sender.desktop.light.png) | ![](../screens/60-large-transfer-receive/07-error-incompatible-sender.mobile.light.png) |
-| Incompatible — dark        |                                    | ![](../screens/60-large-transfer-receive/07-error-incompatible-sender.desktop.dark.png)  | ![](../screens/60-large-transfer-receive/07-error-incompatible-sender.mobile.dark.png)   |
-| Permission denied          | Camera prompt denied               | ![](../screens/60-large-transfer-receive/08-error-permission.desktop.light.png)          | ![](../screens/60-large-transfer-receive/08-error-permission.mobile.light.png)           |
-| Permission denied — dark   |                                    | ![](../screens/60-large-transfer-receive/08-error-permission.desktop.dark.png)           | ![](../screens/60-large-transfer-receive/08-error-permission.mobile.dark.png)            |
+| State                      | Trigger                                            | Desktop                                                                                  | Mobile                                                                                  |
+| -------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Verification failed        | Checksum mismatch after assembling                 | ![](../screens/60-large-transfer-receive/06-error-verification-failed.desktop.light.png) | ![](../screens/60-large-transfer-receive/06-error-verification-failed.mobile.light.png) |
+| Verification failed — dark |                                                    | ![](../screens/60-large-transfer-receive/06-error-verification-failed.desktop.dark.png)  | ![](../screens/60-large-transfer-receive/06-error-verification-failed.mobile.dark.png)  |
+| Incompatible sender        | A `QRT1…` (or otherwise unsupported) frame scanned | ![](../screens/60-large-transfer-receive/07-error-incompatible-sender.desktop.light.png) | ![](../screens/60-large-transfer-receive/07-error-incompatible-sender.mobile.light.png) |
+| Incompatible — dark        |                                                    | ![](../screens/60-large-transfer-receive/07-error-incompatible-sender.desktop.dark.png)  | ![](../screens/60-large-transfer-receive/07-error-incompatible-sender.mobile.dark.png)  |
+| Permission denied          | Camera prompt denied                               | ![](../screens/60-large-transfer-receive/08-error-permission.desktop.light.png)          | ![](../screens/60-large-transfer-receive/08-error-permission.mobile.light.png)          |
+| Permission denied — dark   |                                                    | ![](../screens/60-large-transfer-receive/08-error-permission.desktop.dark.png)           | ![](../screens/60-large-transfer-receive/08-error-permission.mobile.dark.png)           |
 
-The same "not readable" and "generic" camera errors from Quick QR Scan also apply here (identical
-`.error` treatment — see `quick-qr.md`). Every error state offers "Try again", which restarts the
-camera from scratch.
+The same "not readable" and "generic" camera errors from Quick QR Scan also apply here — same
+`Feedback level="error"` treatment (see `quick-qr.md`). Every error offers "Try again" except an
+incompatible sender, which restarting can't fix (see `TransferScanner.tsx`'s `recoverable` check).
 
 ## Copy inventory
 
@@ -103,7 +113,7 @@ camera from scratch.
 | `receiving` / `assembling`                    | Receiving transfer… / Verifying and decompressing…                                                  |
 | `framesProgress(received, total)`             | "{received} / {total} frames"                                                                       |
 | `missingFrames`                               | Missing frames                                                                                      |
-| `transferComplete` `verified`                 | Transfer complete / Verified                                                                        |
+| `transferComplete`                            | Transfer complete                                                                                   |
 | `verificationFailed` `scanAgainHint`          | Transfer could not be verified. / Scan again.                                                       |
 | `incompatibleSender`                          | This QR comes from an incompatible version of QR Transfer. Update the sending device and try again. |
 | `download` `copyImage` `scanAnother`          | Download / Copy image / Scan another                                                                |

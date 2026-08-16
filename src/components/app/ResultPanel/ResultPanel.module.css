@@ -1,3 +1,9 @@
+.meta {
+  margin: 0;
+  font: var(--fs-data) var(--font-mono);
+  color: var(--text-faint);
+}
+
 .body {
   font: var(--fs-data) var(--font-mono);
   white-space: pre-wrap;

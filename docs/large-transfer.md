@@ -181,17 +181,25 @@ once the header arrived — "photo.jpg · 420 KB" or "Text · 21 KB"; missing fr
 - Sizing the canvas ourselves is the point: `html5-qrcode` derives it from the viewfinder's CSS
   width, which left dense symbols at ~3 pixels per module — the floor below which no decoder works.
   The region targets ~4.6.
-- The viewfinder is square with `object-fit: cover`, and the guide box is drawn at the same
-  `DEFAULT_CROP_RATIO` the crop uses, so the box frames exactly the region being decoded. Each
-  accepted frame briefly highlights it in green, fading out on its own.
+- Both engines share one `CameraScanner` (`src/components/app/OpticalStage/CameraScanner/`) — the
+  same component Quick QR's scanner uses, so the brackets/sweep/badge look identical either way.
+  Its `framed` prop is what makes the WASM engine's viewfinder square with `object-fit: cover`;
+  the guide box inside it is drawn at the same `DEFAULT_CROP_RATIO` the crop uses (via a
+  `--scan-crop` CSS variable passed down through the same element the engine attaches its
+  `<video>` to — sibling elements can't see it, which is why the guide isn't a sibling of that
+  element), so the box frames exactly the region being decoded rather than just approximating it.
+  `framed` must stay off for the legacy engine, whose own crop math would be silently shifted by a
+  forced viewport shape. Each accepted frame briefly highlights the guide in green (`hitKey` prop),
+  fading out on its own; the viewfinder's own "Live" badge shows the live receive percent instead
+  while frames are arriving.
 - `html5-qrcode` remains as an automatic fallback, loaded with a dynamic `import()` only if the
   WASM pipeline fails to start. `?scanner=legacy` forces it; `?debug=1` reports which engine ran.
-- **Complete, text** — "Transfer complete", characters, size, "✓ Verified", **Copy all**,
-  **View content** (read-only CodeMirror viewer), **Scan another**.
-- **Complete, file** — sanitized filename, size, MIME, "✓ Verified", image preview when the MIME is
-  `image/*`, **Download** (`<a download>` on a `Blob` object URL, revoked on unmount), **Copy image**
-  (only when `navigator.clipboard.write` + `ClipboardItem` exist; non-PNG images are re-encoded to
-  PNG via canvas), **Scan another**.
+- **Complete, text** — `ResultPanel` (`Feedback level="verified"`): "Transfer complete", characters,
+  size, **Copy all**, **View content** (read-only CodeMirror viewer), **Scan another**.
+- **Complete, file** — same `ResultPanel`: sanitized filename, size, MIME, image preview when the
+  MIME is `image/*`, **Download** (`<a download>` on a `Blob` object URL, revoked on unmount),
+  **Copy image** (only when `navigator.clipboard.write` + `ClipboardItem` exist; non-PNG images are
+  re-encoded to PNG via canvas), **Scan another**.
 - Cancel / Scan another / Try again restart the session and release the camera; unmounting the
   section releases it too.
 
