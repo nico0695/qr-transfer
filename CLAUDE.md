@@ -7,13 +7,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 QR Transfer: static SPA (Vite + React 19 + strict TypeScript + plain CSS) that transfers text and
 files between devices optically (screen → camera). No backend, no network requests, no content
 persistence — by design. Persistence is UI preferences only — theme, language, last-used transfer
-profile — **never** text, files or received content. Today that's
-`src/lib/settingsStorage.ts` (`localStorage`); the design-system refactor
-([`docs/specs/design-system-refactor/`](docs/specs/design-system-refactor/)) moves it to a single
-Zustand `persist` store, `src/store/preferences.ts` (key `qr-transfer:prefs`), which is the only
-thing allowed to touch `localStorage` once that lands. Docs live in `docs/`
-(`technical-overview.md`, `qr-transfer-flow.md`, `large-transfer.md`, `frontend-architecture.md`,
-`DESIGN_SYSTEM.md`, `specs/design-system-refactor/`).
+profile — **never** text, files or received content. It lives in a single Zustand `persist`
+store, `src/store/preferences.ts` (key `qr-transfer:prefs`), the only thing allowed to touch
+`localStorage`. Docs live in `docs/` (`technical-overview.md`, `qr-transfer-flow.md`,
+`large-transfer.md`, `frontend-architecture.md`, `DESIGN_SYSTEM.md`, `specs/design-system-refactor/`).
 
 ## Commands
 

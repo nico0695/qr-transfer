@@ -120,9 +120,8 @@ handful called out below as not screenshot-worthy:
 
 Observed while building this catalog — worth the designer's attention, not fixed here:
 
-- **No persistence for theme or language.** Every reload resets to the OS's `prefers-color-scheme`
-  and `navigator.language` (`src/App.tsx`). Only the transfer profile survives a reload
-  (`src/lib/settingsStorage.ts`).
+- ~~**No persistence for theme or language.**~~ Resolved in the design-system refactor's Stage 3:
+  theme, language and the transfer profile all persist through `src/store/preferences.ts`.
 - **No routing.** Section, mode, direction and dialogs are all in-memory `useState`; there is no
   deep link to "Large Transfer → Receive" or a shareable URL for any state. Screenshots in this
   catalog can only be reached by the click sequence documented in each flow.

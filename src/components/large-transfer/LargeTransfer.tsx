@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useI18n } from '../../i18n'
-import { loadPreferredProfile, savePreferredProfile } from '../../lib/settingsStorage'
+import { usePreferences } from '../../store/preferences'
 import { DEFAULT_SETTINGS, type TransferSettings } from '../../lib/transfer/profiles'
 import { SendFlow } from './SendFlow'
 import { TransferScanner } from './TransferScanner'
@@ -15,14 +15,16 @@ export default function LargeTransfer() {
   const [source, setSource] = useState<SourceKind>('text')
   const [text, setText] = useState('')
   const [file, setFile] = useState<File | null>(null)
+  const storedProfile = usePreferences((s) => s.profile)
+  const setStoredProfile = usePreferences((s) => s.setProfile)
   const [settings, setSettings] = useState<TransferSettings>(() => ({
     ...DEFAULT_SETTINGS,
-    profile: loadPreferredProfile() ?? DEFAULT_SETTINGS.profile,
+    profile: storedProfile,
   }))
 
   const updateSettings = (next: TransferSettings) => {
     setSettings(next)
-    if (next.profile !== settings.profile) savePreferredProfile(next.profile)
+    if (next.profile !== settings.profile) setStoredProfile(next.profile)
   }
 
   return (

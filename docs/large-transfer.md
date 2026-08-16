@@ -297,7 +297,8 @@ scanning is reliable, **Fast** halves the loop time. Requires a browser with `Co
   - `config.ts`, `types.ts` — tunables, `sizeLevel`, shared types (`TransferInput`,
     `TransferMetadata`, `TransferFrame`, `PreparedPayload`, `PreparedTransfer`, `ReceivedTransfer`).
   - `*.test.ts` — Vitest unit tests next to each module.
-- `src/lib/settingsStorage.ts` — the preferred profile in `localStorage` (only persisted value).
+- `src/store/preferences.ts` — Zustand `persist` store: theme, language, preferred profile in
+  `localStorage` (the only persisted values).
 - `src/components/large-transfer/` — UI: `LargeTransfer` (Send/Receive, holds source, draft, file
   and settings), `SendFlow`, `SourceSelector`, `LargeTextEditor` + `codemirrorSetup.ts`,
   `FileInput`, `FilePreview`, `usePreparedPayload.ts`, `TransferSummary`, `TransferSettings`,

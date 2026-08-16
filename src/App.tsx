@@ -2,8 +2,9 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 import { ModeTabs, type Mode } from './components/ModeTabs'
 import { NavMenu, type Section } from './components/NavMenu'
 import { QRGenerator } from './components/QRGenerator'
-import { detectLang, LangContext, messages, type Lang } from './i18n'
+import { LangContext, messages } from './i18n'
 import { PRIMITIVES_DEMO_ENABLED } from './lib/demo'
+import { usePreferences } from './store/preferences'
 
 // html5-qrcode is heavy, so the scanner is only loaded when Scan QR is opened.
 const QRScanner = lazy(() => import('./components/QRScanner'))
@@ -11,12 +12,6 @@ const QRScanner = lazy(() => import('./components/QRScanner'))
 const LargeTransfer = lazy(() => import('./components/large-transfer/LargeTransfer'))
 // Dev-only primitives review page (?demo=primitives) — never part of the app's own navigation.
 const PrimitivesDemo = lazy(() => import('./components/demo/PrimitivesDemo'))
-
-type Theme = 'light' | 'dark'
-
-function detectTheme(): Theme {
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-}
 
 export default function App() {
   if (PRIMITIVES_DEMO_ENABLED) {
@@ -33,8 +28,10 @@ export default function App() {
 function QrTransferApp() {
   const [section, setSection] = useState<Section>('quick')
   const [mode, setMode] = useState<Mode>('generate')
-  const [theme, setTheme] = useState<Theme>(detectTheme)
-  const [lang, setLang] = useState<Lang>(detectLang)
+  const theme = usePreferences((s) => s.theme)
+  const setTheme = usePreferences((s) => s.setTheme)
+  const lang = usePreferences((s) => s.lang)
+  const setLang = usePreferences((s) => s.setLang)
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
