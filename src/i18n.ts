@@ -35,21 +35,18 @@ const en = {
   // Navigation
   navQuick: 'Quick QR',
   navLarge: 'Large Transfer',
-  navLabel: 'Sections',
   loadingLargeTransfer: 'Loading Large Transfer…',
-  // App shell — context label, mobile view switcher
+  // App shell — header controls, context label, mobile view switcher
   ctxQuick: 'Quick QR',
   ctxLarge: 'Large Transfer',
   roleSend: 'Send',
   roleReceive: 'Receive',
+  roleGroupLabel: 'Role',
   limitChars: (n: number) => `Up to ${n} characters`,
-  srcText: 'Text',
-  srcFile: 'File',
   viewCompose: 'Content',
   viewStage: 'Stage',
+  viewGroupLabel: 'View',
   // Large transfer — common
-  send: 'Send',
-  receive: 'Receive',
   back: 'Back',
   cancel: 'Cancel',
   close: 'Close',
@@ -180,21 +177,18 @@ const es: Messages = {
   // Navigation
   navQuick: 'QR rápido',
   navLarge: 'Transferencia grande',
-  navLabel: 'Secciones',
   loadingLargeTransfer: 'Cargando transferencia grande…',
-  // App shell — context label, mobile view switcher
+  // App shell — header controls, context label, mobile view switcher
   ctxQuick: 'QR rápido',
   ctxLarge: 'Transferencia grande',
   roleSend: 'Enviar',
   roleReceive: 'Recibir',
+  roleGroupLabel: 'Rol',
   limitChars: (n: number) => `Hasta ${n} caracteres`,
-  srcText: 'Texto',
-  srcFile: 'Archivo',
   viewCompose: 'Contenido',
   viewStage: 'Vista',
+  viewGroupLabel: 'Vista',
   // Large transfer — common
-  send: 'Enviar',
-  receive: 'Recibir',
   back: 'Volver',
   cancel: 'Cancelar',
   close: 'Cerrar',

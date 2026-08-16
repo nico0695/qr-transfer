@@ -10,6 +10,7 @@ export interface AppShellProps {
   onViewChange: (view: PaneView) => void
   composeLabel: string
   stageLabel: string
+  viewGroupLabel: string
 }
 
 export function AppShell({
@@ -20,6 +21,7 @@ export function AppShell({
   onViewChange,
   composeLabel,
   stageLabel,
+  viewGroupLabel,
 }: AppShellProps) {
   return (
     <div className={styles.shell}>
@@ -33,6 +35,7 @@ export function AppShell({
         onChange={onViewChange}
         composeLabel={composeLabel}
         stageLabel={stageLabel}
+        groupLabel={viewGroupLabel}
       />
     </div>
   )

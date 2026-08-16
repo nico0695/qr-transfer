@@ -1,14 +1,13 @@
 import { useState } from 'react'
+import type { AppRole } from '../app/AppHeader'
 import { usePreferences } from '../../store/preferences'
 import { DEFAULT_SETTINGS, type TransferSettings } from '../../lib/transfer/profiles'
 import { SendFlow } from './SendFlow'
 import { TransferScanner } from './TransferScanner'
 import type { SourceKind } from './usePreparedPayload'
 
-type Direction = 'send' | 'receive'
-
 export interface LargeTransferProps {
-  direction: Direction
+  direction: AppRole
 }
 
 export default function LargeTransfer({ direction }: LargeTransferProps) {

@@ -1,3 +1,4 @@
+import { Button } from '../../primitives/Button'
 import { Icon } from '../../primitives/Icon'
 import { SegmentedControl } from '../../primitives/SegmentedControl'
 import { Tabs } from '../../primitives/Tabs'
@@ -11,6 +12,7 @@ export interface AppHeaderProps {
   onModeChange: (mode: AppMode) => void
   role: AppRole
   onRoleChange: (role: AppRole) => void
+  roleGroupLabel: string
   theme: 'dark' | 'light'
   onThemeToggle: () => void
   onLangToggle: () => void
@@ -25,6 +27,7 @@ export function AppHeader({
   onModeChange,
   role,
   onRoleChange,
+  roleGroupLabel,
   theme,
   onThemeToggle,
   onLangToggle,
@@ -51,7 +54,7 @@ export function AppHeader({
       </div>
       <div className={styles.right}>
         <SegmentedControl
-          aria-label="Role"
+          aria-label={roleGroupLabel}
           value={role}
           onChange={onRoleChange}
           options={[
@@ -59,17 +62,17 @@ export function AppHeader({
             { value: 'receive', label: roleLabels.receive },
           ]}
         />
-        <button
-          type="button"
-          className={styles.iconButton}
+        <Button
+          variant="secondary"
+          size="icon"
           aria-label={theme === 'light' ? themeLabels.switchToDark : themeLabels.switchToLight}
           onClick={onThemeToggle}
         >
           <Icon name={theme === 'light' ? 'moon' : 'sun'} size={16} />
-        </button>
-        <button type="button" className={styles.langButton} onClick={onLangToggle}>
+        </Button>
+        <Button variant="secondary" size="sm" onClick={onLangToggle}>
           {langLabel}
-        </button>
+        </Button>
       </div>
     </header>
   )

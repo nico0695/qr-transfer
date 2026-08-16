@@ -72,6 +72,7 @@ function QrTransferApp() {
             onModeChange={setMode}
             role={role}
             onRoleChange={setRole}
+            roleGroupLabel={t.roleGroupLabel}
             theme={theme}
             onThemeToggle={() => setTheme(theme === 'light' ? 'dark' : 'light')}
             onLangToggle={() => setLang(lang === 'es' ? 'en' : 'es')}
@@ -85,6 +86,7 @@ function QrTransferApp() {
         onViewChange={setView}
         composeLabel={t.viewCompose}
         stageLabel={t.viewStage}
+        viewGroupLabel={t.viewGroupLabel}
         compose={
           <>
             <ContextLabel

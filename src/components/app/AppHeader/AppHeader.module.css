@@ -5,7 +5,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-2) var(--sp-4);
-  padding: var(--sp-2) 20px;
+  padding: var(--sp-2) var(--sp-5);
   border-bottom: 1px solid var(--line-soft);
 }
 
@@ -13,7 +13,7 @@
   .header {
     height: var(--header-height);
     flex-wrap: nowrap;
-    padding-inline: 24px;
+    padding-inline: var(--sp-6);
   }
 }
 
@@ -51,46 +51,4 @@
   align-items: center;
   gap: var(--sp-3);
   flex: none;
-}
-
-.iconButton {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-control);
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-}
-
-.iconButton:hover {
-  background: var(--surface-2);
-}
-
-.iconButton:focus-visible {
-  outline: var(--focus-ring);
-  outline-offset: var(--focus-offset);
-}
-
-.langButton {
-  padding: 0 var(--sp-3);
-  height: 34px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-control);
-  background: transparent;
-  color: var(--text-muted);
-  font: var(--fs-ui) var(--font-ui);
-  cursor: pointer;
-}
-
-.langButton:hover {
-  background: var(--surface-2);
-}
-
-.langButton:focus-visible {
-  outline: var(--focus-ring);
-  outline-offset: var(--focus-offset);
 }

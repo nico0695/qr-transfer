@@ -17,14 +17,14 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: var(--sp-1);
   padding: var(--sp-2) 0;
   border: none;
   background: transparent;
   color: var(--text-faint);
   font: var(--fs-label) var(--font-ui);
   cursor: pointer;
-  min-height: 44px;
+  min-height: 44px; /* touch target, docs/DESIGN_SYSTEM.md §7 */
 }
 
 .button[aria-current='true'] {

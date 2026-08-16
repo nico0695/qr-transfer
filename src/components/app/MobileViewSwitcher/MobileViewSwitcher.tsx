@@ -8,6 +8,7 @@ export interface MobileViewSwitcherProps {
   onChange: (view: PaneView) => void
   composeLabel: string
   stageLabel: string
+  groupLabel: string
 }
 
 export function MobileViewSwitcher({
@@ -15,9 +16,10 @@ export function MobileViewSwitcher({
   onChange,
   composeLabel,
   stageLabel,
+  groupLabel,
 }: MobileViewSwitcherProps) {
   return (
-    <nav className={styles.bar} aria-label="View">
+    <nav className={styles.bar} aria-label={groupLabel}>
       <button
         type="button"
         className={styles.button}
