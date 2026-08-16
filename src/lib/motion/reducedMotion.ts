@@ -23,6 +23,17 @@ export interface MotionVariant {
   transition?: Transition
 }
 
+/** Drops a transition's duration to zero when reduced-motion is on — the piece every collapse
+ * shares, including presets like `paneSwitch` that keep two persistent targets (not an
+ * enter/exit pair) and so can't go through `withReducedMotion` below without erasing the
+ * distinction between them. */
+export function reducedTransition(
+  transition: Transition | undefined,
+  reduced: boolean,
+): Transition | undefined {
+  return reduced ? { duration: 0 } : transition
+}
+
 /** Collapses a preset to its settled `animate` state with zero duration when reduced-motion is on. */
 export function withReducedMotion(preset: MotionVariant, reduced: boolean): MotionVariant {
   if (!reduced) return preset
@@ -30,6 +41,6 @@ export function withReducedMotion(preset: MotionVariant, reduced: boolean): Moti
     initial: preset.animate,
     animate: preset.animate,
     exit: preset.animate,
-    transition: { duration: 0 },
+    transition: reducedTransition(preset.transition, reduced),
   }
 }

@@ -3,7 +3,7 @@ import { useState, type ReactNode } from 'react'
 import { MobileViewSwitcher, type PaneView } from '../MobileViewSwitcher'
 import styles from './AppShell.module.css'
 import { StageSlotContext } from './StageSlotContext'
-import { useReducedMotion } from '../../../lib/motion/reducedMotion'
+import { reducedTransition, useReducedMotion } from '../../../lib/motion/reducedMotion'
 import { paneSwitch } from '../../../lib/motion/presets'
 import { useIsDesktop } from '../../../lib/theme/useIsDesktop'
 
@@ -34,7 +34,7 @@ export function AppShell({
   const stagePane = paneSwitch(1)
   const composeActive = isDesktop || view === 'compose'
   const stageActive = isDesktop || view === 'stage'
-  const transition = reduced ? { duration: 0 } : composePane.transition
+  const transition = reducedTransition(composePane.transition, reduced)
 
   return (
     <div className={styles.shell}>

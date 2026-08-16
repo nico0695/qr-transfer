@@ -1,5 +1,22 @@
-import type { Easing, Transition } from 'motion/react'
+import type { Easing, Target, Transition } from 'motion/react'
 import type { MotionVariant } from './reducedMotion'
+
+/** Shared fade/slide-up offset — how far ResultPanel and each SummaryGrid cell travel on enter. */
+const FADE_SLIDE_DISTANCE = 8
+const FADE_SLIDE_HIDDEN: Target = { opacity: 0, y: FADE_SLIDE_DISTANCE }
+const FADE_SLIDE_SHOWN: Target = { opacity: 1, y: 0 }
+
+/** How far off-screen the inactive compose/stage pane rests. */
+const PANE_OFFSET = 24
+
+/** SummaryGrid's per-cell stagger delay. */
+const STAGGER_CHILDREN = 0.04
+
+/** Dialog's modal-variant scale range. */
+const MODAL_SCALE_HIDDEN = 0.96
+
+/** Feedback's default presence scale range. */
+const PRESENCE_SCALE_HIDDEN = 0.98
 
 function cssMs(name: string, fallback: number): number {
   const raw = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
@@ -35,9 +52,9 @@ function sheetTransition(): Transition {
 /** ResultPanel — a scan/receive result reads better sliding up than scaling in. */
 export function fadeSlideUp(): MotionVariant {
   return {
-    initial: { opacity: 0, y: 8 },
-    animate: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: 8 },
+    initial: FADE_SLIDE_HIDDEN,
+    animate: FADE_SLIDE_SHOWN,
+    exit: FADE_SLIDE_HIDDEN,
     transition: baseTransition(),
   }
 }
@@ -47,9 +64,9 @@ export function sheetEnter(kind: 'modal' | 'sheet'): MotionVariant {
   const transition = sheetTransition()
   if (kind === 'modal') {
     return {
-      initial: { opacity: 0, scale: 0.96 },
+      initial: { opacity: 0, scale: MODAL_SCALE_HIDDEN },
       animate: { opacity: 1, scale: 1 },
-      exit: { opacity: 0, scale: 0.96 },
+      exit: { opacity: 0, scale: MODAL_SCALE_HIDDEN },
       transition,
     }
   }
@@ -74,24 +91,23 @@ export function paneSwitch(direction: 1 | -1): {
 } {
   return {
     active: { opacity: 1, x: 0 },
-    inactive: { opacity: 0, x: direction * 24 },
+    inactive: { opacity: 0, x: direction * PANE_OFFSET },
     transition: baseTransition(),
   }
 }
 
 /** SummaryGrid stagger — container drives `staggerChildren`, item is the per-cell fade/slide. */
 export function staggerList(): { container: MotionVariant; item: MotionVariant } {
-  const transition = baseTransition()
   return {
     container: {
       initial: {},
       animate: {},
-      transition: { staggerChildren: 0.04 },
+      transition: { staggerChildren: STAGGER_CHILDREN },
     },
     item: {
-      initial: { opacity: 0, y: 8 },
-      animate: { opacity: 1, y: 0 },
-      transition,
+      initial: FADE_SLIDE_HIDDEN,
+      animate: FADE_SLIDE_SHOWN,
+      transition: baseTransition(),
     },
   }
 }
@@ -99,9 +115,9 @@ export function staggerList(): { container: MotionVariant; item: MotionVariant }
 /** Feedback's default mount/unmount preset. */
 export function presence(): MotionVariant {
   return {
-    initial: { opacity: 0, scale: 0.98 },
+    initial: { opacity: 0, scale: PRESENCE_SCALE_HIDDEN },
     animate: { opacity: 1, scale: 1 },
-    exit: { opacity: 0, scale: 0.98 },
+    exit: { opacity: 0, scale: PRESENCE_SCALE_HIDDEN },
     transition: baseTransition(),
   }
 }

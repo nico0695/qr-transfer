@@ -1,4 +1,3 @@
-import { AnimatePresence } from 'motion/react'
 import { createPortal } from 'react-dom'
 import { useStageSlot } from '../app/AppShell'
 import { CameraScanner } from '../app/OpticalStage/CameraScanner'
@@ -57,20 +56,17 @@ export function TransferScanner() {
           : t[state.key]
     return (
       <>
-        <AnimatePresence>
-          <Feedback
-            key="error"
-            level="error"
-            title={message}
-            actions={
-              recoverable && (
-                <Button variant="secondary" size="sm" onClick={restart}>
-                  {t.tryAgain}
-                </Button>
-              )
-            }
-          />
-        </AnimatePresence>
+        <Feedback
+          level="error"
+          title={message}
+          actions={
+            recoverable && (
+              <Button variant="secondary" size="sm" onClick={restart}>
+                {t.tryAgain}
+              </Button>
+            )
+          }
+        />
         {debug}
       </>
     )

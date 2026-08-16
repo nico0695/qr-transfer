@@ -27,13 +27,10 @@ export function TransferSummary({ state, settings }: TransferSummaryProps) {
   }
   if (state.status === 'error') {
     return (
-      <AnimatePresence>
-        <Feedback
-          key="error"
-          level="error"
-          title={state.error === 'sourceTooLarge' ? t.sourceTooLargeError : t.readFailedError}
-        />
-      </AnimatePresence>
+      <Feedback
+        level="error"
+        title={state.error === 'sourceTooLarge' ? t.sourceTooLargeError : t.readFailedError}
+      />
     )
   }
 
