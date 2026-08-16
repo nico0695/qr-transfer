@@ -164,7 +164,9 @@ terminates the decode worker.
   frames use `scale: 6` PNGs with `image-rendering: pixelated`.
 - **Theming**: light palette on `:root` and dark on `:root[data-theme='dark']`, all CSS variables
   (including the CodeMirror highlight colors). Initial theme follows `prefers-color-scheme`; initial
-  language, `navigator.language`.
+  language, `navigator.language`. A design-system refactor (CSS Modules, token split, reusable
+  primitives) is planned — see [`frontend-architecture.md`](./frontend-architecture.md) for the
+  standard to follow.
 - **Almost no persistence**: content lives only in memory (draft, file, speed survive only while
   the Large Transfer section is mounted); the sole stored value is the preferred transfer profile.
 - **Content safety**: scanned/received text is stored as a string and rendered as plain text or as
@@ -224,3 +226,6 @@ animated-QR pipeline implemented as pure, tested modules in `src/lib/transfer/`,
 a continuous-scan receiver that verifies integrity before showing anything. Strings go in
 `i18n.ts`, styles in the CSS variables, camera helpers in `lib/camera.ts`, and byte/protocol logic
 never lives inside React components.
+
+For the visual side of the app — every screen and UI state, screenshotted in desktop/mobile and
+light/dark for a design handoff — see the [Design Catalog](design/README.md).

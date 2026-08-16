@@ -15,7 +15,8 @@ your device (the only thing stored locally is your preferred transfer profile).
   [Large Transfer](docs/large-transfer.md).
 
 Documentation: [Technical Overview](docs/technical-overview.md) ·
-[Transfer Flow](docs/qr-transfer-flow.md) · [Large Transfer](docs/large-transfer.md)
+[Transfer Flow](docs/qr-transfer-flow.md) · [Large Transfer](docs/large-transfer.md) ·
+[Design Catalog](docs/design/README.md)
 
 ## Requirements
 

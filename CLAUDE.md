@@ -8,7 +8,8 @@ QR Transfer: static SPA (Vite + React 19 + strict TypeScript + plain CSS) that t
 files between devices optically (screen → camera). No backend, no network requests, no content
 persistence — by design. The **only** thing persisted is the preferred transfer profile
 (`src/lib/settingsStorage.ts`, `localStorage`); never text, files or received content. Docs live
-in `docs/` (`technical-overview.md`, `qr-transfer-flow.md`, `large-transfer.md`).
+in `docs/` (`technical-overview.md`, `qr-transfer-flow.md`, `large-transfer.md`,
+`frontend-architecture.md`).
 
 ## Commands
 
@@ -94,7 +95,12 @@ code.
 
 ### Styling
 
-Single `src/styles.css` with CSS variables; light on `:root`, dark on `:root[data-theme='dark']`
-(includes `--cm-*` CodeMirror colors). Reuse existing classes (`.button`, `.button-small`,
-`.button-primary`, `.tabs`, `.panel`, `.hint`, `.error`, `.actions`) — no new design system,
-gradients or component libraries. Breakpoint 760 px.
+A design-system refactor is underway per [`docs/frontend-architecture.md`](docs/frontend-architecture.md) —
+**CSS Modules** (no Tailwind, no CSS-in-JS, no Radix by default), design tokens split under
+`src/styles/tokens/`, reusable primitives under `src/components/primitives/` (folder-per-component:
+`Component.tsx` + `.module.css` + `index.ts`, extra files only when needed), animations in native
+CSS only, respecting `prefers-reduced-motion`. Read that doc before adding new UI. Until primitives
+land, the app still runs on the legacy single `src/styles.css` with CSS variables; light on
+`:root`, dark on `:root[data-theme='dark']` (includes `--cm-*` CodeMirror colors). Reuse existing
+classes (`.button`, `.button-small`, `.button-primary`, `.tabs`, `.panel`, `.hint`, `.error`,
+`.actions`) rather than inventing new global ones. Breakpoint 760 px.
