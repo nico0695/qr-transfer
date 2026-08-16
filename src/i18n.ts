@@ -95,6 +95,7 @@ const en = {
   // Settings
   settings: 'Settings',
   settingsTitle: 'Transfer settings',
+  settingsDescription: 'Choose a profile — faster transfers need a steadier camera and screen.',
   profileLabel: 'Profile',
   profileNames: { balanced: 'Balanced', reliable: 'Reliable', fast: 'Fast' },
   profileDescriptions: {
@@ -228,6 +229,8 @@ const es: Messages = {
   // Settings
   settings: 'Ajustes',
   settingsTitle: 'Ajustes de transferencia',
+  settingsDescription:
+    'Elegí un perfil — las transferencias más rápidas necesitan una cámara y pantalla más estables.',
   profileLabel: 'Perfil',
   profileNames: { balanced: 'Equilibrado', reliable: 'Confiable', fast: 'Rápido' },
   profileDescriptions: {

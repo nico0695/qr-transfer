@@ -49,6 +49,7 @@ export function SettingsSheet({ open, settings, onChange, onClose }: SettingsShe
         {t.settingsTitle}
       </Dialog.Header>
       <Dialog.Body>
+        <p className={styles.description}>{t.settingsDescription}</p>
         <fieldset className={styles.profileList}>
           <legend className={styles.legend}>{t.profileLabel}</legend>
           {PROFILE_IDS.map((id) => (
