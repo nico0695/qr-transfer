@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ResultPanel } from '../app/ResultPanel'
 import { Button } from '../primitives/Button'
 import buttonStyles from '../primitives/Button/Button.module.css'
@@ -49,6 +49,7 @@ async function toPngBlob(blob: Blob): Promise<Blob> {
 export function ReceivedFile({ file, onScanAnother }: ReceivedFileProps) {
   const t = useI18n()
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle')
+  const copyTimerRef = useRef<number | undefined>(undefined)
   const isImage = file.mimeType.startsWith('image/')
   const downloadName = useMemo(() => sanitizeFilename(file.filename), [file.filename])
   const blob = useMemo(
@@ -66,6 +67,8 @@ export function ReceivedFile({ file, onScanAnother }: ReceivedFileProps) {
     }
   }, [blob])
 
+  useEffect(() => () => window.clearTimeout(copyTimerRef.current), [])
+
   const copyImage = async () => {
     try {
       const png = await toPngBlob(blob)
@@ -74,7 +77,8 @@ export function ReceivedFile({ file, onScanAnother }: ReceivedFileProps) {
     } catch {
       setCopyState('failed')
     }
-    window.setTimeout(() => setCopyState('idle'), 2000)
+    window.clearTimeout(copyTimerRef.current)
+    copyTimerRef.current = window.setTimeout(() => setCopyState('idle'), 2000)
   }
 
   return (
