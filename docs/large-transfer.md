@@ -303,10 +303,12 @@ scanning is reliable, **Fast** halves the loop time. Requires a browser with `Co
   `localStorage` (the only persisted values).
 - `src/components/large-transfer/` — UI: `LargeTransfer` (Send/Receive, holds source, draft, file
   and settings), `SendFlow`, `SourceSelector`, `LargeTextEditor` + `codemirrorSetup.ts`,
-  `usePreparedPayload.ts`, `TransferSummary`, `TransferSettings`, `AnimatedQR`, `qrFrames.ts`,
-  `TransferScanner`, `ReceivedContent`, `ReceivedFile`.
+  `usePreparedPayload.ts`, `TransferSummary`, `AnimatedQR`, `qrFrames.ts`, `TransferScanner`,
+  `ReceivedContent`, `ReceivedFile`.
 - `src/components/app/{Dropzone,FileCard,SummaryGrid}/` — File-source picker/card and the generic
   key/value grid `TransferSummary` renders into.
+- `src/components/app/{SettingsSheet,ProfileOption}/` — the transfer-settings `Dialog` (modal/sheet
+  come from the `Dialog` primitive) and its profile radio cards.
 - `src/lib/scan/` — receiver capture pipeline, no React:
   - `roi.ts` — `computeRoi` (crop and decode size in camera pixels), `pixelsPerModule`.
   - `captureLoop.ts` — camera, frame loop and pixel handling for the WASM engine.

@@ -1,0 +1,57 @@
+.profileList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.legend {
+  padding: 0;
+  margin: 0 0 var(--sp-2);
+  font: var(--fs-label) var(--font-ui);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--text-faint);
+}
+
+.advanced {
+  margin-top: var(--sp-4);
+}
+
+.advancedSummary {
+  font: var(--fs-ui) var(--font-ui);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.advancedField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+  font: var(--fs-label) var(--font-ui);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--text-faint);
+}
+
+.rangeRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.rangeRow > :global(input[type='range']) {
+  flex: 1;
+}
+
+.rangeValue {
+  min-width: 7rem;
+  text-align: right;
+  font: var(--fs-data) var(--font-mono);
+  color: var(--text-faint);
+  text-transform: none;
+  letter-spacing: normal;
+}

@@ -4,6 +4,7 @@ import { useStageSlot } from '../app/AppShell'
 import { Dropzone } from '../app/Dropzone'
 import { FileCard } from '../app/FileCard'
 import { QrDisplay } from '../app/OpticalStage/QrDisplay'
+import { SettingsSheet } from '../app/SettingsSheet'
 import { Button } from '../primitives/Button'
 import { Feedback } from '../primitives/Feedback'
 import { Icon } from '../primitives/Icon'
@@ -18,7 +19,6 @@ import { AnimatedQR } from './AnimatedQR'
 import { LargeTextEditor } from './LargeTextEditor'
 import { renderFrameImages } from './qrFrames'
 import { SourceSelector } from './SourceSelector'
-import { TransferSettings } from './TransferSettings'
 import { TransferSummary } from './TransferSummary'
 import { usePreparedPayload, useTextBytes, type SourceKind } from './usePreparedPayload'
 import styles from './SendFlow.module.css'
@@ -164,7 +164,7 @@ export function SendFlow({
           {t.startTransfer}
         </Button>
       </div>
-      <TransferSettings
+      <SettingsSheet
         open={settingsOpen}
         settings={settings}
         onChange={onSettingsChange}

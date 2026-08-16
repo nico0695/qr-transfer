@@ -2,7 +2,7 @@
 
 > Compose (text or one file) → review a summary → optional settings → start → animated QR loop.
 > Source: `src/components/large-transfer/{SendFlow,SourceSelector,LargeTextEditor,TransferSummary,
-TransferSettings,AnimatedQR}.tsx`, `src/components/app/{Dropzone,FileCard,SummaryGrid}/`.
+AnimatedQR}.tsx`, `src/components/app/{Dropzone,FileCard,SummaryGrid,SettingsSheet,ProfileOption}/`.
 
 ## Table of Contents
 
@@ -97,8 +97,13 @@ the full-panel "preparing" screen below) — usually too brief to catch for smal
 
 ## Settings
 
-Opened via the "Settings" button. A native `<dialog>`, centered on desktop and a bottom sheet
-below 760 px. Three presets (radio buttons) plus one Advanced override (frame duration).
+Opened via the "Settings" button, which shows the active profile name next to the icon (e.g.
+"Settings · Balanced"). `components/app/SettingsSheet/` composes the `Dialog` primitive — modal
+centered on desktop (≥900px), a bottom sheet with safe-area padding below that. Three profiles as
+`ProfileOption` radio cards (custom 17px indicator, name + `--font-mono` spec line built from
+`profiles.ts` — e.g. "300 ms · 550 B · EC M" — plus a description; the checked card's border turns
+`--accent`), collapsible "Advanced" with an `Input.Range` snapped to `FRAME_MS_PRESETS` (never an
+arbitrary value) overriding just the frame duration.
 
 | Preset             | Frame  | Chunk size | Error correction |
 | ------------------ | ------ | ---------- | ---------------- |
@@ -115,8 +120,8 @@ below 760 px. Three presets (radio buttons) plus one Advanced override (frame du
 | Advanced open      | Expand "Advanced"        | ![](../screens/40-large-transfer-settings/03-dialog-advanced-open.desktop.light.png)     | ![](../screens/40-large-transfer-settings/03-dialog-advanced-open.mobile.light.png)     |
 | Advanced — dark    |                          | ![](../screens/40-large-transfer-settings/03-dialog-advanced-open.desktop.dark.png)      | ![](../screens/40-large-transfer-settings/03-dialog-advanced-open.mobile.dark.png)      |
 
-Note: on mobile the dialog becomes a bottom sheet (`@media (max-width: 759px)` in `styles.css`) —
-worth a deliberate design pass rather than treating it as the desktop dialog squeezed narrower.
+Note: the modal/sheet breakpoint, backdrop blur, and open/close motion all come from the `Dialog`
+primitive itself (Stage 2) — this flow only supplies the settings-specific content.
 
 ## Preparing and the animated QR
 
