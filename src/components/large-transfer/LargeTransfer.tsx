@@ -1,52 +1,36 @@
 import { useState } from 'react'
-import { useI18n } from '../../i18n'
-import { loadPreferredProfile, savePreferredProfile } from '../../lib/settingsStorage'
+import type { AppRole } from '../app/AppHeader'
+import { usePreferences } from '../../store/preferences'
 import { DEFAULT_SETTINGS, type TransferSettings } from '../../lib/transfer/profiles'
 import { SendFlow } from './SendFlow'
 import { TransferScanner } from './TransferScanner'
 import type { SourceKind } from './usePreparedPayload'
+import styles from './LargeTransfer.module.css'
 
-type Direction = 'send' | 'receive'
+export interface LargeTransferProps {
+  direction: AppRole
+}
 
-export default function LargeTransfer() {
-  const t = useI18n()
-  const [direction, setDirection] = useState<Direction>('send')
-  // Kept here so switching Send↔Receive or Text↔File does not lose the draft, file or settings.
+export default function LargeTransfer({ direction }: LargeTransferProps) {
+  // Kept here so switching Text↔File does not lose the draft, file or settings; Send↔Receive
+  // itself is now App's `role`, shared with Quick QR (docs/DESIGN_SYSTEM.md §5.1).
   const [source, setSource] = useState<SourceKind>('text')
   const [text, setText] = useState('')
   const [file, setFile] = useState<File | null>(null)
+  const storedProfile = usePreferences((s) => s.profile)
+  const setStoredProfile = usePreferences((s) => s.setProfile)
   const [settings, setSettings] = useState<TransferSettings>(() => ({
     ...DEFAULT_SETTINGS,
-    profile: loadPreferredProfile() ?? DEFAULT_SETTINGS.profile,
+    profile: storedProfile,
   }))
 
   const updateSettings = (next: TransferSettings) => {
     setSettings(next)
-    if (next.profile !== settings.profile) savePreferredProfile(next.profile)
+    if (next.profile !== settings.profile) setStoredProfile(next.profile)
   }
 
   return (
-    <div className="large-transfer">
-      <div className="tabs" role="tablist" aria-label={t.navLarge}>
-        <button
-          type="button"
-          role="tab"
-          className="tab"
-          aria-selected={direction === 'send'}
-          onClick={() => setDirection('send')}
-        >
-          {t.send}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          className="tab"
-          aria-selected={direction === 'receive'}
-          onClick={() => setDirection('receive')}
-        >
-          {t.receive}
-        </button>
-      </div>
+    <div className={styles.wrapper}>
       {direction === 'send' ? (
         <SendFlow
           source={source}

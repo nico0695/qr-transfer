@@ -1,6 +1,9 @@
 import { useState } from 'react'
+import { Button } from '../primitives/Button'
+import { cx } from '../../lib/cx'
 import { copyText } from '../../lib/clipboard'
 import { SCAN_FIELDS, formatScanReport, type ScanStatsSnapshot } from '../../lib/transfer/scanStats'
+import styles from './ScanDebug.module.css'
 
 /**
  * Diagnostics for tuning the optical channel, shown only with `?debug=1`. Labels are fixed
@@ -17,19 +20,19 @@ export function ScanDebug({ stats }: { stats: ScanStatsSnapshot }) {
   }
 
   return (
-    <div className="scan-debug">
-      <dl>
+    <div className={styles.debug}>
+      <dl className={styles.list}>
         {SCAN_FIELDS.map((field) => (
-          <div key={field.label} data-field={field.label}>
+          <div key={field.label} className={cx(field.label === 'sightings' && styles.sightings)}>
             <dt>{field.label}</dt>
             <dd>{field.render(stats)}</dd>
           </div>
         ))}
       </dl>
-      <div className="actions actions-center">
-        <button type="button" className="button button-small" onClick={() => void copy()}>
+      <div className={styles.actions}>
+        <Button variant="secondary" size="sm" onClick={() => void copy()}>
           {copied === 'ok' ? 'copied' : copied === 'failed' ? 'copy failed' : 'copy report'}
-        </button>
+        </Button>
       </div>
     </div>
   )

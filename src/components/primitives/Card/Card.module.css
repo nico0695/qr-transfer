@@ -1,0 +1,37 @@
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+}
+
+.dashed {
+  border-style: dashed;
+  border-color: var(--line);
+}
+
+.radius-control {
+  border-radius: var(--r-control);
+}
+
+.radius-card {
+  border-radius: var(--r-card);
+}
+
+.radius-stage {
+  border-radius: var(--r-stage);
+}
+
+.padding-none {
+  padding: 0;
+}
+
+.padding-sm {
+  padding: var(--sp-3);
+}
+
+.padding-md {
+  padding: var(--sp-4);
+}
+
+.padding-lg {
+  padding: var(--sp-6);
+}

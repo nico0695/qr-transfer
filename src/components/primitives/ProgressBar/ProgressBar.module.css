@@ -1,0 +1,25 @@
+.track {
+  width: 100%;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: var(--r-pill);
+  transition: width var(--duration-base) var(--easing-standard);
+}
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.label {
+  font: var(--fs-data) var(--font-mono);
+  color: var(--text-muted);
+}

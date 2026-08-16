@@ -1,0 +1,109 @@
+/* Values: docs/DESIGN_SYSTEM.md §2.1. Dark is the default (bare :root); light overrides via
+   [data-theme='light']. Theme-invariant tokens (accent, optical channel, focus, CodeMirror
+   aliases) live in one shared block below instead of being duplicated in both. */
+
+:root {
+  color-scheme: dark;
+
+  /* Neutrals */
+  --bg: #050505;
+  --surface: #111111;
+  --surface-2: #161616;
+  --surface-active: #242424;
+  --line: #333333;
+  --line-soft: #222222;
+  --text-strong: #ffffff;
+  --text: #ebebeb;
+  --text-muted: #888888;
+  --text-faint: #666666;
+
+  /* Status (fixed — never follow the accent) */
+  --ok: #4ade80;
+  --ok-bg: rgba(74, 222, 128, 0.07);
+  --ok-line: rgba(74, 222, 128, 0.3);
+  --warn: #fbbf24;
+  --warn-bg: rgba(251, 191, 36, 0.07);
+  --warn-line: rgba(251, 191, 36, 0.28);
+  --danger: #f87171;
+  --danger-bg: rgba(248, 113, 113, 0.1);
+  --danger-line: rgba(248, 113, 113, 0.3);
+
+  /* CodeMirror syntax highlighting (Markdown/JSON) — not aliases of the palette above, so unlike
+     the rest of --cm-* they need their own per-theme values. */
+  --cm-heading: #8fb8ee;
+  --cm-link: #7ab3e8;
+  --cm-code: #e6b566;
+  --cm-property: #c79bea;
+  --cm-string: #8fd4a6;
+  --cm-number: #f0a07a;
+  --cm-keyword: #e39ac8;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --bg: #f4f3f0;
+  --surface: #ffffff;
+  --surface-2: #faf9f6;
+  --surface-active: #efede7;
+  --line: #dedcd6;
+  --line-soft: #e8e6e1;
+  --text-strong: #050505;
+  --text: #1a1917;
+  --text-muted: #5c5a55;
+  --text-faint: #8a8780;
+
+  --ok: #15803d;
+  --ok-bg: rgba(21, 128, 61, 0.06);
+  --ok-line: rgba(21, 128, 61, 0.28);
+  --warn: #a16207;
+  --warn-bg: rgba(161, 98, 7, 0.06);
+  --warn-line: rgba(161, 98, 7, 0.22);
+  --danger: #b91c1c;
+  --danger-bg: rgba(185, 28, 28, 0.06);
+  --danger-line: rgba(185, 28, 28, 0.22);
+
+  --cm-heading: #1f4b8f;
+  --cm-link: #3b6ea5;
+  --cm-code: #7a4d00;
+  --cm-property: #6b2f8f;
+  --cm-string: #1a6b3a;
+  --cm-number: #a13c1a;
+  --cm-keyword: #8a2b6b;
+}
+
+/* Theme-invariant: same value in both themes, several expressed via var() onto the
+   theme-dependent tokens above so they still resolve correctly per theme. */
+:root {
+  /* Accent (piedra, fixed for this pass — see DESIGN_SYSTEM.md §3) */
+  --accent: #aaaaad;
+  --accent-hover: #8f8f92;
+  --accent-soft: rgba(170, 170, 173, 0.12);
+  --accent-line: rgba(170, 170, 173, 0.4);
+  --on-accent: #050505;
+
+  /* Optical channel — fixed in both themes */
+  --qr-ink: #050505;
+  --qr-paper: #ffffff;
+  --qr-quiet: 14px;
+  --scan-guide: var(--accent);
+  --scan-mask: rgba(5, 5, 5, 0.55);
+  --overlay-scrim: rgba(5, 5, 5, 0.72);
+
+  /* Focus */
+  --focus-ring: 2px solid var(--accent);
+  --focus-offset: 2px;
+
+  /* CodeMirror (editor chrome, not syntax highlighting) — direct aliases of the palette above */
+  --cm-bg: var(--surface);
+  --cm-text: var(--text);
+  --cm-caret: var(--accent);
+  --cm-selection: rgba(170, 170, 173, 0.25);
+  --cm-gutter-bg: var(--surface-2);
+  --cm-gutter-text: var(--text-faint);
+  --cm-line-active: var(--surface-2);
+  --cm-match: var(--warn-line);
+  --cm-match-selected: var(--warn);
+  --cm-bracket: var(--accent);
+  --cm-scrollbar: var(--line);
+}

@@ -8,6 +8,28 @@
       href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔳</text></svg>"
     />
     <title>QR Transfer</title>
+    <script>
+      // Sets data-theme before first paint so there's no flash of the wrong theme. Reads the
+      // Zustand `persist` store's key directly (src/store/preferences.ts, landing in Stage 3)
+      // rather than importing anything, since this has to run before any JS module loads.
+      // Falls back to prefers-color-scheme — same behavior App.tsx already had — if the key is
+      // absent or unparsable (first visit, private mode, or before Stage 3 ships).
+      ;(function () {
+        try {
+          var raw = window.localStorage.getItem('qr-transfer:prefs')
+          var theme = raw ? JSON.parse(raw).state.theme : null
+          if (theme !== 'light' && theme !== 'dark') {
+            theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+          }
+          document.documentElement.dataset.theme = theme
+        } catch {
+          document.documentElement.dataset.theme = window.matchMedia('(prefers-color-scheme: dark)')
+            .matches
+            ? 'dark'
+            : 'light'
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

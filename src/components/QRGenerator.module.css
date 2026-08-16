@@ -1,0 +1,9 @@
+.showStageButton {
+  align-self: flex-start;
+}
+
+@media (min-width: 900px) {
+  .showStageButton {
+    display: none;
+  }
+}

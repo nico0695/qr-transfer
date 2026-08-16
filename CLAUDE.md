@@ -6,9 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 QR Transfer: static SPA (Vite + React 19 + strict TypeScript + plain CSS) that transfers text and
 files between devices optically (screen → camera). No backend, no network requests, no content
-persistence — by design. The **only** thing persisted is the preferred transfer profile
-(`src/lib/settingsStorage.ts`, `localStorage`); never text, files or received content. Docs live
-in `docs/` (`technical-overview.md`, `qr-transfer-flow.md`, `large-transfer.md`).
+persistence — by design. Persistence is UI preferences only — theme, language, last-used transfer
+profile — **never** text, files or received content. It lives in a single Zustand `persist`
+store, `src/store/preferences.ts` (key `qr-transfer:prefs`), the only thing allowed to touch
+`localStorage`. Docs live in `docs/` (`technical-overview.md`, `qr-transfer-flow.md`,
+`large-transfer.md`, `frontend-architecture.md`, `DESIGN_SYSTEM.md`, `specs/design-system-refactor/`).
 
 ## Commands
 
@@ -29,11 +31,19 @@ that also exports a component (see `usePreparedPayload.ts` next to `SendFlow.tsx
 
 ## Architecture
 
-Two sections chosen by a navbar in `App.tsx` (`NavMenu`): **Quick QR** (tabs Generate/Scan —
-`QRGenerator`, `QRScanner`) and **Large Transfer** (`components/large-transfer/`, lazy-loaded).
-`App` owns section/mode/theme/lang; strings come from the typed es/en dictionary in `src/i18n.ts`
-via `useI18n()` — every user-visible string must be added to **both** `en` and `es` (the `es`
-object is typed as `Messages`, so TS flags omissions).
+Two `mode`s chosen by `Tabs` in `AppHeader` (`src/components/app/AppHeader/`): **Quick QR**
+(`QRGenerator`, `QRScanner`) and **Large Transfer** (`components/large-transfer/`, lazy-loaded).
+A shared `role: 'send' | 'receive'` — also owned by `App.tsx`, controlled by a `SegmentedControl`
+in the same header — picks which of the two components renders per mode (`role=send` →
+`QRGenerator` / `SendFlow`; `role=receive` → `QRScanner` / `TransferScanner`); it replaced Quick
+QR's old Generate/Scan tabs and Large Transfer's own internal Send/Receive tabs, which no longer
+exist (`NavMenu.tsx`/`ModeTabs.tsx` are deleted). Every screen renders inside `AppShell`'s
+`compose`/`stage` panes (`src/components/app/AppShell/`); each screen's own QR-display/camera
+portion portals into `stage` via `useStageSlot()` (Stages 5–8), keeping one component instance —
+and one camera-lifecycle or frame-loop hook — instead of duplicating it across two. Strings come
+from the typed es/en dictionary in `src/i18n.ts` via `useI18n()` — every user-visible string must
+be added to **both** `en` and `es` (the `es` object is typed as `Messages`, so TS flags
+omissions). See `DESIGN_SYSTEM.md` §5.1/§5.2/§6.1 and the macro plan's Stage 4.
 
 ### Large Transfer
 
@@ -94,7 +104,24 @@ code.
 
 ### Styling
 
-Single `src/styles.css` with CSS variables; light on `:root`, dark on `:root[data-theme='dark']`
-(includes `--cm-*` CodeMirror colors). Reuse existing classes (`.button`, `.button-small`,
-`.button-primary`, `.tabs`, `.panel`, `.hint`, `.error`, `.actions`) — no new design system,
-gradients or component libraries. Breakpoint 760 px.
+The design-system refactor described in
+[`docs/specs/design-system-refactor/macro-plan.md`](docs/specs/design-system-refactor/macro-plan.md)
+has shipped in full (Stages 0–10) — read
+[`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) (token values, component specs) and
+[`docs/frontend-architecture.md`](docs/frontend-architecture.md) (folder/CSS conventions) before
+touching any UI.
+
+**CSS Modules** (no Tailwind, no CSS-in-JS, no Radix by default), design tokens split under
+`src/styles/tokens/`, reusable primitives under `src/components/primitives/` and app-scoped
+components under `src/components/app/` (folder-per-component: `Component.tsx` + `.module.css` +
+`index.ts`, extra files only when needed), CSS for micro-interactions + a `motion` kit
+(`src/lib/motion/`) for layout/presence transitions (Dialog, Feedback/ResultPanel, SummaryGrid,
+the mobile pane switch), self-hosted Inter + JetBrains Mono
+variable fonts, `lucide-react` icons, native `<dialog>` for the settings sheet/modal, a single
+**900px** breakpoint. Every color/spacing/radius/duration must resolve through a token — no
+hardcoded hex or raw px in component CSS (layout-only numbers — grid fractions, `minmax`,
+viewport-relative sizes — are fine).
+
+`src/styles.css` (the legacy global stylesheet) is gone — deleted in Stage 9 along with every class
+it defined. There is no global stylesheet to fall back to for new UI; every component gets its own
+CSS Module.

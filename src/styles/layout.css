@@ -1,0 +1,11 @@
+/* Global rules the shell needs but that aren't component-scoped — docs/DESIGN_SYSTEM.md §1: no
+   page scroll for the primary task. AppShell (src/components/app/AppShell) does the actual
+   layout in its own CSS Module; this is only the belt-and-suspenders reset so nothing above it
+   in the tree can introduce a scrollbar. */
+
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}

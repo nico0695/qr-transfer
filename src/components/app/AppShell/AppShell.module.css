@@ -1,0 +1,102 @@
+.shell {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  overflow: hidden;
+}
+
+@media (min-width: 900px) {
+  .body {
+    grid-template-columns: 1.35fr minmax(400px, var(--stage-max));
+    gap: var(--panel-gap);
+    max-width: var(--content-max);
+    margin-inline: auto;
+    width: 100%;
+    padding-inline: var(--sp-6);
+  }
+}
+
+.compose,
+.stage {
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--sp-5);
+}
+
+@media (min-width: 900px) {
+  .compose,
+  .stage {
+    padding: var(--sp-6) 0;
+  }
+}
+
+/* Below 900px only one pane is active at a time — the mobile view switcher toggles which. Both
+   stay in the DOM (the stage pane is a portal target that must not remount) and occupy the same
+   box; the inactive one is pushed off pointer/AT interaction by JS (`aria-hidden`/`inert`) while
+   `motion` slides it out of view. Hero layouts use the same stacking at every width. */
+@media (max-width: 899px) {
+  .body {
+    position: relative;
+  }
+
+  .compose,
+  .stage {
+    position: absolute;
+    inset: 0;
+  }
+
+  .body[data-view='compose'] .stage {
+    pointer-events: none;
+  }
+
+  .body[data-view='stage'] .compose {
+    pointer-events: none;
+  }
+}
+
+@media (min-width: 900px) {
+  .body[data-layout='compose-hero'],
+  .body[data-layout='stage-hero'] {
+    position: relative;
+    grid-template-columns: 1fr;
+  }
+
+  .body[data-layout='compose-hero'] .compose,
+  .body[data-layout='compose-hero'] .stage,
+  .body[data-layout='stage-hero'] .compose,
+  .body[data-layout='stage-hero'] .stage {
+    position: absolute;
+    inset: 0;
+  }
+}
+
+.body[data-layout='compose-hero'] .compose {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-width: var(--compose-max);
+  margin-inline: auto;
+  width: 100%;
+}
+
+.body[data-layout='compose-hero'] .stage,
+.body[data-layout='stage-hero'] .compose {
+  pointer-events: none;
+}
+
+.body[data-layout='stage-hero'] .stage {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-width: var(--compose-max);
+  margin-inline: auto;
+  width: 100%;
+}

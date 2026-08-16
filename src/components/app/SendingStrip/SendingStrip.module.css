@@ -1,0 +1,29 @@
+.strip {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex: none;
+  width: 100%;
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.text {
+  min-width: 0;
+  flex: 1;
+}
+
+.title {
+  margin: 0;
+  font: var(--fs-ui) var(--font-ui);
+  color: var(--text-strong);
+}
+
+.meta {
+  margin: 0;
+  font: var(--fs-data) var(--font-mono);
+  color: var(--text-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

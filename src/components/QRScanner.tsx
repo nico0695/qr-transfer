@@ -1,6 +1,13 @@
+import { AnimatePresence } from 'motion/react'
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Html5Qrcode, type CameraDevice } from 'html5-qrcode'
-import { CopyButton } from './CopyButton'
+import { useStageSlot } from './app/AppShell'
+import { CameraScanner } from './app/OpticalStage/CameraScanner'
+import { ResultPanel } from './app/ResultPanel'
+import { Button } from './primitives/Button'
+import { Feedback } from './primitives/Feedback'
+import { useCopy } from '../hooks/useCopy'
 import { useI18n } from '../i18n'
 import {
   DEFAULT_CAMERA,
@@ -18,12 +25,14 @@ type ErrorKey = CameraErrorKey | 'errorEmptyQr'
 
 export default function QRScanner() {
   const t = useI18n()
+  const stageNode = useStageSlot()
   const [cameras, setCameras] = useState<CameraDevice[]>([])
   const [selection, setSelection] = useState<CameraSelection | null>(null)
   const [status, setStatus] = useState<Status>('starting')
   const [result, setResult] = useState('')
   const [errorKey, setErrorKey] = useState<ErrorKey | null>(null)
   const [session, setSession] = useState(0)
+  const { feedback, copy } = useCopy()
 
   useEffect(() => {
     let cancelled = false
@@ -105,49 +114,55 @@ export default function QRScanner() {
   const showCamera = status === 'starting' || status === 'scanning'
 
   return (
-    <section className="panel scanner">
-      {showCamera && cameras.length > 1 && (
-        <label className="field-label camera-select">
-          {t.cameraLabel}
-          <select
-            className="select"
-            value={typeof selection === 'string' ? selection : ''}
-            onChange={(event) =>
-              setSelection(event.target.value === '' ? DEFAULT_CAMERA : event.target.value)
+    <>
+      <AnimatePresence mode="wait">
+        {status === 'error' && (
+          <Feedback
+            key="error"
+            level="error"
+            title={errorKey !== null ? t[errorKey] : ''}
+            actions={
+              <Button variant="secondary" size="sm" onClick={restart}>
+                {t.tryAgain}
+              </Button>
             }
-          >
-            <option value="">{t.cameraDefault}</option>
-            {cameras.map((camera) => (
-              <option key={camera.id} value={camera.id}>
-                {camera.label || camera.id}
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
-      <div id={REGION_ID} className="camera-region" hidden={!showCamera} />
-      {status === 'starting' && <p className="hint">{t.startingCamera}</p>}
-      {status === 'scanning' && <p className="hint">{t.scanHint}</p>}
-      {status === 'error' && (
-        <div className="result">
-          <p className="error">{errorKey !== null && t[errorKey]}</p>
-          <button type="button" className="button" onClick={restart}>
-            {t.tryAgain}
-          </button>
-        </div>
-      )}
-      {status === 'done' && (
-        <div className="result">
-          <p className="field-label">{t.scannedText}</p>
-          <pre className="result-text">{result}</pre>
-          <div className="actions">
-            <CopyButton text={result} />
-            <button type="button" className="button" onClick={restart}>
-              {t.scanAgain}
-            </button>
-          </div>
-        </div>
-      )}
-    </section>
+          />
+        )}
+        {status === 'done' && (
+          <ResultPanel
+            key="done"
+            title={t.scannedText}
+            text={result}
+            actions={
+              <>
+                <Button variant="secondary" size="sm" onClick={() => void copy(result)}>
+                  {feedback === 'copied' ? t.copied : feedback === 'failed' ? t.copyFailed : t.copy}
+                </Button>
+                <Button variant="secondary" size="sm" onClick={restart}>
+                  {t.scanAgain}
+                </Button>
+              </>
+            }
+          />
+        )}
+      </AnimatePresence>
+      {showCamera &&
+        stageNode &&
+        createPortal(
+          <CameraScanner
+            regionId={REGION_ID}
+            cameras={cameras}
+            selection={typeof selection === 'string' ? selection : ''}
+            onSelectionChange={(value) => setSelection(value === '' ? DEFAULT_CAMERA : value)}
+            cameraLabel={t.cameraLabel}
+            cameraDefaultLabel={t.cameraDefault}
+            starting={status === 'starting'}
+            startingLabel={t.startingCamera}
+            hint={t.scanHint}
+            liveLabel={t.liveLabel}
+          />,
+          stageNode,
+        )}
+    </>
   )
 }

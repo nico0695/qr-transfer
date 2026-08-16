@@ -3,11 +3,8 @@ import { createContext, useContext } from 'react'
 export type Lang = 'es' | 'en'
 
 const en = {
-  subtitle: 'Transfer text between devices using QR codes.',
   switchToDark: 'Switch to dark mode',
   switchToLight: 'Switch to light mode',
-  tabGenerate: 'Generate QR',
-  tabScan: 'Scan QR',
   textLabel: 'Text to transfer',
   textPlaceholder: 'Type or paste the text you want to transfer…',
   limitReached: ' — limit reached',
@@ -23,6 +20,7 @@ const en = {
   cameraDefault: 'Default (back camera)',
   startingCamera: 'Starting camera…',
   scanHint: 'Point the camera at a QR code.',
+  liveLabel: 'Live',
   scannedText: 'Scanned text',
   scanAgain: 'Scan again',
   tryAgain: 'Try again',
@@ -35,12 +33,18 @@ const en = {
   // Navigation
   navQuick: 'Quick QR',
   navLarge: 'Large Transfer',
-  navLabel: 'Sections',
   loadingLargeTransfer: 'Loading Large Transfer…',
+  // App shell — header controls, context label, mobile view switcher
+  ctxQuick: 'Quick QR',
+  ctxLarge: 'Large Transfer',
+  roleSend: 'Send',
+  roleReceive: 'Receive',
+  roleGroupLabel: 'Role',
+  limitChars: (n: number) => `Up to ${n} characters`,
+  viewCompose: 'Content',
+  viewStage: 'Stage',
+  viewGroupLabel: 'View',
   // Large transfer — common
-  send: 'Send',
-  receive: 'Receive',
-  back: 'Back',
   cancel: 'Cancel',
   close: 'Close',
   done: 'Done',
@@ -50,12 +54,6 @@ const en = {
   // Editor
   editorLabel: 'Text to transfer',
   editorPlaceholder: 'Paste or type a large text…',
-  undo: 'Undo',
-  redo: 'Redo',
-  find: 'Find',
-  wrap: 'Wrap',
-  wrapOn: 'Wrap: on',
-  wrapOff: 'Wrap: off',
   format: 'Format',
   formatAuto: 'Auto',
   formatText: 'Text',
@@ -71,12 +69,16 @@ const en = {
   sourceTooLargeError: 'This file is too large to transfer with QR codes.',
   readFailedError: 'The file could not be read.',
   preparing: 'Preparing transfer…',
+  sending: 'Sending',
+  sendingMetaText: (chars: string, frames: string, profile: string) =>
+    `${chars} chars · ${frames} frames · ${profile}`,
+  sendingMetaFile: (name: string, size: string, frames: string, profile: string) =>
+    `${name} · ${size} · ${frames} frames · ${profile}`,
   // Source
   sourceLabel: 'Source',
   sourceText: 'Text',
   sourceFile: 'File',
   dropFileHere: 'Drop a file here',
-  or: 'or',
   chooseFile: 'Choose file',
   oneFileHint: 'One file per transfer.',
   changeFile: 'Change',
@@ -97,6 +99,7 @@ const en = {
   // Settings
   settings: 'Settings',
   settingsTitle: 'Transfer settings',
+  settingsDescription: 'Choose a profile — faster transfers need a steadier camera and screen.',
   profileLabel: 'Profile',
   profileNames: { balanced: 'Balanced', reliable: 'Reliable', fast: 'Fast' },
   profileDescriptions: {
@@ -122,7 +125,6 @@ const en = {
   missingFrames: 'Missing frames',
   assembling: 'Verifying and decompressing…',
   transferComplete: 'Transfer complete',
-  verified: 'Verified',
   verificationFailed: 'Transfer could not be verified.',
   scanAgainHint: 'Scan again.',
   incompatibleSender:
@@ -138,11 +140,8 @@ const en = {
 export type Messages = typeof en
 
 const es: Messages = {
-  subtitle: 'Transferí texto entre dispositivos usando códigos QR.',
   switchToDark: 'Cambiar a modo oscuro',
   switchToLight: 'Cambiar a modo claro',
-  tabGenerate: 'Generar QR',
-  tabScan: 'Escanear QR',
   textLabel: 'Texto a transferir',
   textPlaceholder: 'Escribí o pegá el texto que querés transferir…',
   limitReached: ' — límite alcanzado',
@@ -158,6 +157,7 @@ const es: Messages = {
   cameraDefault: 'Predeterminada (cámara trasera)',
   startingCamera: 'Iniciando cámara…',
   scanHint: 'Apuntá la cámara a un código QR.',
+  liveLabel: 'En vivo',
   scannedText: 'Texto escaneado',
   scanAgain: 'Escanear de nuevo',
   tryAgain: 'Reintentar',
@@ -170,12 +170,18 @@ const es: Messages = {
   // Navigation
   navQuick: 'QR rápido',
   navLarge: 'Transferencia grande',
-  navLabel: 'Secciones',
   loadingLargeTransfer: 'Cargando transferencia grande…',
+  // App shell — header controls, context label, mobile view switcher
+  ctxQuick: 'QR rápido',
+  ctxLarge: 'Transferencia grande',
+  roleSend: 'Enviar',
+  roleReceive: 'Recibir',
+  roleGroupLabel: 'Rol',
+  limitChars: (n: number) => `Hasta ${n} caracteres`,
+  viewCompose: 'Contenido',
+  viewStage: 'Vista',
+  viewGroupLabel: 'Vista',
   // Large transfer — common
-  send: 'Enviar',
-  receive: 'Recibir',
-  back: 'Volver',
   cancel: 'Cancelar',
   close: 'Cerrar',
   done: 'Listo',
@@ -185,12 +191,6 @@ const es: Messages = {
   // Editor
   editorLabel: 'Texto a transferir',
   editorPlaceholder: 'Pegá o escribí un texto largo…',
-  undo: 'Deshacer',
-  redo: 'Rehacer',
-  find: 'Buscar',
-  wrap: 'Ajuste',
-  wrapOn: 'Ajuste: sí',
-  wrapOff: 'Ajuste: no',
   format: 'Formato',
   formatAuto: 'Auto',
   formatText: 'Texto',
@@ -206,12 +206,16 @@ const es: Messages = {
   sourceTooLargeError: 'El archivo es demasiado grande para transferir con códigos QR.',
   readFailedError: 'No se pudo leer el archivo.',
   preparing: 'Preparando transferencia…',
+  sending: 'Enviando',
+  sendingMetaText: (chars: string, frames: string, profile: string) =>
+    `${chars} car. · ${frames} códigos · ${profile}`,
+  sendingMetaFile: (name: string, size: string, frames: string, profile: string) =>
+    `${name} · ${size} · ${frames} códigos · ${profile}`,
   // Source
   sourceLabel: 'Origen',
   sourceText: 'Texto',
   sourceFile: 'Archivo',
   dropFileHere: 'Soltá un archivo acá',
-  or: 'o',
   chooseFile: 'Elegir archivo',
   oneFileHint: 'Un archivo por transferencia.',
   changeFile: 'Cambiar',
@@ -232,6 +236,8 @@ const es: Messages = {
   // Settings
   settings: 'Ajustes',
   settingsTitle: 'Ajustes de transferencia',
+  settingsDescription:
+    'Elegí un perfil — las transferencias más rápidas necesitan una cámara y pantalla más estables.',
   profileLabel: 'Perfil',
   profileNames: { balanced: 'Equilibrado', reliable: 'Confiable', fast: 'Rápido' },
   profileDescriptions: {
@@ -257,7 +263,6 @@ const es: Messages = {
   missingFrames: 'Códigos faltantes',
   assembling: 'Verificando y descomprimiendo…',
   transferComplete: 'Transferencia completa',
-  verified: 'Verificada',
   verificationFailed: 'No se pudo verificar la transferencia.',
   scanAgainHint: 'Escaneá de nuevo.',
   incompatibleSender:

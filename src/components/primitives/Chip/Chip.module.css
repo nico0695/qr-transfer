@@ -1,0 +1,32 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: 4px var(--sp-2);
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-control);
+  font: var(--fs-data) var(--font-mono);
+  color: var(--text);
+}
+
+.remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: var(--text-faint);
+  cursor: pointer;
+}
+
+.remove:hover {
+  color: var(--text);
+}
+
+.remove:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}

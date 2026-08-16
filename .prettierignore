@@ -1,3 +1,5 @@
 dist
 package-lock.json
 .claude
+docs/design/prototype/App.dc.html
+docs/design/prototype/support.js

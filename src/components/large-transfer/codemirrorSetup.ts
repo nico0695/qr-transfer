@@ -1,8 +1,8 @@
-import { defaultKeymap, history, historyKeymap, redo, undo } from '@codemirror/commands'
+import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { json } from '@codemirror/lang-json'
 import { markdown } from '@codemirror/lang-markdown'
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language'
-import { openSearchPanel, search, searchKeymap } from '@codemirror/search'
+import { search, searchKeymap } from '@codemirror/search'
 import { Compartment, EditorState, type Extension } from '@codemirror/state'
 import {
   drawSelection,
@@ -13,8 +13,6 @@ import {
 } from '@codemirror/view'
 import { tags } from '@lezer/highlight'
 import type { ContentFormat } from '../../lib/transfer/types'
-
-export { openSearchPanel, redo, undo }
 
 /** Colors come from CSS variables so highlighting follows the app theme (light/dark). */
 const highlightStyle = HighlightStyle.define([
@@ -53,17 +51,17 @@ const theme = EditorView.theme({
     { backgroundColor: 'var(--cm-selection) !important' },
   '.cm-placeholder': { color: 'var(--text-muted)' },
   '.cm-panels': {
-    backgroundColor: 'var(--surface-muted)',
+    backgroundColor: 'var(--surface-2)',
     color: 'var(--text)',
-    borderColor: 'var(--border)',
+    borderColor: 'var(--line)',
   },
-  '.cm-panels.cm-panels-top': { borderBottom: '1px solid var(--border)' },
+  '.cm-panels.cm-panels-top': { borderBottom: '1px solid var(--line)' },
   '.cm-panel.cm-search': { padding: '0.5rem 0.75rem', fontSize: '0.875rem' },
   '.cm-panel.cm-search input, .cm-panel.cm-search button': {
     font: 'inherit',
     color: 'inherit',
     background: 'var(--surface)',
-    border: '1px solid var(--border)',
+    border: '1px solid var(--line)',
     borderRadius: '6px',
     padding: '0.2rem 0.45rem',
     margin: '0.1rem 0.25rem 0.1rem 0',

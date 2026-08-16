@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>QR Transfer — App</title>
+<script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+@font-face{font-family:'Satoshi';src:url('https://vgbujcuwptvheqijyjbe.supabase.co/storage/v1/object/public/hmac-uploads/uploads/4aed2f49-a476-436f-bae8-f31aa18f46fa/1767920861040-60c1c779/Satoshi-Variable.woff2') format('woff2');font-weight:300 900;font-display:swap;font-style:normal;}
+html,body{margin:0;padding:0;height:100%;background:#050505;overflow:hidden;}
+body{font-family:'Satoshi','Inter',sans-serif;color:#ebebeb;-webkit-font-smoothing:antialiased;}
+*{box-sizing:border-box;}
+[hidden]{display:none !important;}
+::selection{background:var(--accent,#E5715A);color:var(--on-accent,#050505);}
+a{color:var(--accent,#E5715A);text-decoration:none;}
+a:hover{color:var(--accent-hover,#CC6049);}
+textarea,button,select,input{font-family:inherit;}
+@keyframes pulseDot{0%,100%{opacity:1}50%{opacity:.2}}
+@keyframes sweep{0%{transform:translateY(-100%)}100%{transform:translateY(900%)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</helmet>
+
+<div style="height:100dvh;display:flex;flex-direction:column;background:var(--bg,#050505);color:var(--text,#ebebeb);overflow:hidden">
+
+  <header style="flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:14px 20px;border-bottom:1px solid var(--line-soft,#1a1a1a)">
+    <div style="display:flex;align-items:center;gap:26px;min-width:0">
+      <a href="Landing.dc.html" style="display:flex;align-items:center;gap:10px;text-decoration:none;flex:0 0 auto">
+        <div style="width:30px;height:30px;border-radius:8px;background:var(--text,#ebebeb);color:var(--bg,#050505);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;letter-spacing:-0.04em">QR</div>
+      </a>
+      <nav style="display:flex;align-items:stretch;gap:22px;min-width:0">
+        <button onClick="{{ goQuick }}" style="padding:6px 0 8px;background:transparent;border:none;border-bottom:2px solid transparent;font-size:11px;font-weight:800;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-faint,#666);cursor:pointer;white-space:nowrap;transition:color .2s" style-hover="color:var(--text,#ebebeb)" aria-current="{{ quickCurrent }}" data-active="{{ isQuick }}">{{ t.navQuick }}</button>
+        <button onClick="{{ goLarge }}" style="padding:6px 0 8px;background:transparent;border:none;border-bottom:2px solid transparent;font-size:11px;font-weight:800;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-faint,#666);cursor:pointer;white-space:nowrap;transition:color .2s" style-hover="color:var(--text,#ebebeb)" aria-current="{{ largeCurrent }}" data-active="{{ isLarge }}">{{ t.navLarge }}</button>
+      </nav>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;flex:0 0 auto">
+      <div style="display:flex;padding:3px;background:var(--surface-2,#141414);border:1px solid var(--line-soft,#222);border-radius:11px">
+        <button onClick="{{ setSend }}" data-active="{{ isSend }}" style="padding:7px 15px;background:transparent;border:none;border-radius:8px;font-size:12px;font-weight:650;color:var(--text-faint,#666);cursor:pointer;white-space:nowrap">{{ t.send }}</button>
+        <button onClick="{{ setReceive }}" data-active="{{ isReceive }}" style="padding:7px 15px;background:transparent;border:none;border-radius:8px;font-size:12px;font-weight:650;color:var(--text-faint,#666);cursor:pointer;white-space:nowrap">{{ t.receive }}</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:3px;max-width:170px;padding:3px;border:1px solid var(--line,#333);border-radius:10px">
+        <sc-for list="{{ accents }}" as="a" hint-placeholder-count="9">
+          <button onClick="{{ a.select }}" title="{{ a.name }}" aria-label="{{ a.name }}" style="width:16px;height:22px;padding:0;border-radius:5px;cursor:pointer;background:{{ a.color }};border:2px solid {{ a.ring }};opacity:{{ a.opacity }};box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)"></button>
+        </sc-for>
+      </div>
+      <button onClick="{{ toggleLang }}" style="height:34px;padding:0 11px;background:transparent;border:1px solid var(--line,#333);border-radius:10px;font-size:11px;font-weight:700;letter-spacing:0.08em;color:var(--text-muted,#888);cursor:pointer">{{ t.langLabel }}</button>
+      <button onClick="{{ toggleTheme }}" aria-label="{{ t.themeAria }}" style="width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--line,#333);border-radius:10px;color:var(--text-muted,#888);cursor:pointer">
+        <iconify-icon icon="{{ themeIcon }}" style="font-size:15px"></iconify-icon>
+      </button>
+    </div>
+  </header>
+
+  <main style="flex:1 1 auto;min-height:0;display:flex;gap:16px;padding:16px 20px 0;max-width:1320px;width:100%;margin:0 auto">
+
+    <section hidden="{{ hideCompose }}" style="flex:1.35 1 380px;min-width:0;display:flex;flex-direction:column;gap:12px;padding-bottom:16px">
+
+      <div style="flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:14px">
+        <div style="display:flex;align-items:center;gap:9px;min-width:0">
+          <div style="width:6px;height:6px;border-radius:99px;background:var(--accent,#E5715A);animation:pulseDot 2s ease-in-out infinite"></div>
+          <span style="font-size:10px;font-weight:800;letter-spacing:0.26em;text-transform:uppercase;color:var(--text-faint,#666);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ contextLabel }}</span>
+        </div>
+        <sc-if value="{{ isLargeSend }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;padding:3px;background:var(--surface-2,#141414);border:1px solid var(--line-soft,#222);border-radius:10px;flex:0 0 auto">
+            <button onClick="{{ setSrcText }}" data-active="{{ isText }}" style="padding:6px 14px;background:transparent;border:none;border-radius:7px;font-size:12px;font-weight:650;color:var(--text-faint,#666);cursor:pointer">{{ t.srcText }}</button>
+            <button onClick="{{ setSrcFile }}" data-active="{{ isFile }}" style="padding:6px 14px;background:transparent;border:none;border-radius:7px;font-size:12px;font-weight:650;color:var(--text-faint,#666);cursor:pointer">{{ t.srcFile }}</button>
+          </div>
+        </sc-if>
+      </div>
+
+      <sc-if value="{{ showEditor }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:1 1 auto;min-height:0;display:flex;flex-direction:column;background:var(--surface,#111);border:1px solid var(--line-soft,#222);border-radius:18px;overflow:hidden">
+          <div style="flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line-soft,#222)">
+            <span style="font-size:10px;font-weight:800;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-faint,#666);padding-left:4px">{{ t.textLabel }}</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <sc-if value="{{ isLargeSend }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;align-items:center;gap:6px">
+                  <select value="{{ format }}" onChange="{{ setFormat }}" style="height:30px;padding:0 8px;background:var(--surface-2,#191919);border:1px solid var(--line,#333);border-radius:8px;font-size:12px;font-weight:600;color:var(--text,#ebebeb);cursor:pointer">
+                    <option value="auto">{{ t.fmtAuto }}</option>
+                    <option value="text">{{ t.fmtText }}</option>
+                    <option value="markdown">Markdown</option>
+                    <option value="json">JSON</option>
+                  </select>
+                  <button onClick="{{ openFullscreen }}" title="{{ t.fullscreen }}" style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:var(--surface-2,#191919);border:1px solid var(--line,#333);border-radius:8px;color:var(--text-muted,#888);cursor:pointer">
+                    <iconify-icon icon="lucide:maximize-2" style="font-size:13px"></iconify-icon>
+                  </button>
+                </div>
+              </sc-if>
+              <button onClick="{{ copyText }}" style="height:30px;padding:0 11px;background:var(--surface-2,#191919);border:1px solid var(--line,#333);border-radius:8px;font-size:12px;font-weight:650;color:var(--text-muted,#888);cursor:pointer">{{ copyLabel }}</button>
+              <button onClick="{{ clearText }}" style="height:30px;padding:0 11px;background:transparent;border:1px solid var(--line-soft,#262626);border-radius:8px;font-size:12px;font-weight:650;color:var(--text-faint,#666);cursor:pointer">{{ t.clear }}</button>
+            </div>
+          </div>
+          <textarea value="{{ text }}" onChange="{{ onText }}" placeholder="{{ editorPlaceholder }}" spellCheck="{{ false }}" style="flex:1 1 auto;min-height:120px;width:100%;padding:16px;background:transparent;border:none;outline:none;resize:none;color:var(--text,#ebebeb);font-size:14px;line-height:1.65;font-family:'JetBrains Mono',monospace"></textarea>
+          <div style="flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 14px;border-top:1px solid var(--line-soft,#222);font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-faint,#666)">
+            <span>{{ counter }}</span>
+            <span style="color:var(--warn-text,#FBBF24)" hidden="{{ hideLimit }}">{{ t.limitReached }}</span>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showDropzone }}" hint-placeholder-val="{{ true }}">
+        <div onClick="{{ pickFile }}" style="flex:1 1 auto;min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:28px;background:var(--surface,#111);border:1px dashed var(--line,#333);border-radius:18px;cursor:pointer;transition:border-color .2s,background .2s" style-hover="border-color:var(--accent,#E5715A);background:var(--surface-2,#161616)">
+          <iconify-icon icon="lucide:file-up" style="font-size:32px;color:var(--text-faint,#666)"></iconify-icon>
+          <div style="text-align:center">
+            <div style="font-size:16px;font-weight:650;color:var(--text-strong,#fff)">{{ t.dropHere }}</div>
+            <div style="margin-top:6px;font-size:13px;color:var(--text-faint,#666)">{{ t.oneFileHint }}</div>
+          </div>
+          <span style="padding:9px 16px;background:var(--accent,#E5715A);color:var(--on-accent,#050505);border-radius:10px;font-size:12px;font-weight:750">{{ t.chooseFile }}</span>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showFileCard }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:0 0 auto;display:flex;align-items:center;gap:14px;padding:14px;background:var(--surface,#111);border:1px solid var(--line-soft,#222);border-radius:18px">
+          <div style="flex:0 0 auto;width:56px;height:56px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:var(--surface-2,#191919);border:1px solid var(--line-soft,#262626);overflow:hidden">
+            <iconify-icon icon="{{ fileIcon }}" style="font-size:22px;color:var(--accent,#E5715A)"></iconify-icon>
+          </div>
+          <div style="flex:1 1 auto;min-width:0">
+            <div style="font-size:14px;font-weight:650;color:var(--text-strong,#fff);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ fileName }}</div>
+            <div style="margin-top:3px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-faint,#666)">{{ fileMeta }}</div>
+          </div>
+          <div style="flex:0 0 auto;display:flex;gap:6px">
+            <button onClick="{{ pickFile }}" style="height:32px;padding:0 12px;background:var(--surface-2,#191919);border:1px solid var(--line,#333);border-radius:9px;font-size:12px;font-weight:650;color:var(--text-muted,#888);cursor:pointer">{{ t.changeFile }}</button>
+            <button onClick="{{ removeFile }}" aria-label="{{ t.removeFile }}" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--line-soft,#262626);border-radius:9px;color:var(--text-faint,#666);cursor:pointer">
+              <iconify-icon icon="lucide:x" style="font-size:14px"></iconify-icon>
+            </button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showNotice }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:0 0 auto;display:flex;gap:11px;padding:12px 14px;background:var(--notice-bg,rgba(251,191,36,0.07));border:1px solid var(--notice-line,rgba(251,191,36,0.28));border-left:3px solid #FBBF24;border-radius:12px">
+          <iconify-icon icon="lucide:alert-triangle" style="font-size:16px;color:#FBBF24;flex:0 0 auto;margin-top:1px"></iconify-icon>
+          <div style="min-width:0">
+            <div style="font-size:12px;font-weight:750;letter-spacing:0.02em;color:var(--warn-text,#FBBF24)">{{ noticeTitle }}</div>
+            <div style="margin-top:3px;font-size:12px;line-height:1.5;color:var(--text-muted,#888);text-wrap:pretty">{{ noticeBody }}</div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showBlockError }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:0 0 auto;display:flex;gap:11px;padding:12px 14px;background:var(--danger-bg,rgba(248,113,113,0.08));border:1px solid var(--danger-line,rgba(248,113,113,0.3));border-left:3px solid #F87171;border-radius:12px">
+          <iconify-icon icon="lucide:octagon-alert" style="font-size:16px;color:#F87171;flex:0 0 auto;margin-top:1px"></iconify-icon>
+          <div style="min-width:0">
+            <div style="font-size:12px;font-weight:750;color:var(--danger-text,#F87171)">{{ t.blocked }}</div>
+            <div style="margin-top:3px;font-size:12px;line-height:1.5;color:var(--text-muted,#888);text-wrap:pretty">{{ blockBody }}</div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showSummary }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:0 0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:1px;background:var(--line-soft,#222);border:1px solid var(--line-soft,#222);border-radius:14px;overflow:hidden">
+          <sc-for list="{{ summary }}" as="s" hint-placeholder-count="5">
+            <div style="padding:11px 13px;background:var(--surface,#111)">
+              <div style="font-size:9px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-faint,#666);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.k }}</div>
+              <div style="margin-top:5px;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;color:var(--text-strong,#fff)">{{ s.v }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showReceiveStatus }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:12px">
+          <div style="flex:0 0 auto;padding:18px;background:var(--surface,#111);border:1px solid var(--line-soft,#222);border-radius:18px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+              <div style="display:flex;align-items:center;gap:10px;min-width:0">
+                <iconify-icon icon="{{ statusIcon }}" style="font-size:18px;color:{{ statusColor }};flex:0 0 auto"></iconify-icon>
+                <span style="font-size:16px;font-weight:650;letter-spacing:-0.01em;color:var(--text-strong,#fff);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ statusTitle }}</span>
+              </div>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted,#888);flex:0 0 auto">{{ statusMeta }}</span>
+            </div>
+            <p style="margin:10px 0 0;font-size:13px;line-height:1.55;color:var(--text-muted,#888);text-wrap:pretty">{{ statusBody }}</p>
+
+            <sc-if value="{{ showProgress }}" hint-placeholder-val="{{ true }}">
+              <div style="margin-top:16px">
+                <div style="height:8px;border-radius:99px;background:var(--surface-2,#1c1c1c);overflow:hidden">
+                  <div ref="{{ barRef }}" style="height:100%;width:0%;border-radius:99px;background:var(--accent,#E5715A);transition:width .3s ease"></div>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-top:9px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-faint,#666)">
+                  <span>{{ framesLabel }}</span>
+                  <span>{{ transferLabel }}</span>
+                </div>
+                <button onClick="{{ toggleMissing }}" style="margin-top:12px;display:flex;align-items:center;gap:7px;padding:0;background:transparent;border:none;font-size:11px;font-weight:750;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-faint,#666);cursor:pointer">
+                  <iconify-icon icon="{{ missingChevron }}" style="font-size:13px"></iconify-icon>{{ t.missingFrames }} · {{ missingCount }}
+                </button>
+                <div hidden="{{ hideMissing }}" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:5px;max-height:96px;overflow:auto">
+                  <sc-for list="{{ missingList }}" as="m" hint-placeholder-count="8">
+                    <span style="padding:4px 8px;background:var(--surface-2,#1c1c1c);border:1px solid var(--line-soft,#262626);border-radius:7px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted,#888)">{{ m }}</span>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+
+          <sc-if value="{{ showResult }}" hint-placeholder-val="{{ true }}">
+            <div style="flex:1 1 auto;min-height:0;display:flex;flex-direction:column;background:var(--surface,#111);border:1px solid var(--ok-line,rgba(74,222,128,0.3));border-radius:18px;overflow:hidden">
+              <div style="flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 16px;border-bottom:1px solid var(--line-soft,#222)">
+                <span style="display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:800;letter-spacing:0.16em;text-transform:uppercase;color:var(--ok-text,#4ADE80)">
+                  <iconify-icon icon="lucide:shield-check" style="font-size:15px"></iconify-icon>{{ t.verified }}
+                </span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-faint,#666)">{{ resultMeta }}</span>
+              </div>
+              <div style="flex:1 1 auto;min-height:0;overflow:auto;padding:16px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;color:var(--text,#ebebeb);white-space:pre-wrap">{{ resultBody }}</div>
+              <div style="flex:0 0 auto;display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--line-soft,#222)">
+                <button onClick="{{ copyText }}" style="height:36px;padding:0 15px;background:var(--accent,#E5715A);border:none;border-radius:10px;font-size:12.5px;font-weight:750;color:var(--on-accent,#050505);cursor:pointer">{{ resultPrimary }}</button>
+                <button onClick="{{ scanAnother }}" style="height:36px;padding:0 15px;background:transparent;border:1px solid var(--line,#333);border-radius:10px;font-size:12.5px;font-weight:650;color:var(--text-muted,#888);cursor:pointer">{{ t.scanAnother }}</button>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <div style="flex:0 0 auto;display:flex;align-items:center;gap:8px;padding-top:2px">
+        <sc-if value="{{ showSendActions }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;align-items:center;gap:8px;width:100%">
+            <sc-if value="{{ isLargeSend }}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{ openSettings }}" style="height:42px;padding:0 15px;display:inline-flex;align-items:center;gap:8px;background:transparent;border:1px solid var(--line,#333);border-radius:12px;font-size:13px;font-weight:650;color:var(--text-muted,#888);cursor:pointer">
+                <iconify-icon icon="lucide:sliders-horizontal" style="font-size:15px"></iconify-icon>{{ profileLabel }}
+              </button>
+            </sc-if>
+            <button onClick="{{ primaryAction }}" disabled="{{ primaryDisabled }}" style="flex:1 1 auto;height:42px;padding:0 18px;display:inline-flex;align-items:center;justify-content:center;gap:9px;background:var(--accent,#E5715A);border:none;border-radius:12px;font-size:13.5px;font-weight:750;color:var(--on-accent,#050505);cursor:pointer">
+              <iconify-icon icon="{{ primaryIcon }}" style="font-size:16px"></iconify-icon>{{ primaryLabel }}
+            </button>
+          </div>
+        </sc-if>
+      </div>
+    </section>
+
+    <aside hidden="{{ hideStage }}" style="flex:1 1 400px;min-width:0;max-width:560px;display:flex;flex-direction:column;gap:12px;padding-bottom:16px">
+
+      <sc-if value="{{ showQrStage }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:1 1 auto;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;background:var(--surface,#111);border:1px solid var(--line-soft,#222);border-radius:22px">
+          <div hidden="{{ hideQrEmpty }}" style="display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;padding:36px 20px;border:1px dashed var(--line,#333);border-radius:18px;width:100%">
+            <iconify-icon icon="lucide:qr-code" style="font-size:38px;color:var(--line,#333)"></iconify-icon>
+            <span style="font-size:13px;color:var(--text-faint,#666);max-width:220px;text-wrap:pretty">{{ t.qrPlaceholder }}</span>
+          </div>
+          <div hidden="{{ hideQr }}" style="display:flex;flex-direction:column;align-items:center;gap:14px;width:100%">
+            <div style="padding:14px;background:#fff;border-radius:18px;box-shadow:0 24px 60px rgba(0,0,0,.45)">
+              <canvas ref="{{ qrRef }}" width="440" height="440" style="display:block;width:min(46vh,300px);height:min(46vh,300px);image-rendering:pixelated"></canvas>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted,#888)">
+              <span>{{ qrCaption }}</span>
+            </div>
+            <sc-if value="{{ isLooping }}" hint-placeholder-val="{{ true }}">
+              <div style="width:100%;display:flex;flex-direction:column;gap:12px">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <button onClick="{{ slower }}" disabled="{{ slowerDisabled }}" style="flex:1 1 auto;height:38px;background:var(--surface-2,#191919);border:1px solid var(--line,#333);border-radius:10px;font-size:12.5px;font-weight:650;color:var(--text-muted,#888);cursor:pointer">{{ t.slower }}</button>
+                  <span style="flex:0 0 auto;min-width:96px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-faint,#666)">{{ speedLabel }}</span>
+                  <button onClick="{{ faster }}" disabled="{{ fasterDisabled }}" style="flex:1 1 auto;height:38px;background:var(--surface-2,#191919);border:1px solid var(--line,#333);border-radius:10px;font-size:12.5px;font-weight:650;color:var(--text-muted,#888);cursor:pointer">{{ t.faster }}</button>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <button onClick="{{ openFullscreen }}" style="flex:1 1 auto;height:38px;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:transparent;border:1px solid var(--line,#333);border-radius:10px;font-size:12.5px;font-weight:650;color:var(--text-muted,#888);cursor:pointer">
+                    <iconify-icon icon="lucide:maximize" style="font-size:15px"></iconify-icon>{{ t.fullscreen }}
+                  </button>
+                  <button onClick="{{ stopTransfer }}" style="flex:1 1 auto;height:38px;background:var(--danger-bg,rgba(248,113,113,0.1));border:1px solid var(--danger-line,rgba(248,113,113,0.32));border-radius:10px;font-size:12.5px;font-weight:700;color:var(--danger-text,#F87171);cursor:pointer">{{ t.stopTransfer }}</button>
+                </div>
+              </div>
+            </sc-if>
+            <p style="margin:0;font-size:12px;line-height:1.5;text-align:center;color:var(--text-faint,#666);max-width:300px;text-wrap:pretty">{{ qrHint }}</p>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showPreparing }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:1 1 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:28px;background:var(--surface,#111);border:1px solid var(--line-soft,#222);border-radius:22px">
+          <div style="width:34px;height:34px;border-radius:99px;border:2.5px solid var(--line,#333);border-top-color:var(--accent,#E5715A);animation:spin .8s linear infinite"></div>
+          <span style="font-size:15px;font-weight:650;color:var(--text-strong,#fff)">{{ t.preparing }}</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-faint,#666)">{{ preparingMeta }}</span>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showCamera }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:12px;padding:14px;background:var(--surface,#111);border:1px solid var(--line-soft,#222);border-radius:22px">
+          <div style="flex:0 0 auto;display:flex;align-items:center;gap:8px">
+            <select style="flex:1 1 auto;height:34px;padding:0 10px;background:var(--surface-2,#191919);border:1px solid var(--line,#333);border-radius:10px;font-size:12px;font-weight:600;color:var(--text-muted,#888);cursor:pointer">
+              <option>{{ t.cameraDefault }}</option>
+              <option>FaceTime HD Camera</option>
+            </select>
+            <button onClick="{{ toggleTorch }}" aria-label="{{ t.torch }}" style="width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:var(--surface-2,#191919);border:1px solid var(--line,#333);border-radius:10px;color:var(--text-muted,#888);cursor:pointer">
+              <iconify-icon icon="lucide:zap" style="font-size:14px"></iconify-icon>
+            </button>
+          </div>
+          <div style="flex:1 1 auto;min-height:180px;position:relative;border-radius:16px;overflow:hidden;background:#0b0b0b">
+            <div style="position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 40%,#1e1e1e 0%,#0a0a0a 75%)"></div>
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+              <div style="position:relative;width:min(62%,240px);aspect-ratio:1/1;border-radius:12px;box-shadow:0 0 0 9999px rgba(5,5,5,.55)">
+                <div style="position:absolute;top:0;left:0;width:26px;height:26px;border-top:3px solid var(--accent,#E5715A);border-left:3px solid var(--accent,#E5715A);border-radius:8px 0 0 0"></div>
+                <div style="position:absolute;top:0;right:0;width:26px;height:26px;border-top:3px solid var(--accent,#E5715A);border-right:3px solid var(--accent,#E5715A);border-radius:0 8px 0 0"></div>
+                <div style="position:absolute;bottom:0;left:0;width:26px;height:26px;border-bottom:3px solid var(--accent,#E5715A);border-left:3px solid var(--accent,#E5715A);border-radius:0 0 0 8px"></div>
+                <div style="position:absolute;bottom:0;right:0;width:26px;height:26px;border-bottom:3px solid var(--accent,#E5715A);border-right:3px solid var(--accent,#E5715A);border-radius:0 0 8px 0"></div>
+                <div hidden="{{ hideSweep }}" style="position:absolute;left:6px;right:6px;top:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent,#E5715A),transparent);animation:sweep 2.4s linear infinite"></div>
+              </div>
+            </div>
+            <div hidden="{{ hideStarting }}" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(5,5,5,.75)">
+              <div style="width:28px;height:28px;border-radius:99px;border:2.5px solid #333;border-top-color:var(--accent,#E5715A);animation:spin .8s linear infinite"></div>
+              <span style="font-size:13px;font-weight:600;color:#ebebeb">{{ t.startingCamera }}</span>
+            </div>
+            <div style="position:absolute;left:14px;bottom:12px;display:flex;align-items:center;gap:8px;padding:7px 11px;background:rgba(5,5,5,.7);border:1px solid rgba(255,255,255,.12);border-radius:99px">
+              <div style="width:6px;height:6px;border-radius:99px;background:var(--accent,#E5715A);animation:pulseDot 1.4s ease-in-out infinite"></div>
+              <span style="font-size:11px;font-weight:650;color:#ebebeb">{{ cameraBadge }}</span>
+            </div>
+          </div>
+          <p style="flex:0 0 auto;margin:0;font-size:12.5px;line-height:1.5;text-align:center;color:var(--text-faint,#666);text-wrap:pretty">{{ t.scanHint }}</p>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showErrorStage }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:1 1 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:32px 26px;background:var(--surface,#111);border:1px solid var(--danger-line,rgba(248,113,113,0.3));border-radius:22px;text-align:center">
+          <div style="width:46px;height:46px;display:flex;align-items:center;justify-content:center;border-radius:14px;background:var(--danger-bg,rgba(248,113,113,0.1));border:1px solid var(--danger-line,rgba(248,113,113,0.3))">
+            <iconify-icon icon="{{ errorIcon }}" style="font-size:22px;color:var(--danger-text,#F87171)"></iconify-icon>
+          </div>
+          <div>
+            <div style="font-size:17px;font-weight:700;letter-spacing:-0.015em;color:var(--text-strong,#fff)">{{ errorTitle }}</div>
+            <p style="margin:8px auto 0;max-width:300px;font-size:13px;line-height:1.55;color:var(--text-muted,#888);text-wrap:pretty">{{ errorBody }}</p>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button onClick="{{ retry }}" hidden="{{ hideRetry }}" style="height:38px;padding:0 16px;background:var(--accent,#E5715A);border:none;border-radius:10px;font-size:12.5px;font-weight:750;color:var(--on-accent,#050505);cursor:pointer">{{ t.tryAgain }}</button>
+            <button onClick="{{ goQuick }}" style="height:38px;padding:0 16px;background:transparent;border:1px solid var(--line,#333);border-radius:10px;font-size:12.5px;font-weight:650;color:var(--text-muted,#888);cursor:pointer">{{ t.cancel }}</button>
+          </div>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.06em;color:var(--text-faint,#555)">{{ errorCode }}</span>
+        </div>
+      </sc-if>
+    </aside>
+  </main>
+
+  <div hidden="{{ hideSwitcher }}" style="flex:0 0 auto;display:flex;gap:6px;padding:8px 14px calc(8px + env(safe-area-inset-bottom));background:var(--surface,#111);border-top:1px solid var(--line-soft,#222)">
+    <button onClick="{{ showComposeView }}" data-active="{{ isComposeView }}" style="flex:1 1 0;height:44px;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:transparent;border:none;border-radius:11px;font-size:12.5px;font-weight:700;color:var(--text-faint,#666);cursor:pointer">
+      <iconify-icon icon="lucide:pencil-line" style="font-size:16px"></iconify-icon>{{ switchLeftLabel }}
+    </button>
+    <button onClick="{{ showStageView }}" data-active="{{ isStageView }}" style="flex:1 1 0;height:44px;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:transparent;border:none;border-radius:11px;font-size:12.5px;font-weight:700;color:var(--text-faint,#666);cursor:pointer">
+      <iconify-icon icon="{{ switchRightIcon }}" style="font-size:16px"></iconify-icon>{{ switchRightLabel }}
+    </button>
+  </div>
+
+  <div hidden="{{ hideSettings }}" style="position:fixed;inset:0;z-index:200;display:flex;align-items:flex-end;justify-content:center;background:rgba(5,5,5,.72);backdrop-filter:blur(6px)">
+    <div style="width:100%;max-width:520px;max-height:88dvh;overflow:auto;background:var(--surface,#111);border:1px solid var(--line,#333);border-radius:24px 24px 0 0;padding:22px 22px calc(22px + env(safe-area-inset-bottom))">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:6px">
+        <h2 style="margin:0;font-size:20px;font-weight:700;letter-spacing:-0.025em;color:var(--text-strong,#fff)">{{ t.settingsTitle }}</h2>
+        <button onClick="{{ closeSettings }}" aria-label="{{ t.close }}" style="width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--line,#333);border-radius:10px;color:var(--text-muted,#888);cursor:pointer">
+          <iconify-icon icon="lucide:x" style="font-size:15px"></iconify-icon>
+        </button>
+      </div>
+      <p style="margin:0 0 18px;font-size:13px;line-height:1.5;color:var(--text-muted,#888);text-wrap:pretty">{{ t.settingsBody }}</p>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <sc-for list="{{ profiles }}" as="p" hint-placeholder-count="3">
+          <button onClick="{{ p.select }}" data-active="{{ p.active }}" style="display:flex;align-items:flex-start;gap:13px;padding:15px;text-align:left;background:var(--surface-2,#161616);border:1px solid var(--line-soft,#262626);border-radius:15px;cursor:pointer;width:100%">
+            <span style="flex:0 0 auto;margin-top:2px;width:17px;height:17px;border-radius:99px;border:2px solid var(--line,#444);display:flex;align-items:center;justify-content:center" data-radio="{{ p.active }}">
+              <span style="width:7px;height:7px;border-radius:99px;background:transparent"></span>
+            </span>
+            <span style="flex:1 1 auto;min-width:0">
+              <span style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+                <span style="font-size:14.5px;font-weight:700;color:var(--text-strong,#fff)">{{ p.name }}</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-faint,#666)">{{ p.spec }}</span>
+              </span>
+              <span style="display:block;margin-top:5px;font-size:12.5px;line-height:1.5;color:var(--text-muted,#888)">{{ p.desc }}</span>
+            </span>
+          </button>
+        </sc-for>
+      </div>
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line-soft,#222)">
+        <button onClick="{{ toggleAdvanced }}" style="display:flex;align-items:center;gap:8px;padding:0;background:transparent;border:none;font-size:11px;font-weight:800;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-faint,#666);cursor:pointer">
+          <iconify-icon icon="{{ advChevron }}" style="font-size:14px"></iconify-icon>{{ t.advanced }}
+        </button>
+        <div hidden="{{ hideAdvanced }}" style="margin-top:14px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:9px">
+            <span style="font-size:12.5px;font-weight:650;color:var(--text,#ebebeb)">{{ t.frameDuration }}</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent,#E5715A)">{{ frameMsLabel }}</span>
+          </div>
+          <input type="range" min="200" max="500" step="50" value="{{ frameMs }}" onChange="{{ setFrameMs }}" style="width:100%;accent-color:var(--accent,#E5715A)" />
+          <div style="display:flex;justify-content:space-between;margin-top:6px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-faint,#555)">
+            <span>200 ms</span><span>{{ profileDefaultLabel }}</span><span>500 ms</span>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:9px;margin-top:20px">
+        <button onClick="{{ resetDefaults }}" style="height:44px;padding:0 16px;background:transparent;border:1px solid var(--line,#333);border-radius:12px;font-size:13px;font-weight:650;color:var(--text-muted,#888);cursor:pointer">{{ t.resetDefaults }}</button>
+        <button onClick="{{ closeSettings }}" style="flex:1 1 auto;height:44px;background:var(--accent,#E5715A);border:none;border-radius:12px;font-size:13.5px;font-weight:750;color:var(--on-accent,#050505);cursor:pointer">{{ t.done }}</button>
+      </div>
+    </div>
+  </div>
+
+  <div hidden="{{ hideFullscreen }}" style="position:fixed;inset:0;z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;background:#fff">
+    <canvas ref="{{ fsRef }}" width="440" height="440" style="width:min(74vh,74vw);height:min(74vh,74vw);image-rendering:pixelated"></canvas>
+    <div style="display:flex;align-items:center;gap:16px;font-family:'JetBrains Mono',monospace;font-size:14px;color:#111">
+      <span>{{ qrCaption }}</span>
+      <span style="color:#888">{{ speedLabel }}</span>
+    </div>
+    <button onClick="{{ closeFullscreen }}" style="position:fixed;top:20px;right:20px;height:40px;padding:0 16px;display:inline-flex;align-items:center;gap:8px;background:#050505;border:none;border-radius:11px;font-size:12.5px;font-weight:700;color:#fff;cursor:pointer">
+      <iconify-icon icon="lucide:minimize" style="font-size:15px"></iconify-icon>{{ t.exitFullscreen }}
+    </button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;accent&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;celeste&quot;,&quot;bosque&quot;,&quot;lago&quot;,&quot;piedra&quot;,&quot;hueso&quot;],&quot;default&quot;:&quot;piedra&quot;,&quot;tsType&quot;:&quot;'celeste' | 'bosque' | 'lago' | 'piedra' | 'hueso'&quot;,&quot;section&quot;:&quot;Color&quot;}}">
+const PALETTES = {
+  dark: {'--bg':'#050505','--surface':'#111111','--surface-2':'#161616','--line':'#333333','--line-soft':'#222222','--text':'#ebebeb','--text-strong':'#ffffff','--text-muted':'#888888','--text-faint':'#666666','--ok-text':'#4ADE80','--ok-line':'rgba(74,222,128,0.3)','--warn-text':'#FBBF24','--notice-bg':'rgba(251,191,36,0.07)','--notice-line':'rgba(251,191,36,0.28)','--danger-text':'#F87171','--danger-bg':'rgba(248,113,113,0.1)','--danger-line':'rgba(248,113,113,0.3)','--active-bg':'#242424'},
+  light:{'--bg':'#F4F3F0','--surface':'#FFFFFF','--surface-2':'#FAF9F6','--line':'#DEDCD6','--line-soft':'#E8E6E1','--text':'#1A1917','--text-strong':'#050505','--text-muted':'#5C5A55','--text-faint':'#8A8780','--ok-text':'#15803D','--ok-line':'rgba(21,128,61,0.28)','--warn-text':'#A16207','--notice-bg':'rgba(161,98,7,0.06)','--notice-line':'rgba(161,98,7,0.22)','--danger-text':'#B91C1C','--danger-bg':'rgba(185,28,28,0.06)','--danger-line':'rgba(185,28,28,0.22)','--active-bg':'#EFEDE7'}
+};
+const ACCENTS = {
+  celeste:{name:'Celeste',accent:'#B5D3E7',hover:'#9CBFD9',soft:'rgba(181,211,231,.12)',line:'rgba(181,211,231,.4)',on:'#050505'},
+  bosque:{name:'Verde bosque',accent:'#248C54',hover:'#1D7344',soft:'rgba(36,140,84,.12)',line:'rgba(36,140,84,.4)',on:'#FFFFFF'},
+  lago:{name:'Azul lago',accent:'#90C0DF',hover:'#74AACB',soft:'rgba(144,192,223,.12)',line:'rgba(144,192,223,.4)',on:'#0B2233'},
+  piedra:{name:'Gris piedra',accent:'#AAAAAD',hover:'#8F8F92',soft:'rgba(170,170,173,.12)',line:'rgba(170,170,173,.4)',on:'#050505'},
+  hueso:{name:'Hueso',accent:'#DFDEDD',hover:'#C7C6C4',soft:'rgba(223,222,221,.12)',line:'rgba(223,222,221,.4)',on:'#050505'}
+};
+function luminance(hex){
+  const c = hex.replace('#','');
+  const r=parseInt(c.substr(0,2),16)/255, g=parseInt(c.substr(2,2),16)/255, b=parseInt(c.substr(4,2),16)/255;
+  const f = v => v<=0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055,2.4);
+  return 0.2126*f(r)+0.7152*f(g)+0.0722*f(b);
+}
+function bestOn(hex){
+  const L = luminance(hex);
+  const blackRatio = (L+0.05)/0.05, whiteRatio = 1.05/(L+0.05);
+  return blackRatio>=whiteRatio ? '#050505' : '#FFFFFF';
+}
+function applyAccent(k){
+  const a = ACCENTS[k] || ACCENTS.piedra, r = document.documentElement;
+  r.style.setProperty('--accent',a.accent); r.style.setProperty('--accent-hover',a.hover);
+  r.style.setProperty('--accent-soft',a.soft); r.style.setProperty('--accent-line',a.line);
+  r.style.setProperty('--on-accent',bestOn(a.accent));
+  try { localStorage.setItem('qrt-accent',k); } catch(e){}
+}
+function storedAccent(){ try { return localStorage.getItem('qrt-accent') || 'piedra'; } catch(e){ return 'azul'; } }
+const T = {
+  es:{langLabel:'EN',themeAria:'Cambiar tema',navQuick:'QR rápido',navLarge:'Transferencia grande',send:'Enviar',receive:'Recibir',srcText:'Texto',srcFile:'Archivo',textLabel:'Texto a transferir',clear:'Limpiar',copy:'Copiar',copied:'¡Copiado!',fmtAuto:'Auto',fmtText:'Texto plano',fullscreen:'Pantalla completa',exitFullscreen:'Salir',limitReached:'límite alcanzado',dropHere:'Soltá un archivo acá',oneFileHint:'Un archivo por transferencia · hasta 20 MB',chooseFile:'Elegir archivo',changeFile:'Cambiar',removeFile:'Quitar',blocked:'Transferencia bloqueada',qrPlaceholder:'Escribí algo y el QR aparece acá al instante.',startingCamera:'Iniciando cámara…',scanHint:'Apuntá la cámara al QR del otro dispositivo y mantenelo firme.',cameraDefault:'Predeterminada (trasera)',torch:'Linterna',missingFrames:'Frames faltantes',verified:'Verificado',scanAnother:'Escanear otro',preparing:'Preparando transferencia…',slower:'Más lento',faster:'Más rápido',stopTransfer:'Detener',settingsTitle:'Ajustes de transferencia',settingsBody:'El perfil define cuántos datos entran por frame y qué tan tolerante es el escaneo. Se guarda para la próxima vez.',advanced:'Avanzado',frameDuration:'Duración de frame',resetDefaults:'Restaurar',done:'Listo',close:'Cerrar',cancel:'Cancelar',tryAgain:'Reintentar',startTransfer:'Iniciar transferencia',showQr:'Ver QR',viewCamera:'Cámara',content:'Contenido',status:'Estado'},
+  en:{langLabel:'ES',themeAria:'Switch theme',navQuick:'Quick QR',navLarge:'Large Transfer',send:'Send',receive:'Receive',srcText:'Text',srcFile:'File',textLabel:'Text to transfer',clear:'Clear',copy:'Copy',copied:'Copied!',fmtAuto:'Auto',fmtText:'Plain text',fullscreen:'Fullscreen',exitFullscreen:'Exit',limitReached:'limit reached',dropHere:'Drop a file here',oneFileHint:'One file per transfer · up to 20 MB',chooseFile:'Choose file',changeFile:'Change',removeFile:'Remove',blocked:'Transfer blocked',qrPlaceholder:'Type something and the QR shows up instantly.',startingCamera:'Starting camera…',scanHint:'Point the camera at the other device’s QR and hold steady.',cameraDefault:'Default (back camera)',torch:'Torch',missingFrames:'Missing frames',verified:'Verified',scanAnother:'Scan another',preparing:'Preparing transfer…',slower:'Slower',faster:'Faster',stopTransfer:'Stop',settingsTitle:'Transfer settings',settingsBody:'The profile sets how much data goes in each frame and how forgiving the scan is. It is remembered next time.',advanced:'Advanced',frameDuration:'Frame duration',resetDefaults:'Reset',done:'Done',close:'Close',cancel:'Cancel',tryAgain:'Try again',startTransfer:'Start transfer',showQr:'Show QR',viewCamera:'Camera',content:'Content',status:'Status'}
+};
+const PROFILES = {
+  reliable:{ms:400,chunk:400,ec:'Q'}, balanced:{ms:300,chunk:550,ec:'M'}, fast:{ms:200,chunk:600,ec:'M'}
+};
+const PROFILE_COPY = {
+  es:{reliable:['Confiable','Frames más lentos y chunks chicos: la opción para cámaras viejas o poca luz.'],balanced:['Equilibrado','El default. Buen ritmo con margen de error suficiente en casi todos los teléfonos.'],fast:['Rápido','Menos frames y más datos por frame. Requiere buena cámara y pulso firme.']},
+  en:{reliable:['Reliable','Slower frames, small chunks: for older cameras or poor light.'],balanced:['Balanced','The default. Good pace with enough margin on almost any phone.'],fast:['Fast','Fewer frames, more data each. Needs a good camera and a steady hand.']}
+};
+const SAMPLE_TEXT = 'wg-quick up wg0\n[Interface]\nPrivateKey = 8Jd2kQ...\nAddress = 10.7.0.2/32\nDNS = 10.7.0.1';
+const SAMPLE_LONG = '# Notas de release 4.2\n\n- Scanner WASM con crop guide en pixeles de cámara\n- Verificación SHA-256 obligatoria antes de mostrar\n- Perfiles de transferencia persistidos\n\n{"build": 4210, "channel": "stable"}';
+
+function qs(){ try { return new URLSearchParams(location.search); } catch(e){ return new URLSearchParams(''); } }
+
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    const p = qs();
+    const mode = p.get('mode') === 'large' ? 'large' : 'quick';
+    const role = p.get('role') === 'receive' ? 'receive' : 'send';
+    const phase = p.get('phase') || (role === 'receive' ? (mode==='quick'?'scanning':'idle') : 'editing');
+    const filled = p.get('filled') === '1' || p.get('size') || p.get('file');
+    this.state = {
+      theme: p.get('theme') === 'light' ? 'light' : 'dark',
+      lang: p.get('lang') === 'en' ? 'en' : 'es',
+      mode, role, phase,
+      src: p.get('file') ? 'file' : (p.get('src') === 'file' ? 'file' : 'text'),
+      text: filled ? (mode==='large'?SAMPLE_LONG:SAMPLE_TEXT) : '',
+      size: p.get('size') || null,
+      file: p.get('file') || null,
+      result: p.get('result') || 'text',
+      settingsOpen: p.get('settings') === '1',
+      advancedOpen: p.get('settings') === 'advanced',
+      fullscreen: p.get('fullscreen') === '1',
+      missingOpen: p.get('missing') === '1',
+      profile: p.get('profile') || 'balanced',
+      frameMs: PROFILES[p.get('profile') || 'balanced'].ms,
+      accent: p.get('accent') || props.accent || storedAccent(),
+      format: 'auto', copied: false, narrow: false,
+      view: p.get('view') || (role === 'receive' ? 'compose' : 'stage'),
+      frame: 3, received: 41, total: 96
+    };
+    if (p.get('settings') === 'advanced') this.state.settingsOpen = true;
+    this.qrRef = React.createRef(); this.fsRef = React.createRef(); this.barRef = React.createRef();
+  }
+  componentDidMount(){
+    this.applyTheme(this.state.theme);
+    applyAccent(this.state.accent);
+    this.mq = window.matchMedia('(max-width: 900px)');
+    this.onMq = () => this.setState({ narrow: this.mq.matches });
+    this.mq.addEventListener('change', this.onMq); this.onMq();
+    this.paint();
+    this.loop = setInterval(() => {
+      if (this.state.mode==='large' && this.state.role==='send' && this.state.phase==='looping') {
+        this.setState(s => ({ frame: (s.frame % 14) + 1 }));
+      }
+      if (this.state.mode==='large' && this.state.role==='receive' && this.state.phase==='receiving') {
+        this.setState(s => ({ received: Math.min(s.total - 12, s.received + 1) }));
+      }
+    }, 900);
+  }
+  componentDidUpdate(){ this.paint(); }
+  componentWillUnmount(){ clearInterval(this.loop); if(this.mq) this.mq.removeEventListener('change', this.onMq); }
+  applyTheme(theme){
+    const root = document.documentElement, p = PALETTES[theme];
+    Object.keys(p).forEach(k => root.style.setProperty(k, p[k]));
+    document.body.style.background = p['--bg'];
+  }
+  paint(){
+    const seed = (this.state.text.length * 31 + this.state.frame * 7 + (this.state.file?11:0)) || 5;
+    [this.qrRef.current, this.fsRef.current].forEach(c => c && this.drawQr(c, seed));
+    const bar = this.barRef.current;
+    if (bar) bar.style.width = Math.round(this.state.received / this.state.total * 100) + '%';
+    document.querySelectorAll('[data-active]').forEach(el => {
+      const on = el.getAttribute('data-active') === 'true';
+      const st = getComputedStyle(document.documentElement);
+      if (el.hasAttribute('data-radio')) {
+        el.style.borderColor = on ? 'var(--accent,#E5715A)' : st.getPropertyValue('--line');
+        const dot = el.firstElementChild; if (dot) dot.style.background = on ? 'var(--accent,#E5715A)' : 'transparent';
+        return;
+      }
+      if (el.tagName === 'BUTTON' && el.parentElement && el.parentElement.getAttribute('aria-hidden') !== 'x') {
+        if (el.closest('nav')) {
+          el.style.borderBottomColor = on ? 'var(--accent,#E5715A)' : 'transparent';
+          el.style.color = on ? st.getPropertyValue('--text-strong') : st.getPropertyValue('--text-faint');
+        } else {
+          el.style.background = on ? st.getPropertyValue('--active-bg') : 'transparent';
+          el.style.color = on ? st.getPropertyValue('--text-strong') : st.getPropertyValue('--text-faint');
+        }
+      }
+    });
+  }
+  drawQr(canvas, seed){
+    const ctx = canvas.getContext('2d'); const N = 33, S = canvas.width / N;
+    ctx.fillStyle = '#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    let x = seed * 9301 + 49297;
+    const rnd = () => { x = (x * 9301 + 49297) % 233280; return x / 233280; };
+    ctx.fillStyle = '#050505';
+    for (let r=0;r<N;r++) for (let c=0;c<N;c++){
+      const inFinder = (r<8&&c<8)||(r<8&&c>N-9)||(r>N-9&&c<8);
+      if (inFinder) continue;
+      if (rnd() > 0.5) ctx.fillRect(c*S, r*S, S, S);
+    }
+    const finder = (cx, cy) => {
+      ctx.fillStyle='#050505'; ctx.fillRect(cx*S,cy*S,7*S,7*S);
+      ctx.fillStyle='#fff'; ctx.fillRect((cx+1)*S,(cy+1)*S,5*S,5*S);
+      ctx.fillStyle='#050505'; ctx.fillRect((cx+2)*S,(cy+2)*S,3*S,3*S);
+    };
+    finder(0,0); finder(N-7,0); finder(0,N-7);
+  }
+  setSt(patch){ this.setState(patch); }
+  renderVals(){
+    const s = this.state, t = T[s.lang], isQuick = s.mode==='quick', isLarge = !isQuick;
+    const isSend = s.role==='send', isReceive = !isSend;
+    const isQuickSend = isQuick && isSend, isLargeSend = isLarge && isSend;
+    const isQuickRcv = isQuick && isReceive, isLargeRcv = isLarge && isReceive;
+    const err = (s.phase||'').indexOf('error') === 0;
+    const looping = isLargeSend && s.phase==='looping';
+    const preparing = isLargeSend && s.phase==='preparing';
+    const chars = s.text.length;
+    const bytes = Math.max(1, Math.round(chars * 0.62));
+    const sizeMap = { large: 168, verylarge: 620, toolarge: 2480 };
+    const kb = s.size ? sizeMap[s.size] : Math.round(bytes/1024*10)/10;
+    const frames = s.size ? Math.ceil(sizeMap[s.size]*1024/PROFILES[s.profile].chunk) : Math.max(1, Math.ceil(bytes/PROFILES[s.profile].chunk));
+    const tooLarge = s.size === 'toolarge';
+    const fileNames = { image:'captura-tablero.png', pdf:'contrato-final.pdf' };
+    const hasFile = s.src==='file' && !!s.file;
+    const contentReady = isLargeSend ? (s.src==='text' ? chars>0 : hasFile) : chars>0;
+
+    const summary = isLargeSend && contentReady ? (s.src==='file' ? [
+      {k:'Archivo',v:fileNames[s.file]||'archivo'},{k:'Original',v:(s.size?Math.round(sizeMap[s.size]*1.9):210)+' KB'},
+      {k:'Transferencia',v:kb+' KB'},{k:'Compresión',v:'−47%'},{k:'Frames QR',v:String(frames)},{k:'Loop est.',v:Math.round(frames*PROFILES[s.profile].ms/1000)+' s'}
+    ] : [
+      {k:'Caracteres',v:String(chars)},{k:'Original',v:(Math.round(chars/1024*10)/10)+' KB'},
+      {k:'Transferencia',v:kb+' KB'},{k:'Compresión',v:'−38%'},{k:'Frames QR',v:String(frames)},{k:'Loop est.',v:Math.round(frames*PROFILES[s.profile].ms/1000)+' s'}
+    ]) : [];
+
+    const noticeCopy = {
+      large:['Transferencia grande','Son '+frames+' frames QR: el escaneo puede tardar bastante. Mantené las dos pantallas quietas.'],
+      verylarge:['Transferencia muy grande','Cerca del límite práctico. Si podés, mandá el archivo comprimido o partido en dos.']
+    };
+    const notice = isLargeSend && s.size && !tooLarge ? noticeCopy[s.size] : null;
+    const multiDrop = null;
+
+    const errors = {
+      'error:permission':['lucide:camera-off','Cámara bloqueada','El navegador rechazó el acceso. Habilitalo en los permisos del sitio y volvé a intentar.','NotAllowedError',true],
+      'error:notreadable':['lucide:video-off','Cámara ocupada','Otra app está usando la cámara. Cerrala y reintentá.','NotReadableError',true],
+      'error:generic':['lucide:triangle-alert','No se pudo iniciar la cámara','Algo falló al abrir el stream. Reintentá o probá con otra cámara.','StartFailed',true],
+      'error:verify':['lucide:shield-x','No se pudo verificar','El checksum SHA-256 no coincide: el contenido llegó incompleto o corrupto. Nada se guardó. Escaneá de nuevo.','ChecksumMismatch',true],
+      'error:incompatible':['lucide:file-x','Emisor incompatible','Este QR viene de una versión distinta de QR Transfer. Actualizá el dispositivo que envía.','QRT1-Unsupported',false]
+    };
+    const e = errors[s.phase] || errors['error:permission'];
+
+    const rcvStatus = {
+      idle:['lucide:scan-line','var(--text-muted,#888)','Esperando el QR','Abrí la transferencia en el otro dispositivo y apuntá la cámara al código.','—'],
+      scanning:['lucide:scan-line','var(--accent,#E5715A)','Buscando frames','En cuanto entre el frame de cabecera aparece el progreso real.','0 %'],
+      receiving:['lucide:download','var(--accent,#E5715A)','Recibiendo transferencia','No muevas los dispositivos. Los frames que falten se recuperan en la próxima vuelta del loop.',''],
+      assembling:['lucide:loader','var(--accent,#E5715A)','Verificando y descomprimiendo','Comparando el checksum SHA-256 antes de mostrarte nada.','99 %'],
+      complete:['lucide:shield-check','var(--ok-text,#4ADE80)','Transferencia completa','Checksum verificado. El contenido nunca salió de estos dos dispositivos.','100 %']
+    };
+    const st = rcvStatus[isQuickRcv ? (s.phase==='done'?'complete':(s.phase==='scanning'?'scanning':'idle')) : (rcvStatus[s.phase]?s.phase:'idle')];
+    const pct = Math.round(s.received/s.total*100);
+    const missingList = Array.from({length:12},(_,i)=>'#'+(s.received+3+i*4));
+
+    const resultBodies = {
+      text: isQuickRcv ? 'https://app.interno.example/invite?token=9f2c-Ae81-KK20' : SAMPLE_LONG,
+      file: '', image: ''
+    };
+    const resultIsFile = isLargeRcv && s.phase==='complete' && s.result!=='text';
+
+    return {
+      t, isQuick, isLarge, isSend, isReceive, isLargeSend, isText:s.src==='text', isFile:s.src==='file',
+      quickCurrent: isQuick ? 'page' : null, largeCurrent: isLarge ? 'page' : null,
+      themeIcon: s.theme==='dark' ? 'lucide:sun' : 'lucide:moon',
+      contextLabel: isQuickSend ? (s.lang==='es'?'QR rápido · enviar · hasta 2.000 caracteres':'Quick QR · send · up to 2,000 chars')
+        : isQuickRcv ? (s.lang==='es'?'QR rápido · recibir · un solo código':'Quick QR · receive · single code')
+        : isLargeSend ? (s.lang==='es'?'Transferencia grande · enviar · '+(s.src==='text'?'texto':'archivo'):'Large Transfer · send · '+s.src)
+        : (s.lang==='es'?'Transferencia grande · recibir · loop de frames':'Large Transfer · receive · frame loop'),
+
+      showEditor: (isQuickSend) || (isLargeSend && s.src==='text' && !looping && !preparing),
+      showDropzone: isLargeSend && s.src==='file' && !hasFile && !looping && !preparing,
+      showFileCard: isLargeSend && s.src==='file' && hasFile,
+      showSummary: isLargeSend && contentReady && !preparing,
+      showNotice: !!notice, noticeTitle: notice?notice[0]:'', noticeBody: notice?notice[1]:'',
+      showBlockError: tooLarge, blockBody: 'Después de comprimir sigue pesando '+kb+' KB y el límite por QR es 2 MB. Probá con un archivo más chico o partilo.',
+      summary,
+      showReceiveStatus: isReceive,
+      showSendActions: isSend && !looping && !preparing,
+      showQrStage: isSend, showPreparing: preparing,
+      showCamera: isReceive && !err && s.phase!=='complete' && s.phase!=='done',
+      showErrorStage: isReceive && err,
+      showResult: (isLargeRcv && s.phase==='complete') || (isQuickRcv && s.phase==='done'),
+      showProgress: isLargeRcv && (s.phase==='receiving' || s.phase==='assembling'),
+
+      text: s.text, counter: isQuick ? chars+' / 2000' : chars+' chars · '+(Math.round(bytes/1024*10)/10)+' KB',
+      hideLimit: !(isQuick && chars>=2000),
+      editorPlaceholder: isQuick ? (s.lang==='es'?'Escribí o pegá lo que querés pasar…':'Type or paste what you want to move…') : (s.lang==='es'?'Pegá o escribí un texto largo…':'Paste or type a large text…'),
+      copyLabel: s.copied ? t.copied : t.copy, format: s.format,
+      fileName: fileNames[s.file]||'archivo', fileIcon: s.file==='image'?'lucide:image':'lucide:file-text',
+      fileMeta: (s.file==='image'?'PNG':'PDF')+' · '+(s.size?Math.round(sizeMap[s.size]*1.9):210)+' KB',
+
+      hideQrEmpty: !(isSend && !contentReady) , hideQr: !(isSend && contentReady),
+      qrCaption: looping ? s.frame+' / 14' : (isQuick ? (s.lang==='es'?'QR listo':'QR ready') : (s.lang==='es'?'previsualización':'preview')),
+      qrHint: looping ? (s.lang==='es'?'Subí el brillo de la pantalla y mantenela quieta frente a la cámara.':'Raise screen brightness and hold the screen still.') : (isQuick ? (s.lang==='es'?'Escaneá con el otro dispositivo. El código se actualiza mientras escribís.':'Scan with the other device. The code updates as you type.') : (s.lang==='es'?'Iniciá la transferencia para ver el loop completo de frames.':'Start the transfer to see the full frame loop.')),
+      isLooping: looping, speedLabel: PROFILES[s.profile] ? s.frameMs+' ms / frame' : '',
+      slowerDisabled: s.frameMs>=500, fasterDisabled: s.frameMs<=200,
+      preparingMeta: frames+' frames · '+Math.round(frames*PROFILES[s.profile].ms/1000)+' s',
+
+      hideSweep: !(isReceive && (s.phase==='scanning'||s.phase==='receiving')),
+      hideStarting: !(isReceive && (s.phase==='idle'||s.phase==='starting')),
+      cameraBadge: s.phase==='receiving' ? pct+' %' : (s.phase==='idle'||s.phase==='starting' ? (s.lang==='es'?'conectando':'connecting') : (s.lang==='es'?'en vivo':'live')),
+
+      errorIcon:e[0], errorTitle:e[1], errorBody:e[2], errorCode:e[3], hideRetry:!e[4],
+      statusIcon:st[0], statusColor:st[1], statusTitle:st[2], statusBody:st[3],
+      statusMeta: s.phase==='receiving' ? pct+' %' : st[4],
+      framesLabel: s.received+' / '+s.total+' frames', transferLabel: s.result==='text' ? 'Texto · 52 KB' : 'captura-tablero.png · 168 KB',
+      missingCount: s.total - s.received, missingList, hideMissing: !s.missingOpen,
+      missingChevron: s.missingOpen ? 'lucide:chevron-down' : 'lucide:chevron-right',
+      resultMeta: resultIsFile ? (s.result==='image'?'captura-tablero.png · 168 KB':'contrato-final.pdf · 410 KB') : (s.lang==='es'?'texto · 52 KB':'text · 52 KB'),
+      resultBody: resultIsFile ? (s.lang==='es'?'El archivo quedó listo en memoria. Descargalo antes de cerrar la pestaña — no se guarda nada.':'File ready in memory. Download before closing the tab — nothing is stored.') : resultBodies.text,
+      resultPrimary: resultIsFile ? (s.lang==='es'?'Descargar':'Download') : (s.copied ? t.copied : (s.lang==='es'?'Copiar todo':'Copy all')),
+
+      primaryLabel: isQuickSend ? t.showQr : t.startTransfer,
+      primaryIcon: isQuickSend ? 'lucide:qr-code' : 'lucide:play',
+      primaryDisabled: !contentReady || tooLarge,
+      profileLabel: PROFILE_COPY[s.lang][s.profile][0],
+
+      profiles: ['reliable','balanced','fast'].map(k => ({
+        name: PROFILE_COPY[s.lang][k][0], desc: PROFILE_COPY[s.lang][k][1],
+        spec: PROFILES[k].ms+' ms · '+PROFILES[k].chunk+' B · EC '+PROFILES[k].ec,
+        active: s.profile===k, select: () => this.setState({profile:k, frameMs:PROFILES[k].ms})
+      })),
+      hideSettings: !s.settingsOpen, hideAdvanced: !s.advancedOpen,
+      advChevron: s.advancedOpen ? 'lucide:chevron-down' : 'lucide:chevron-right',
+      frameMs: s.frameMs, frameMsLabel: s.frameMs+' ms',
+      profileDefaultLabel: (s.lang==='es'?'perfil: ':'profile: ')+PROFILES[s.profile].ms+' ms',
+      hideFullscreen: !s.fullscreen,
+
+      hideSwitcher: !s.narrow, isComposeView: s.view==='compose', isStageView: s.view==='stage',
+      hideCompose: s.narrow && s.view!=='compose', hideStage: s.narrow && s.view!=='stage',
+      switchLeftLabel: isReceive ? t.status : t.content,
+      switchRightLabel: isReceive ? t.viewCamera : t.showQr,
+      switchRightIcon: isReceive ? 'lucide:camera' : 'lucide:qr-code',
+
+      goQuick: () => this.setState({mode:'quick', phase: s.role==='receive'?'scanning':'editing', size:null, file:null, src:'text'}),
+      goLarge: () => this.setState({mode:'large', phase: s.role==='receive'?'idle':'editing'}),
+      setSend: () => this.setState({role:'send', phase:'editing', view: s.narrow?'compose':'stage'}),
+      setReceive: () => this.setState({role:'receive', phase: s.mode==='quick'?'scanning':'idle', view:'compose'}),
+      setSrcText: () => this.setState({src:'text'}), setSrcFile: () => this.setState({src:'file'}),
+      onText: (ev) => this.setState({text: ev.target.value.slice(0, isQuick?2000:200000)}),
+      setFormat: (ev) => this.setState({format: ev.target.value}),
+      copyText: () => { this.setState({copied:true}); setTimeout(()=>this.setState({copied:false}),1600); },
+      clearText: () => this.setState({text:'', size:null}),
+      pickFile: () => this.setState({file: s.file||'pdf', src:'file'}),
+      removeFile: () => this.setState({file:null, size:null}),
+      openSettings: () => this.setState({settingsOpen:true}), closeSettings: () => this.setState({settingsOpen:false}),
+      toggleAdvanced: () => this.setState({advancedOpen: !s.advancedOpen}),
+      setFrameMs: (ev) => this.setState({frameMs: Number(ev.target.value)}),
+      resetDefaults: () => this.setState({profile:'balanced', frameMs:300}),
+      openFullscreen: () => this.setState({fullscreen:true}), closeFullscreen: () => this.setState({fullscreen:false}),
+      slower: () => this.setState({frameMs: Math.min(500, s.frameMs+50)}),
+      faster: () => this.setState({frameMs: Math.max(200, s.frameMs-50)}),
+      primaryAction: () => {
+        if (isQuickSend) { this.setState({view:'stage'}); return; }
+        this.setState({phase:'preparing'});
+        setTimeout(()=>this.setState({phase:'looping', view: this.state.narrow?'stage':this.state.view}), 1300);
+      },
+      stopTransfer: () => this.setState({phase:'editing'}),
+      retry: () => this.setState({phase: s.mode==='quick'?'scanning':'idle'}),
+      scanAnother: () => this.setState({phase: s.mode==='quick'?'scanning':'idle', received:41}),
+      toggleMissing: () => this.setState({missingOpen: !s.missingOpen}),
+      toggleTorch: () => {},
+      showComposeView: () => this.setState({view:'compose'}), showStageView: () => this.setState({view:'stage'}),
+      accents: Object.keys(ACCENTS).map(k => ({
+        name: ACCENTS[k].name, color: ACCENTS[k].accent, key: k,
+        ring: s.accent===k ? '#fff' : 'transparent',
+        opacity: s.accent===k ? 1 : 0.7,
+        select: () => { applyAccent(k); this.setState({accent:k}); }
+      })),
+      toggleLang: () => this.setState({lang: s.lang==='es'?'en':'es'}),
+      toggleTheme: () => { const th = s.theme==='dark'?'light':'dark'; this.applyTheme(th); this.setState({theme:th}); },
+      qrRef: this.qrRef, fsRef: this.fsRef, barRef: this.barRef
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+/* Values: docs/DESIGN_SYSTEM.md §2.4. Theme-invariant. */
+
+:root {
+  --r-control: 10px;
+  --r-card: 16px;
+  --r-stage: 22px;
+  --r-sheet: 24px;
+  --r-pill: 999px;
+}

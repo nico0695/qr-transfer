@@ -18,10 +18,11 @@
 ## Overview
 
 QR Transfer is a minimal SPA (single page, no routing) built with **Vite + React 19 + strict
-TypeScript** and plain CSS. A navbar switches between two sections:
+TypeScript** and plain CSS. A header switches between two modes, and a shared Send/Receive control
+switches direction within either:
 
-- **Quick QR** — two tabs: **Generate QR** (a textarea generates a single QR code live, up to 2000
-  characters) and **Scan QR** (the camera reads one QR code and shows its text).
+- **Quick QR** — **Send** (a textarea generates a single QR code live, up to 2000 characters) and
+  **Receive** (the camera reads one QR code and shows its text).
 - **Large Transfer** — texts (Markdown, JSON, logs, configs…) or **one file** (documents, images,
   archives, small binaries) are compressed when it helps, split into chunks and shown as an
   **animated loop of QR codes** with a Reliable / Balanced / Fast profile; the receiver scans
@@ -45,8 +46,9 @@ texts or a single file as an animated QR sequence with integrity verification (L
 let the user copy the text / download the file on the other end. Includes dark/light mode and
 es/en language support.
 
-**Does not:** persist content (no drafts, files or received data anywhere; the only stored value is
-the preferred transfer profile in `localStorage`), interpret scanned content (URLs, HTML or
+**Does not:** persist content (no drafts, files or received data anywhere; the only stored values
+are the UI preferences — theme, language, preferred transfer profile — in `localStorage`),
+interpret scanned content (URLs, HTML or
 Markdown are shown as plain text/source, files are only wrapped in a `Blob` — never opened,
 rendered or executed), or transmit data over the network — the "transfer" is purely optical, screen
 to camera. Not in scope: multiple files per transfer, encryption, receiver acknowledgements,
@@ -58,13 +60,13 @@ documented in [qr-transfer-flow.md](./qr-transfer-flow.md) and
 
 ```mermaid
 flowchart TD
-    main[main.tsx] --> App[App.tsx<br/>section · mode · theme · language]
+    main[main.tsx] --> App[App.tsx<br/>mode · role · theme · language]
     App -->|LangContext| i18n[i18n.ts<br/>es/en dictionary]
-    App --> Nav[NavMenu.tsx<br/>Quick QR · Large Transfer]
-    App --> ModeTabs[ModeTabs.tsx]
-    App -->|generate mode| Gen[QRGenerator.tsx]
-    App -->|scan mode · lazy| Scan[QRScanner.tsx]
-    App -->|large section · lazy| LT[large-transfer/LargeTransfer.tsx<br/>Send · Receive]
+    App --> Header[app/AppHeader<br/>mode Tabs · role SegmentedControl]
+    App --> Shell[app/AppShell<br/>compose · stage panes]
+    App -->|role=send| Gen[QRGenerator.tsx]
+    App -->|role=receive · lazy| Scan[QRScanner.tsx]
+    App -->|mode=large · lazy| LT[large-transfer/LargeTransfer.tsx<br/>direction prop]
     LT --> SendFlow[SendFlow.tsx<br/>editing → preparing → ready → transferring]
     LT --> Receiver[TransferScanner.tsx<br/>idle → scanning → receiving → assembling → complete]
     SendFlow --> Editor[LargeTextEditor.tsx<br/>CodeMirror 6]
@@ -80,45 +82,49 @@ flowchart TD
     ScanLib --> Camera
 ```
 
-`App` owns the global state (active section and mode, theme, language) and applies it via
-attributes on `<html>` (`data-theme`, `lang`) and a React Context for the UI strings.
-`LargeTransfer` keeps the draft text and loop speed so switching between Send and Receive does not
-lose them. Everything else is local state in each component. **All byte-level and protocol logic
-lives in `src/lib/transfer/` and has no React dependency.**
+`App` owns the global state (`mode`, `role`, theme, language) and applies it via attributes on
+`<html>` (`data-theme`, `lang`) and a React Context for the UI strings; `role` is shared by both
+Quick QR and Large Transfer, so it's read once in `App` and passed down (`LargeTransfer` receives
+it as a `direction` prop rather than owning it). `LargeTransfer` keeps the draft text and loop
+speed so switching between Send and Receive does not lose them. Everything else is local state in
+each component. **All byte-level and protocol logic lives in `src/lib/transfer/` and has no React
+dependency.**
 
 ## Main Components
 
-| Component / module                                    | Responsibility                                                                                                                                         | Depends on                      |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------- |
-| `src/App.tsx`                                         | Header, navbar, theme/language buttons, mounts the active section/mode                                                                                 | `i18n.ts`, components           |
-| `src/components/NavMenu.tsx`                          | Quick QR / Large Transfer navbar (`aria-current`)                                                                                                      | `i18n.ts`                       |
-| `src/components/ModeTabs.tsx`                         | Generate/Scan selector (accessible tabs) inside Quick QR                                                                                               | `i18n.ts`                       |
-| `src/components/QRGenerator.tsx`                      | Textarea + counter + QR canvas, Copy/Clear/Show QR buttons                                                                                             | `qrcode`, `CopyButton`          |
-| `src/components/QRScanner.tsx`                        | Single-QR camera lifecycle, decoding, result and error handling                                                                                        | `html5-qrcode`, `lib/camera.ts` |
-| `src/components/CopyButton.tsx`                       | Copy to clipboard with "Copied!" feedback (`label`, `small`, `primary` variants)                                                                       | Clipboard API                   |
-| `src/components/large-transfer/LargeTransfer.tsx`     | Send/Receive switch; holds source, draft text, selected file and settings (profile persisted)                                                          | `SendFlow`, `TransferScanner`   |
-| `src/components/large-transfer/SendFlow.tsx`          | Sender state machine: `editing → preparing → transferring`; source selector, live summary, Settings, Start                                             | `lib/transfer`, `qrFrames.ts`   |
-| `src/components/large-transfer/SourceSelector.tsx`    | Text / File segmented control                                                                                                                          | —                               |
-| `src/components/large-transfer/FileInput.tsx`         | Drop zone + file picker (one file; extra drops ignored)                                                                                                | —                               |
-| `src/components/large-transfer/FilePreview.tsx`       | File card: name / size / MIME, image thumbnail (object URL revoked), Change / Remove                                                                   | —                               |
-| `src/components/large-transfer/usePreparedPayload.ts` | Live, debounced, cancellable `preparePayload` for the current source                                                                                   | `lib/transfer`                  |
-| `src/components/large-transfer/TransferSettings.tsx`  | Native `<dialog>` with Reliable / Balanced / Fast + Advanced frame duration                                                                            | `lib/transfer/profiles`         |
-| `src/components/large-transfer/ReceivedFile.tsx`      | File result: sanitized name, preview for images, Download (Blob URL), Copy image, Scan another                                                         | `lib/transfer/filename`         |
-| `src/components/large-transfer/LargeTextEditor.tsx`   | CodeMirror wrapper (editable or read-only viewer): toolbar, find, wrap, format, fullscreen overlay                                                     | `codemirrorSetup.ts`            |
-| `src/components/large-transfer/codemirrorSetup.ts`    | Minimal CM6 extension set (history, search, keymaps, theme via CSS vars, markdown/json highlighting)                                                   | `@codemirror/*`                 |
-| `src/components/large-transfer/TransferSummary.tsx`   | Live summary: original / transfer size, compression, frames and loop for the profile; size warnings                                                    | `lib/transfer/config`           |
-| `src/components/large-transfer/AnimatedQR.tsx`        | Loops the pre-rendered frames, speed presets, fullscreen                                                                                               | —                               |
-| `src/components/large-transfer/qrFrames.ts`           | Renders every frame once as a PNG data URL (yields to the event loop periodically)                                                                     | `qrcode`                        |
-| `src/components/large-transfer/TransferScanner.tsx`   | Renders the receiver states; all imperative work lives in `useTransferScanner.ts`                                                                      | `useTransferScanner`            |
-| `src/components/large-transfer/useTransferScanner.ts` | Camera lifecycle, engine choice and fallback, `ChunkCollector`, progress, auto-finish, verification                                                    | `lib/scan`, `lib/transfer`      |
-| `src/lib/scan/*`                                      | Capture at camera resolution: ROI sizing, frame loop, WASM decode worker, legacy fallback                                                              | `zxing-wasm`                    |
-| `src/components/large-transfer/ReceivedContent.tsx`   | "Transfer complete" screen: Copy all / View content / Scan another + read-only viewer                                                                  | `LargeTextEditor`               |
-| `src/lib/transfer/*`                                  | Pure pipeline: `encoding`, `compression`, `chunking`, `checksum`, `protocol`, `filename`, `profiles`, `transfer`, `formatDetection`, `config`, `types` | Web APIs only                   |
-| `src/lib/settingsStorage.ts`                          | Preferred transfer profile in `localStorage` (the only persisted value)                                                                                | —                               |
-| `src/lib/camera.ts`                                   | Shared camera helpers: `buildVideoConstraints`, `listCameras`, `describeCameraError`, `stopScanner`, default `facingMode: environment`                 | `html5-qrcode` types            |
-| `src/lib/format.ts`                                   | `formatBytes`, `formatNumber`, `formatSeconds`                                                                                                         | —                               |
-| `src/i18n.ts`                                         | Typed es/en dictionary, `LangContext`, `useI18n()` hook                                                                                                | —                               |
-| `src/styles.css`                                      | All styling: CSS variables, dark mode, responsive layout, CodeMirror palette                                                                           | —                               |
+| Component / module                                        | Responsibility                                                                                                                                           | Depends on                                                  |
+| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| `src/App.tsx`                                             | Owns `mode`/`role`, mounts `AppHeader`/`AppShell` and the active screen                                                                                  | `i18n.ts`, `app/*`, components                              |
+| `src/components/app/AppHeader/`                           | Mode `Tabs`, shared Send/Receive `SegmentedControl`, theme/language buttons                                                                              | `primitives/*`, `i18n.ts`                                   |
+| `src/components/app/AppShell/`                            | `100dvh` shell, `compose`/`stage` panes, hosts `MobileViewSwitcher` below 900px                                                                          | `ContextLabel`, `MobileViewSwitcher`                        |
+| `src/components/QRGenerator.tsx`                          | Textarea + counter + QR canvas, Copy/Clear/Show QR buttons                                                                                               | `qrcode`, `useCopy`                                         |
+| `src/components/QRScanner.tsx`                            | Single-QR camera lifecycle, decoding, result and error handling                                                                                          | `html5-qrcode`, `lib/camera.ts`                             |
+| `src/hooks/useCopy.ts`                                    | Copy-to-clipboard hook with a self-resetting `idle/copied/failed` feedback state, shared by every Copy button                                            | Clipboard API                                               |
+| `src/components/large-transfer/LargeTransfer.tsx`         | Renders `SendFlow`/`TransferScanner` per the `direction` prop (owned by `App`); holds source, draft text, selected file and settings (profile persisted) | `SendFlow`, `TransferScanner`                               |
+| `src/components/large-transfer/SendFlow.tsx`              | Sender state machine: `editing → preparing → transferring`; source selector, live summary, Settings, Start                                               | `lib/transfer`, `qrFrames.ts`                               |
+| `src/components/large-transfer/SourceSelector.tsx`        | Text / File segmented control                                                                                                                            | —                                                           |
+| `src/components/app/Dropzone/`                            | Drop zone + file picker (one file; extra drops ignored)                                                                                                  | —                                                           |
+| `src/components/app/FileCard/`                            | File card: name / size / MIME, image thumbnail (object URL revoked), Change / Remove                                                                     | —                                                           |
+| `src/components/large-transfer/usePreparedPayload.ts`     | Live, debounced, cancellable `preparePayload` for the current source                                                                                     | `lib/transfer`                                              |
+| `src/components/app/SettingsSheet/`, `.../ProfileOption/` | Native `<dialog>` (via the `Dialog` primitive) with Reliable / Balanced / Fast profile cards + Advanced frame-duration range                             | `lib/transfer/profiles`                                     |
+| `src/components/large-transfer/ReceivedFile.tsx`          | File result: sanitized name, preview for images, Download (Blob URL), Copy image, Scan another                                                           | `ResultPanel`, `lib/transfer/filename`                      |
+| `src/components/large-transfer/LargeTextEditor.tsx`       | CodeMirror wrapper (editable or read-only viewer): format select, copy, clear, fullscreen icon button                                                    | `codemirrorSetup.ts`                                        |
+| `src/components/large-transfer/codemirrorSetup.ts`        | Minimal CM6 extension set (history, search, keymaps, theme via CSS vars, markdown/json highlighting)                                                     | `@codemirror/*`                                             |
+| `src/components/large-transfer/TransferSummary.tsx`       | Live summary: original / transfer size, compression, frames and loop for the profile; size warnings                                                      | `lib/transfer/config`                                       |
+| `src/components/large-transfer/AnimatedQR.tsx`            | Loops the pre-rendered frames, speed presets, fullscreen                                                                                                 | —                                                           |
+| `src/components/large-transfer/qrFrames.ts`               | Renders every frame once as a PNG data URL (yields to the event loop periodically)                                                                       | `qrcode`                                                    |
+| `src/components/large-transfer/TransferScanner.tsx`       | Renders the receiver states; all imperative work lives in `useTransferScanner.ts`                                                                        | `CameraScanner`, `ReceiveStatusPanel`, `useTransferScanner` |
+| `src/components/app/OpticalStage/CameraScanner/`          | Shared viewfinder for Quick QR and both Large Transfer engines: brackets/sweep/badge, optional square crop (`framed`) and hit-flash (`hitKey`)           | —                                                           |
+| `src/components/app/ReceiveStatusPanel/`                  | Status icon + title + percent, progress bar, missing-frames `Chip` list for the in-progress receiver states                                              | `ProgressBar`, `Chip`                                       |
+| `src/components/large-transfer/useTransferScanner.ts`     | Camera lifecycle, engine choice and fallback, `ChunkCollector`, progress, auto-finish, verification                                                      | `lib/scan`, `lib/transfer`                                  |
+| `src/lib/scan/*`                                          | Capture at camera resolution: ROI sizing, frame loop, WASM decode worker, legacy fallback                                                                | `zxing-wasm`                                                |
+| `src/components/large-transfer/ReceivedContent.tsx`       | "Transfer complete" screen: Copy all / View content / Scan another + read-only viewer                                                                    | `ResultPanel`, `LargeTextEditor`                            |
+| `src/lib/transfer/*`                                      | Pure pipeline: `encoding`, `compression`, `chunking`, `checksum`, `protocol`, `filename`, `profiles`, `transfer`, `formatDetection`, `config`, `types`   | Web APIs only                                               |
+| `src/store/preferences.ts`                                | Zustand `persist` store: theme, language, preferred transfer profile in `localStorage` (the only persisted values)                                       | `zustand`                                                   |
+| `src/lib/camera.ts`                                       | Shared camera helpers: `buildVideoConstraints`, `listCameras`, `describeCameraError`, `stopScanner`, default `facingMode: environment`                   | `html5-qrcode` types                                        |
+| `src/lib/format.ts`                                       | `formatBytes`, `formatNumber`, `formatSeconds`                                                                                                           | —                                                           |
+| `src/i18n.ts`                                             | Typed es/en dictionary, `LangContext`, `useI18n()` hook                                                                                                  | —                                                           |
+| `src/styles.css`                                          | All styling: CSS variables, dark mode, responsive layout, CodeMirror palette                                                                             | —                                                           |
 
 Detail not visible from the table — **camera lifecycle**, identical in both scanners even though
 they now run different engines: the effect that starts the camera returns a cleanup that stops it,
@@ -162,18 +168,29 @@ terminates the decode worker.
   open.
 - **QR sharpness**: Quick QR renders the canvas at 640 px and scales it with CSS; Large Transfer
   frames use `scale: 6` PNGs with `image-rendering: pixelated`.
-- **Theming**: light palette on `:root` and dark on `:root[data-theme='dark']`, all CSS variables
-  (including the CodeMirror highlight colors). Initial theme follows `prefers-color-scheme`; initial
-  language, `navigator.language`.
+- **Theming**: dark is the default (bare `:root`), light overrides via `:root[data-theme='light']`
+  — every color, spacing, radius, shadow and motion value is a CSS custom property under
+  `src/styles/tokens/` (`docs/DESIGN_SYSTEM.md` §2), never a hardcoded hex or raw px in component
+  CSS. Initial theme follows `prefers-color-scheme`; initial language, `navigator.language`; both
+  then persist through `src/store/preferences.ts`. 12 CSS-Modules primitives under
+  `src/components/primitives/` (reviewable at `?demo=primitives`) are the building blocks every
+  screen composes; see [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md) for the token/component spec and
+  [`frontend-architecture.md`](./frontend-architecture.md) for folder/CSS conventions. This is the
+  shipped state of the design-system refactor tracked in
+  [`specs/design-system-refactor/macro-plan.md`](./specs/design-system-refactor/macro-plan.md).
 - **Almost no persistence**: content lives only in memory (draft, file, speed survive only while
-  the Large Transfer section is mounted); the sole stored value is the preferred transfer profile.
+  the Large Transfer section is mounted); the only stored values are UI preferences — theme,
+  language, and the preferred transfer profile.
 - **Content safety**: scanned/received text is stored as a string and rendered as plain text or as
   read-only editor source; received files are only wrapped in a `Blob` for download (filename
   sanitized, MIME normalized) or shown with `<img>` when they are images. No `eval`, no
   `dangerouslySetInnerHTML`, no auto-opening URLs, no Markdown rendering.
-- **Responsive layout** (760 px breakpoint): Quick QR uses 2 columns on desktop with a `sticky` QR
-  panel; Large Transfer is always a vertical flow with separate screens (editor → summary → QR /
-  camera → progress → result) so the editor, QR and camera get the full width.
+- **Responsive layout** (one breakpoint, 900px): `AppShell` is a two-pane `100dvh` shell —
+  `compose` (content, status) and `stage` (QR display / camera scanner) — that never scrolls the
+  page itself, only content inside a pane does. At ≥900px both panes show side by side; below it,
+  `MobileViewSwitcher`'s bottom bar toggles which one is visible, and screens needing both at once
+  (the camera lifecycle, the animated-QR frame loop) render into both through one component
+  instance via `useStageSlot()`'s portal so the underlying hook is never duplicated.
 
 ## How It Runs
 
@@ -224,3 +241,6 @@ animated-QR pipeline implemented as pure, tested modules in `src/lib/transfer/`,
 a continuous-scan receiver that verifies integrity before showing anything. Strings go in
 `i18n.ts`, styles in the CSS variables, camera helpers in `lib/camera.ts`, and byte/protocol logic
 never lives inside React components.
+
+For the visual side of the app — every screen and UI state, screenshotted in desktop/mobile and
+light/dark for a design handoff — see the [Design Catalog](design/README.md).

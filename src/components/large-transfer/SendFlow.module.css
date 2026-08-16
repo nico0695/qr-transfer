@@ -1,0 +1,38 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: var(--sp-4);
+}
+
+.scroll {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  gap: var(--sp-4);
+}
+
+.fill {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 12rem;
+}
+
+.fill > * {
+  flex: 1;
+  min-height: 0;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex: none;
+  padding-top: var(--sp-3);
+  background: var(--bg);
+}

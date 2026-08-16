@@ -1,0 +1,181 @@
+.outer {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+}
+
+.cameraSelect {
+  align-self: flex-start;
+  min-width: 160px;
+}
+
+.viewfinder {
+  position: relative;
+  flex: 1;
+  min-height: 220px;
+  border-radius: var(--r-card);
+  overflow: hidden;
+  background: radial-gradient(circle, var(--surface-2), var(--bg));
+}
+
+/*
+ * Square crop for the WASM engine only — it derives its ROI from `.region`'s own rendered size,
+ * so this must never apply to the legacy engine (see the `framed` prop doc in the .tsx). Carried
+ * by its own wrapper, one level up from `.region`, so the overlay/badge that letterbox around the
+ * video can share its exact box without becoming DOM children of the id'd element the engines
+ * manage themselves — html5-qrcode manipulates that element's children on its own timeline, and
+ * React children sharing it can get torn out from under React (a real "removeChild" crash caught
+ * live, not a hypothetical).
+ */
+.frame {
+  position: absolute;
+  inset: 0;
+}
+
+.framed {
+  margin: auto;
+  aspect-ratio: 1;
+  width: 100%;
+  height: auto;
+}
+
+.region {
+  position: absolute;
+  inset: 0;
+}
+
+.region :global(video) {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.guide {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: var(--scan-crop, min(62%, 240px));
+  height: var(--scan-crop, min(62%, 240px));
+  pointer-events: none;
+}
+
+/* Remounted (new `key`) on every accepted frame — replays the fade without a timer; see the
+   `hitKey` prop doc in the .tsx. */
+.hit {
+  position: absolute;
+  inset: -3px;
+  border: 3px solid var(--ok);
+  border-radius: var(--r-control);
+  opacity: 0;
+  animation: hit 700ms ease-out;
+}
+
+@keyframes hit {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hit {
+    animation: none;
+    opacity: 0.9;
+  }
+}
+
+.corner {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border: 3px solid var(--scan-guide);
+}
+
+.corner:nth-child(1) {
+  top: 0;
+  left: 0;
+  border-right: none;
+  border-bottom: none;
+}
+
+.corner:nth-child(2) {
+  top: 0;
+  right: 0;
+  border-left: none;
+  border-bottom: none;
+}
+
+.corner:nth-child(3) {
+  bottom: 0;
+  left: 0;
+  border-right: none;
+  border-top: none;
+}
+
+.corner:nth-child(4) {
+  bottom: 0;
+  right: 0;
+  border-left: none;
+  border-top: none;
+}
+
+.sweep {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--scan-guide);
+  animation: sweep var(--anim-scan-sweep);
+}
+
+@keyframes sweep {
+  0%,
+  100% {
+    top: 0;
+  }
+  50% {
+    top: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sweep {
+    animation: none;
+  }
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  background: var(--scan-mask);
+  color: var(--text);
+}
+
+.badge {
+  position: absolute;
+  bottom: var(--sp-3);
+  left: var(--sp-3);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--text);
+  font: var(--fs-data) var(--font-mono);
+}
+
+.hint {
+  font: var(--fs-ui) var(--font-ui);
+  color: var(--text-faint);
+  text-align: center;
+}

@@ -1,0 +1,38 @@
+.bar {
+  flex: none;
+  display: flex;
+  border-top: 1px solid var(--line-soft);
+  background: var(--surface);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@media (min-width: 900px) {
+  .bar {
+    display: none;
+  }
+}
+
+.button {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-2) 0;
+  border: none;
+  background: transparent;
+  color: var(--text-faint);
+  font: var(--fs-label) var(--font-ui);
+  cursor: pointer;
+  min-height: 44px; /* touch target, docs/DESIGN_SYSTEM.md §7 */
+}
+
+.button[aria-current='true'] {
+  background: var(--surface-active);
+  color: var(--text-strong);
+}
+
+.button:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}

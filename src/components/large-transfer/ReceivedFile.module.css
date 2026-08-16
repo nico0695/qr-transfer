@@ -1,0 +1,8 @@
+.image {
+  display: block;
+  max-width: min(100%, 420px);
+  max-height: 60svh;
+  margin-top: var(--sp-2);
+  border-radius: var(--r-control);
+  background: var(--surface-2);
+}

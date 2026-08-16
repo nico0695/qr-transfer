@@ -1,8 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { ResultPanel } from '../app/ResultPanel'
+import { Button } from '../primitives/Button'
+import buttonStyles from '../primitives/Button/Button.module.css'
+import { cx } from '../../lib/cx'
 import { useI18n } from '../../i18n'
 import { formatBytes } from '../../lib/format'
 import { sanitizeFilename } from '../../lib/transfer/filename'
 import type { ReceivedTransfer } from '../../lib/transfer/types'
+import styles from './ReceivedFile.module.css'
 
 interface ReceivedFileProps {
   file: Extract<ReceivedTransfer, { type: 'file' }>
@@ -77,38 +82,40 @@ export function ReceivedFile({ file, onScanAnother }: ReceivedFileProps) {
   }
 
   return (
-    <section className="panel received">
-      <div className="received-summary">
-        <h2 className="received-title">{t.transferComplete}</h2>
-        <p className="file-name received-filename">{downloadName}</p>
-        <ul className="stats-list stats-center">
-          <li>{formatBytes(file.bytes.length)}</li>
-          <li>{file.mimeType}</li>
-          <li className="verified">✓ {t.verified}</li>
-        </ul>
-        {isImage && url !== null && (
-          <img className="received-image" src={url} alt={downloadName} draggable={false} />
-        )}
-        <div className="actions actions-center">
+    <ResultPanel
+      title={t.transferComplete}
+      meta={`${downloadName} · ${formatBytes(file.bytes.length)} · ${file.mimeType}`}
+      body={
+        isImage &&
+        url !== null && (
+          <img className={styles.image} src={url} alt={downloadName} draggable={false} />
+        )
+      }
+      actions={
+        <>
           {url !== null && (
-            <a className="button button-primary" href={url} download={downloadName}>
+            <a
+              className={cx(buttonStyles.button, buttonStyles.sm, buttonStyles.primary)}
+              href={url}
+              download={downloadName}
+            >
               {t.download}
             </a>
           )}
           {isImage && canCopyImages() && (
-            <button type="button" className="button" onClick={() => void copyImage()}>
+            <Button variant="secondary" size="sm" onClick={() => void copyImage()}>
               {copyState === 'copied'
                 ? t.copied
                 : copyState === 'failed'
                   ? t.copyFailed
                   : t.copyImage}
-            </button>
+            </Button>
           )}
-          <button type="button" className="button" onClick={onScanAnother}>
+          <Button variant="secondary" size="sm" onClick={onScanAnother}>
             {t.scanAnother}
-          </button>
-        </div>
-      </div>
-    </section>
+          </Button>
+        </>
+      }
+    />
   )
 }

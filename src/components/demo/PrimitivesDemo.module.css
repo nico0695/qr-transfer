@@ -1,0 +1,38 @@
+.page {
+  min-height: 100dvh;
+  padding: var(--sp-6);
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+}
+
+.toolbar {
+  display: flex;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-8);
+}
+
+.section {
+  margin-bottom: var(--sp-8);
+}
+
+.sectionTitle {
+  font: var(--fs-h2) var(--font-ui);
+  margin-bottom: var(--sp-3);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  align-items: center;
+}
+
+.swatch {
+  width: 280px;
+}
+
+[data-motion='reduced'] * {
+  animation: none !important;
+  transition: none !important;
+}

@@ -1,0 +1,42 @@
+.debug {
+  margin-top: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  font-family: var(--font-mono);
+  font-size: var(--fs-data);
+}
+
+.list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: var(--sp-1) var(--sp-4);
+  margin: 0;
+}
+
+.list dt {
+  color: var(--text-muted);
+}
+
+.list dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+/* One value per frame index: unbounded, so it takes the full row and scrolls on its own. */
+.sightings {
+  grid-column: 1 / -1;
+}
+
+.sightings dd {
+  max-height: 4.5rem;
+  overflow-y: auto;
+  color: var(--text-muted);
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--sp-3);
+}

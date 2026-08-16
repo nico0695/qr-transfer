@@ -1,0 +1,151 @@
+.outer {
+  height: 100%;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-4);
+  gap: var(--sp-3);
+}
+
+.main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.emptyBox {
+  width: 100%;
+  height: 100%;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  color: var(--text-faint);
+}
+
+.placeholder {
+  font: var(--fs-body) var(--font-ui);
+  text-align: center;
+}
+
+.readyCard {
+  background: var(--qr-paper);
+  border-radius: var(--r-card);
+  box-shadow: var(--sh-qr);
+  padding: var(--qr-quiet);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.canvas {
+  width: min(46vh, 300px);
+  height: min(46vh, 300px);
+  image-rendering: auto;
+}
+
+.caption {
+  font: var(--fs-data) var(--font-mono);
+  color: var(--qr-ink);
+}
+
+.error {
+  font: var(--fs-body) var(--font-ui);
+  color: var(--danger);
+  text-align: center;
+}
+
+.outerFullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-fullscreen);
+  background: var(--qr-paper);
+  border-radius: 0;
+}
+
+.preparing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.preparingLabel {
+  margin: 0;
+  font: var(--fs-body) var(--font-ui);
+  color: var(--text-muted);
+}
+
+.loop {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  min-height: 0;
+}
+
+.loopFullscreen {
+  justify-content: center;
+  gap: var(--sp-4);
+}
+
+.loopImage {
+  flex: 0 1 auto;
+  width: min(56dvh, 520px, 100%);
+  height: auto;
+  aspect-ratio: 1;
+  max-height: min(56dvh, 520px);
+  background: var(--qr-paper);
+  border-radius: var(--r-card);
+  box-shadow: var(--sh-qr);
+  padding: var(--qr-quiet);
+  image-rendering: auto;
+}
+
+@media (max-width: 899px) {
+  .loopImage {
+    width: min(48dvh, 100%);
+    max-height: min(48dvh, 100%);
+  }
+}
+
+.loopImageFullscreen {
+  width: min(74vh, 74vw);
+  height: min(74vh, 74vw);
+  box-shadow: none;
+}
+
+.loopCaption {
+  margin: 0;
+  font: var(--fs-data) var(--font-mono);
+  color: var(--text-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Fullscreen's background is always --qr-paper (white), regardless of theme, so its text must
+   use --qr-ink rather than the theme-dependent --text-strong (which would go white-on-white in
+   dark mode). */
+.loopCaptionFullscreen {
+  color: var(--qr-ink);
+}
+
+.loopHint {
+  margin: 0;
+  font: var(--fs-ui-sm) var(--font-ui);
+  color: var(--text-faint);
+  text-align: center;
+}
+
+.loopActions {
+  display: flex;
+  gap: var(--sp-2);
+}

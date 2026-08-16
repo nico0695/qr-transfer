@@ -1,18 +1,16 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { EditorView } from '@codemirror/view'
 import { EditorState } from '@codemirror/state'
-import { CopyButton } from '../CopyButton'
+import { cx } from '../../lib/cx'
+import { Button } from '../primitives/Button'
+import { Icon } from '../primitives/Icon'
+import { Input } from '../primitives/Input'
+import { useCopy } from '../../hooks/useCopy'
 import { useI18n } from '../../i18n'
 import { detectFormat } from '../../lib/transfer/formatDetection'
 import type { ContentFormat } from '../../lib/transfer/types'
-import {
-  createEditor,
-  languageFor,
-  openSearchPanel,
-  redo,
-  undo,
-  type EditorCompartments,
-} from './codemirrorSetup'
+import { createEditor, languageFor, type EditorCompartments } from './codemirrorSetup'
+import styles from './LargeTextEditor.module.css'
 
 type FormatChoice = 'auto' | ContentFormat
 
@@ -46,9 +44,9 @@ export function LargeTextEditor({
   const compartmentsRef = useRef<EditorCompartments | null>(null)
   const onChangeRef = useRef(onChange)
   const lastEmittedRef = useRef(value)
-  const [wrap, setWrap] = useState(true)
   const [formatChoice, setFormatChoice] = useState<FormatChoice>('auto')
   const [fullscreen, setFullscreen] = useState(false)
+  const { feedback, copy } = useCopy()
 
   const detected = useMemo(() => detectFormat(value), [value])
   const format: ContentFormat = formatChoice === 'auto' ? detected : formatChoice
@@ -57,7 +55,8 @@ export function LargeTextEditor({
     onChangeRef.current = onChange
   }, [onChange])
 
-  // Create the editor once; the compartments below reconfigure it without recreating it.
+  // Create the editor once; the compartments below reconfigure it without recreating it. Wrap is
+  // always on now (the toolbar's Wrap toggle was removed — Stage 6 of the design-system refactor).
   useEffect(() => {
     const host = hostRef.current
     if (host === null) return
@@ -65,7 +64,7 @@ export function LargeTextEditor({
       parent: host,
       doc: lastEmittedRef.current,
       format,
-      wrap,
+      wrap: true,
       readOnly,
       placeholder,
       onChange: readOnly
@@ -106,15 +105,6 @@ export function LargeTextEditor({
     const compartments = compartmentsRef.current
     if (view === null || compartments === null) return
     view.dispatch({
-      effects: compartments.wrap.reconfigure(wrap ? EditorView.lineWrapping : []),
-    })
-  }, [wrap])
-
-  useEffect(() => {
-    const view = viewRef.current
-    const compartments = compartmentsRef.current
-    if (view === null || compartments === null) return
-    view.dispatch({
       effects: compartments.readOnly.reconfigure([
         EditorState.readOnly.of(readOnly),
         EditorView.editable.of(!readOnly),
@@ -132,54 +122,22 @@ export function LargeTextEditor({
     }
   }, [fullscreen])
 
-  const run = (command: (view: EditorView) => boolean) => {
-    const view = viewRef.current
-    if (view === null) return
-    command(view)
-    view.focus()
-  }
-
   return (
-    <section
-      className={`editor-shell${fullscreen ? ' is-fullscreen' : ''}${tall ? ' is-tall' : ''}`}
+    <div
+      className={cx(styles.shell, fullscreen && styles.fullscreen, tall && styles.tall)}
       onKeyDown={(event) => {
         if (event.key === 'Escape' && fullscreen && !event.nativeEvent.defaultPrevented) {
           setFullscreen(false)
         }
       }}
     >
-      <div className="editor-toolbar">
-        <span className="field-label editor-title">{title}</span>
-        <div className="editor-actions">
-          {!readOnly && (
-            <>
-              <button type="button" className="button button-small" onClick={() => run(undo)}>
-                {t.undo}
-              </button>
-              <button type="button" className="button button-small" onClick={() => run(redo)}>
-                {t.redo}
-              </button>
-            </>
-          )}
-          <button
-            type="button"
-            className="button button-small"
-            onClick={() => run(openSearchPanel)}
-          >
-            {t.find}
-          </button>
-          <button
-            type="button"
-            className="button button-small"
-            aria-pressed={wrap}
-            onClick={() => setWrap((w) => !w)}
-          >
-            {wrap ? t.wrapOn : t.wrapOff}
-          </button>
-          <label className="editor-format">
-            <span className="visually-hidden">{t.format}</span>
-            <select
-              className="select select-small"
+      <div className={styles.toolbar}>
+        <span className={styles.title}>{title}</span>
+        <div className={styles.actions}>
+          <label>
+            <span className={styles.visuallyHidden}>{t.format}</span>
+            <Input.Select
+              className={styles.formatSelect}
               value={formatChoice}
               onChange={(event) => setFormatChoice(event.target.value as FormatChoice)}
             >
@@ -189,35 +147,38 @@ export function LargeTextEditor({
               <option value="text">{t.formatText}</option>
               <option value="markdown">{t.formatMarkdown}</option>
               <option value="json">{t.formatJson}</option>
-            </select>
+            </Input.Select>
           </label>
           {!readOnly && (
             <>
-              <CopyButton text={value} small />
-              <button
-                type="button"
-                className="button button-small"
+              <Button variant="secondary" size="sm" onClick={() => void copy(value)}>
+                {feedback === 'copied' ? t.copied : feedback === 'failed' ? t.copyFailed : t.copy}
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
                 disabled={value === ''}
                 onClick={() => onChange?.('')}
               >
                 {t.clear}
-              </button>
+              </Button>
             </>
           )}
           {extraActions}
-          <button
-            type="button"
-            className="button button-small"
+          <Button
+            variant="secondary"
+            size="icon"
+            aria-label={fullscreen ? t.done : t.fullscreen}
             aria-pressed={fullscreen}
             onClick={() => setFullscreen((f) => !f)}
           >
-            {fullscreen ? t.done : t.fullscreen}
-          </button>
+            <Icon name={fullscreen ? 'minimize' : 'maximize'} size={16} />
+          </Button>
         </div>
       </div>
-      <div className="editor-host" ref={hostRef} />
-      {footer !== undefined && <div className="editor-footer">{footer}</div>}
-    </section>
+      <div className={styles.host} ref={hostRef} />
+      {footer !== undefined && <div className={styles.footer}>{footer}</div>}
+    </div>
   )
 }
 

@@ -1,25 +1,49 @@
+import { LazyMotion } from 'motion/react'
 import { lazy, Suspense, useEffect, useState } from 'react'
-import { ModeTabs, type Mode } from './components/ModeTabs'
-import { NavMenu, type Section } from './components/NavMenu'
+import { AppHeader, type AppMode, type AppRole } from './components/app/AppHeader'
+import { AppShell } from './components/app/AppShell'
+import { ContextLabel } from './components/app/ContextLabel'
+import { type PaneView } from './components/app/MobileViewSwitcher'
 import { QRGenerator } from './components/QRGenerator'
-import { detectLang, LangContext, messages, type Lang } from './i18n'
+import { LangContext, messages } from './i18n'
+import { PRIMITIVES_DEMO_ENABLED } from './lib/demo'
+import { usePreferences } from './store/preferences'
+import styles from './App.module.css'
 
 // html5-qrcode is heavy, so the scanner is only loaded when Scan QR is opened.
 const QRScanner = lazy(() => import('./components/QRScanner'))
 // Large Transfer pulls in CodeMirror and the scanner; loaded only when that section is opened.
 const LargeTransfer = lazy(() => import('./components/large-transfer/LargeTransfer'))
+// Dev-only primitives review page (?demo=primitives) — never part of the app's own navigation.
+const PrimitivesDemo = lazy(() => import('./components/demo/PrimitivesDemo'))
 
-type Theme = 'light' | 'dark'
+const QUICK_QR_CHAR_LIMIT = 2000
 
-function detectTheme(): Theme {
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-}
+// Split into its own chunk — the tween/easing runtime isn't needed to parse the entry bundle.
+const loadMotionFeatures = () => import('motion/react').then((res) => res.domAnimation)
 
 export default function App() {
-  const [section, setSection] = useState<Section>('quick')
-  const [mode, setMode] = useState<Mode>('generate')
-  const [theme, setTheme] = useState<Theme>(detectTheme)
-  const [lang, setLang] = useState<Lang>(detectLang)
+  return (
+    <LazyMotion features={loadMotionFeatures} strict>
+      {PRIMITIVES_DEMO_ENABLED ? (
+        <Suspense fallback={null}>
+          <PrimitivesDemo />
+        </Suspense>
+      ) : (
+        <QrTransferApp />
+      )}
+    </LazyMotion>
+  )
+}
+
+function QrTransferApp() {
+  const [mode, setMode] = useState<AppMode>('quick')
+  const [role, setRole] = useState<AppRole>('send')
+  const [view, setView] = useState<PaneView>('compose')
+  const theme = usePreferences((s) => s.theme)
+  const setTheme = usePreferences((s) => s.setTheme)
+  const lang = usePreferences((s) => s.lang)
+  const setLang = usePreferences((s) => s.setLang)
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -31,50 +55,58 @@ export default function App() {
 
   const t = messages[lang]
 
+  const compose =
+    mode === 'quick' ? (
+      role === 'send' ? (
+        <QRGenerator onShowStage={() => setView('stage')} />
+      ) : (
+        <Suspense fallback={<p className={styles.hint}>{t.loadingScanner}</p>}>
+          <QRScanner />
+        </Suspense>
+      )
+    ) : (
+      <Suspense fallback={<p className={styles.hint}>{t.loadingLargeTransfer}</p>}>
+        <LargeTransfer direction={role} />
+      </Suspense>
+    )
+
   return (
     <LangContext value={t}>
-      <main className="app">
-        <header className="header">
-          <div>
-            <h1>QR Transfer</h1>
-            <p className="subtitle">{t.subtitle}</p>
-          </div>
-          <div className="header-actions">
-            <button
-              type="button"
-              className="button button-small"
-              aria-label={theme === 'light' ? t.switchToDark : t.switchToLight}
-              onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-            >
-              {theme === 'light' ? '🌙' : '☀️'}
-            </button>
-            <button
-              type="button"
-              className="button button-small"
-              onClick={() => setLang(lang === 'es' ? 'en' : 'es')}
-            >
-              {lang === 'es' ? 'EN' : 'ES'}
-            </button>
-          </div>
-        </header>
-        <NavMenu section={section} onChange={setSection} />
-        {section === 'quick' ? (
+      <AppShell
+        header={
+          <AppHeader
+            mode={mode}
+            onModeChange={setMode}
+            role={role}
+            onRoleChange={setRole}
+            roleGroupLabel={t.roleGroupLabel}
+            theme={theme}
+            onThemeToggle={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+            onLangToggle={() => setLang(lang === 'es' ? 'en' : 'es')}
+            modeLabels={{ quick: t.navQuick, large: t.navLarge }}
+            roleLabels={{ send: t.roleSend, receive: t.roleReceive }}
+            themeLabels={{ switchToDark: t.switchToDark, switchToLight: t.switchToLight }}
+            langLabel={lang === 'es' ? 'EN' : 'ES'}
+          />
+        }
+        view={view}
+        onViewChange={setView}
+        composeLabel={t.viewCompose}
+        stageLabel={t.viewStage}
+        viewGroupLabel={t.viewGroupLabel}
+        compose={
           <>
-            <ModeTabs mode={mode} onChange={setMode} />
-            {mode === 'generate' ? (
-              <QRGenerator />
-            ) : (
-              <Suspense fallback={<p className="hint">{t.loadingScanner}</p>}>
-                <QRScanner />
-              </Suspense>
-            )}
+            <ContextLabel
+              mode={mode === 'quick' ? t.ctxQuick : t.ctxLarge}
+              role={role === 'send' ? t.roleSend : t.roleReceive}
+              constraint={
+                mode === 'quick' && role === 'send' ? t.limitChars(QUICK_QR_CHAR_LIMIT) : undefined
+              }
+            />
+            {compose}
           </>
-        ) : (
-          <Suspense fallback={<p className="hint">{t.loadingLargeTransfer}</p>}>
-            <LargeTransfer />
-          </Suspense>
-        )}
-      </main>
+        }
+      />
     </LangContext>
   )
 }

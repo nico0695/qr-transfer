@@ -143,12 +143,14 @@ button), centred on desktop and a bottom sheet under 760 px, with real radio inp
 States (`SendFlow`): `editing → preparing → transferring` (Stop returns to `editing`, keeping the
 text / file / source / settings, which live in `LargeTransfer`).
 
-- **Editing** — `Source [Text | File]` segmented control (buttons with `aria-pressed`).
-  - Text: CodeMirror editor with Undo, Redo, Find, Wrap, Format `Auto | Text | Markdown | JSON`,
-    Copy, Clear, Fullscreen; footer with characters and UTF-8 bytes. Format only changes syntax
-    highlighting.
-  - File: drop zone ("Drop a file here — or — Choose file", one file per transfer; extra dropped
-    files are ignored with a note) → card with name, size, MIME, image thumbnail
+- **Editing** — `Source [Text | File]` `SegmentedControl` primitive (`role="radiogroup"`).
+  - Text: CodeMirror editor with Format `Auto | Text | Markdown | JSON`, Copy, Clear, Fullscreen;
+    footer with characters and UTF-8 bytes. Format only changes syntax highlighting. Line-wrap is
+    always on. Undo/Redo/Find lost their toolbar buttons in the design-system refactor, but the
+    keymaps (Cmd/Ctrl-Z, Cmd/Ctrl-Shift-Z, Cmd/Ctrl-F) are still wired up in `codemirrorSetup.ts`
+    and undo history survives the fullscreen toggle (same `EditorView`, never remounted).
+  - File: `Dropzone` ("Drop a file here", "Choose file", one file per transfer; extra dropped
+    files are ignored with a note) → `FileCard` with name, size, MIME, image thumbnail
     (`URL.createObjectURL`, revoked on change/unmount), Change and Remove.
   - Below: live summary — Filename / Characters, Original size, Transfer size, Compression
     (% or "none"), QR frames, Estimated loop (`frames × frameMs`) with the profile name. From
@@ -179,17 +181,25 @@ once the header arrived — "photo.jpg · 420 KB" or "Text · 21 KB"; missing fr
 - Sizing the canvas ourselves is the point: `html5-qrcode` derives it from the viewfinder's CSS
   width, which left dense symbols at ~3 pixels per module — the floor below which no decoder works.
   The region targets ~4.6.
-- The viewfinder is square with `object-fit: cover`, and the guide box is drawn at the same
-  `DEFAULT_CROP_RATIO` the crop uses, so the box frames exactly the region being decoded. Each
-  accepted frame briefly highlights it in green, fading out on its own.
+- Both engines share one `CameraScanner` (`src/components/app/OpticalStage/CameraScanner/`) — the
+  same component Quick QR's scanner uses, so the brackets/sweep/badge look identical either way.
+  Its `framed` prop is what makes the WASM engine's viewfinder square with `object-fit: cover`;
+  the guide box inside it is drawn at the same `DEFAULT_CROP_RATIO` the crop uses (via a
+  `--scan-crop` CSS variable passed down through the same element the engine attaches its
+  `<video>` to — sibling elements can't see it, which is why the guide isn't a sibling of that
+  element), so the box frames exactly the region being decoded rather than just approximating it.
+  `framed` must stay off for the legacy engine, whose own crop math would be silently shifted by a
+  forced viewport shape. Each accepted frame briefly highlights the guide in green (`hitKey` prop),
+  fading out on its own; the viewfinder's own "Live" badge shows the live receive percent instead
+  while frames are arriving.
 - `html5-qrcode` remains as an automatic fallback, loaded with a dynamic `import()` only if the
   WASM pipeline fails to start. `?scanner=legacy` forces it; `?debug=1` reports which engine ran.
-- **Complete, text** — "Transfer complete", characters, size, "✓ Verified", **Copy all**,
-  **View content** (read-only CodeMirror viewer), **Scan another**.
-- **Complete, file** — sanitized filename, size, MIME, "✓ Verified", image preview when the MIME is
-  `image/*`, **Download** (`<a download>` on a `Blob` object URL, revoked on unmount), **Copy image**
-  (only when `navigator.clipboard.write` + `ClipboardItem` exist; non-PNG images are re-encoded to
-  PNG via canvas), **Scan another**.
+- **Complete, text** — `ResultPanel` (`Feedback level="verified"`): "Transfer complete", characters,
+  size, **Copy all**, **View content** (read-only CodeMirror viewer), **Scan another**.
+- **Complete, file** — same `ResultPanel`: sanitized filename, size, MIME, image preview when the
+  MIME is `image/*`, **Download** (`<a download>` on a `Blob` object URL, revoked on unmount),
+  **Copy image** (only when `navigator.clipboard.write` + `ClipboardItem` exist; non-PNG images are
+  re-encoded to PNG via canvas), **Scan another**.
 - Cancel / Scan another / Try again restart the session and release the camera; unmounting the
   section releases it too.
 
@@ -297,11 +307,16 @@ scanning is reliable, **Fast** halves the loop time. Requires a browser with `Co
   - `config.ts`, `types.ts` — tunables, `sizeLevel`, shared types (`TransferInput`,
     `TransferMetadata`, `TransferFrame`, `PreparedPayload`, `PreparedTransfer`, `ReceivedTransfer`).
   - `*.test.ts` — Vitest unit tests next to each module.
-- `src/lib/settingsStorage.ts` — the preferred profile in `localStorage` (only persisted value).
+- `src/store/preferences.ts` — Zustand `persist` store: theme, language, preferred profile in
+  `localStorage` (the only persisted values).
 - `src/components/large-transfer/` — UI: `LargeTransfer` (Send/Receive, holds source, draft, file
   and settings), `SendFlow`, `SourceSelector`, `LargeTextEditor` + `codemirrorSetup.ts`,
-  `FileInput`, `FilePreview`, `usePreparedPayload.ts`, `TransferSummary`, `TransferSettings`,
-  `AnimatedQR`, `qrFrames.ts`, `TransferScanner`, `ReceivedContent`, `ReceivedFile`.
+  `usePreparedPayload.ts`, `TransferSummary`, `AnimatedQR`, `qrFrames.ts`, `TransferScanner`,
+  `ReceivedContent`, `ReceivedFile`.
+- `src/components/app/{Dropzone,FileCard,SummaryGrid}/` — File-source picker/card and the generic
+  key/value grid `TransferSummary` renders into.
+- `src/components/app/{SettingsSheet,ProfileOption}/` — the transfer-settings `Dialog` (modal/sheet
+  come from the `Dialog` primitive) and its profile radio cards.
 - `src/lib/scan/` — receiver capture pipeline, no React:
   - `roi.ts` — `computeRoi` (crop and decode size in camera pixels), `pixelsPerModule`.
   - `captureLoop.ts` — camera, frame loop and pixel handling for the WASM engine.
