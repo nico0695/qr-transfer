@@ -518,20 +518,20 @@ Backlog, not scheduled. Each is its own small spec if picked up.
 
 States: `pending` · `in progress` · `done` · `blocked` · `skipped`
 
-| #   | Stage                                  | Depends on | Risk     | Size | Status  | PR              | Exit check                                                        |
-| --- | -------------------------------------- | ---------- | -------- | ---- | ------- | --------------- | ----------------------------------------------------------------- |
-| 0   | Docs & source of truth                 | —          | low      | S    | done    | (direct commit) | DS v1.1 consistent; prototype versioned; docs aligned             |
-| 1   | Tokens, theme bootstrap, fonts, icons  | 0          | medium   | M    | pending |                 | Offline bundle; no flash; contrast tests green                    |
-| 2   | Primitives + demo page                 | 1          | medium   | L    | pending |                 | 12 primitives on `?demo=primitives`; module 05 captured           |
-| 3   | Preferences store                      | 1          | low      | S    | pending |                 | theme/lang/profile survive reload; legacy key migrated            |
-| 4   | App shell                              | 2, 3       | high     | L    | pending |                 | No page scroll; switcher <900; Send/Receive drives both modes     |
-| 5   | Quick QR                               | 4          | medium   | M    | pending |                 | Generate/scan restyled; camera matrix OK; modules 10/20           |
-| 6   | Large Transfer · Send                  | 4          | med-high | L    | pending |                 | CodeMirror themed; summary grid; loop/fullscreen; modules 30/50   |
-| 7   | Settings sheet                         | 2, 4       | low-med  | S-M  | pending |                 | Dialog modal/sheet; range presets; module 40                      |
-| 8   | Large Transfer · Receive               | 5, 6       | high     | L    | pending |                 | Shared viewfinder both engines; E2E on Android+iOS; modules 60/70 |
-| 9   | Cleanup & final docs                   | 5–8        | low      | S-M  | pending |                 | `styles.css` gone; full catalog; docs final                       |
-| 10  | Animation kit (optional)               | 9          | low      | M    | pending |                 | Presets adopted; ≤20 KB gz; reduced-motion safe                   |
-| 11  | Backlog: accent picker, torch, ES pass | 9          | —        | —    | pending |                 | Separate mini-specs                                               |
+| #   | Stage                                  | Depends on | Risk     | Size | Status  | Commit    | Exit check                                                        |
+| --- | -------------------------------------- | ---------- | -------- | ---- | ------- | --------- | ----------------------------------------------------------------- |
+| 0   | Docs & source of truth                 | —          | low      | S    | done    | `cc63318` | DS v1.1 consistent; prototype versioned; docs aligned             |
+| 1   | Tokens, theme bootstrap, fonts, icons  | 0          | medium   | M    | pending |           | Offline bundle; no flash; contrast tests green                    |
+| 2   | Primitives + demo page                 | 1          | medium   | L    | pending |           | 12 primitives on `?demo=primitives`; module 05 captured           |
+| 3   | Preferences store                      | 1          | low      | S    | pending |           | theme/lang/profile survive reload; legacy key migrated            |
+| 4   | App shell                              | 2, 3       | high     | L    | pending |           | No page scroll; switcher <900; Send/Receive drives both modes     |
+| 5   | Quick QR                               | 4          | medium   | M    | pending |           | Generate/scan restyled; camera matrix OK; modules 10/20           |
+| 6   | Large Transfer · Send                  | 4          | med-high | L    | pending |           | CodeMirror themed; summary grid; loop/fullscreen; modules 30/50   |
+| 7   | Settings sheet                         | 2, 4       | low-med  | S-M  | pending |           | Dialog modal/sheet; range presets; module 40                      |
+| 8   | Large Transfer · Receive               | 5, 6       | high     | L    | pending |           | Shared viewfinder both engines; E2E on Android+iOS; modules 60/70 |
+| 9   | Cleanup & final docs                   | 5–8        | low      | S-M  | pending |           | `styles.css` gone; full catalog; docs final                       |
+| 10  | Animation kit (optional)               | 9          | low      | M    | pending |           | Presets adopted; ≤20 KB gz; reduced-motion safe                   |
+| 11  | Backlog: accent picker, torch, ES pass | 9          | —        | —    | pending |           | Separate mini-specs                                               |
 
 ### Stage journal
 

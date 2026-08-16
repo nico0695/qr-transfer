@@ -45,8 +45,9 @@ texts or a single file as an animated QR sequence with integrity verification (L
 let the user copy the text / download the file on the other end. Includes dark/light mode and
 es/en language support.
 
-**Does not:** persist content (no drafts, files or received data anywhere; the only stored value is
-the preferred transfer profile in `localStorage`), interpret scanned content (URLs, HTML or
+**Does not:** persist content (no drafts, files or received data anywhere; the only stored values
+are the UI preferences — theme, language, preferred transfer profile — in `localStorage`),
+interpret scanned content (URLs, HTML or
 Markdown are shown as plain text/source, files are only wrapped in a `Blob` — never opened,
 rendered or executed), or transmit data over the network — the "transfer" is purely optical, screen
 to camera. Not in scope: multiple files per transfer, encryption, receiver acknowledgements,
@@ -169,7 +170,8 @@ terminates the decode worker.
   [`frontend-architecture.md`](./frontend-architecture.md), and the stage sequencing in
   [`specs/design-system-refactor/macro-plan.md`](./specs/design-system-refactor/macro-plan.md).
 - **Almost no persistence**: content lives only in memory (draft, file, speed survive only while
-  the Large Transfer section is mounted); the sole stored value is the preferred transfer profile.
+  the Large Transfer section is mounted); the only stored values are UI preferences — theme,
+  language, and the preferred transfer profile.
 - **Content safety**: scanned/received text is stored as a string and rendered as plain text or as
   read-only editor source; received files are only wrapped in a `Blob` for download (filename
   sanitized, MIME normalized) or shown with `<img>` when they are images. No `eval`, no

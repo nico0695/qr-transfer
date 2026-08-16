@@ -328,7 +328,7 @@ variant, the mobile view switcher's visibility).
 | Range   | Layout                                                                                                            |
 | ------- | ----------------------------------------------------------------------------------------------------------------- |
 | < 900px | Single column. Bottom view-switcher (Content ↔ Stage) toggles which pane is visible. Sheet has safe-area padding. |
-| ≥ 900px | Two fixed columns (`1.35fr` compose / `400–560px` stage) inside `100dvh`, no page scroll.                         |
+| ≥ 900px | Two columns (`1.35fr` compose / `minmax(400px, var(--stage-max))` stage) inside `100dvh`, no page scroll.         |
 
 Container: `max-width: var(--content-max)`, centered, `padding-inline: 20px` (< 900px) /
 `24px` (≥ 900px).
