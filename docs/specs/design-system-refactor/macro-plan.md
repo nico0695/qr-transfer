@@ -521,7 +521,7 @@ States: `pending` · `in progress` · `done` · `blocked` · `skipped`
 | #   | Stage                                  | Depends on | Risk     | Size | Status  | Commit    | Exit check                                                        |
 | --- | -------------------------------------- | ---------- | -------- | ---- | ------- | --------- | ----------------------------------------------------------------- |
 | 0   | Docs & source of truth                 | —          | low      | S    | done    | `cc63318` | DS v1.1 consistent; prototype versioned; docs aligned             |
-| 1   | Tokens, theme bootstrap, fonts, icons  | 0          | medium   | M    | done    | (pending) | Offline bundle; no flash; contrast tests green                    |
+| 1   | Tokens, theme bootstrap, fonts, icons  | 0          | medium   | M    | done    | `f4a1257` | Offline bundle; no flash; contrast tests green                    |
 | 2   | Primitives + demo page                 | 1          | medium   | L    | pending |           | 12 primitives on `?demo=primitives`; module 05 captured           |
 | 3   | Preferences store                      | 1          | low      | S    | pending |           | theme/lang/profile survive reload; legacy key migrated            |
 | 4   | App shell                              | 2, 3       | high     | L    | pending |           | No page scroll; switcher <900; Send/Receive drives both modes     |
