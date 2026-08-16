@@ -24,8 +24,11 @@
   --cm-string: #1a6b3a;
   --cm-number: #a13c1a;
   --cm-keyword: #8a2b6b;
-  --cm-selection: #cfe0f5;
-  --cm-match: #ffe08a;
+  /* --cm-selection/--cm-match share their name with src/styles/tokens/colors.css's new tokens —
+     copied as literal values (not var(), which would self-reference and go invalid) so both
+     stylesheets agree instead of leaving an unintentional collision. */
+  --cm-selection: rgba(170, 170, 173, 0.25);
+  --cm-match: rgba(161, 98, 7, 0.22);
   --cm-match-selected: #ffb347;
 }
 
@@ -49,8 +52,8 @@
   --cm-string: #8fd4a6;
   --cm-number: #f0a07a;
   --cm-keyword: #e39ac8;
-  --cm-selection: #2f4a6b;
-  --cm-match: #665a1f;
+  --cm-selection: rgba(170, 170, 173, 0.25);
+  --cm-match: rgba(251, 191, 36, 0.28);
   --cm-match-selected: #8a6a10;
 }
 
