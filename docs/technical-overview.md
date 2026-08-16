@@ -168,11 +168,15 @@ terminates the decode worker.
   open.
 - **QR sharpness**: Quick QR renders the canvas at 640 px and scales it with CSS; Large Transfer
   frames use `scale: 6` PNGs with `image-rendering: pixelated`.
-- **Theming**: light palette on `:root` and dark on `:root[data-theme='dark']`, all CSS variables
-  (including the CodeMirror highlight colors). Initial theme follows `prefers-color-scheme`; initial
-  language, `navigator.language`. A design-system refactor is executing stage by stage — token
-  values and component specs in [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md), folder/CSS conventions in
-  [`frontend-architecture.md`](./frontend-architecture.md), and the stage sequencing in
+- **Theming**: dark is the default (bare `:root`), light overrides via `:root[data-theme='light']`
+  — every color, spacing, radius, shadow and motion value is a CSS custom property under
+  `src/styles/tokens/` (`docs/DESIGN_SYSTEM.md` §2), never a hardcoded hex or raw px in component
+  CSS. Initial theme follows `prefers-color-scheme`; initial language, `navigator.language`; both
+  then persist through `src/store/preferences.ts`. 12 CSS-Modules primitives under
+  `src/components/primitives/` (reviewable at `?demo=primitives`) are the building blocks every
+  screen composes; see [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md) for the token/component spec and
+  [`frontend-architecture.md`](./frontend-architecture.md) for folder/CSS conventions. This is the
+  shipped state of the design-system refactor tracked in
   [`specs/design-system-refactor/macro-plan.md`](./specs/design-system-refactor/macro-plan.md).
 - **Almost no persistence**: content lives only in memory (draft, file, speed survive only while
   the Large Transfer section is mounted); the only stored values are UI preferences — theme,
@@ -181,9 +185,12 @@ terminates the decode worker.
   read-only editor source; received files are only wrapped in a `Blob` for download (filename
   sanitized, MIME normalized) or shown with `<img>` when they are images. No `eval`, no
   `dangerouslySetInnerHTML`, no auto-opening URLs, no Markdown rendering.
-- **Responsive layout** (760 px breakpoint): Quick QR uses 2 columns on desktop with a `sticky` QR
-  panel; Large Transfer is always a vertical flow with separate screens (editor → summary → QR /
-  camera → progress → result) so the editor, QR and camera get the full width.
+- **Responsive layout** (one breakpoint, 900px): `AppShell` is a two-pane `100dvh` shell —
+  `compose` (content, status) and `stage` (QR display / camera scanner) — that never scrolls the
+  page itself, only content inside a pane does. At ≥900px both panes show side by side; below it,
+  `MobileViewSwitcher`'s bottom bar toggles which one is visible, and screens needing both at once
+  (the camera lifecycle, the animated-QR frame loop) render into both through one component
+  instance via `useStageSlot()`'s portal so the underlying hook is never duplicated.
 
 ## How It Runs
 

@@ -21,12 +21,12 @@
 
 ## Why this exists
 
-The app currently has one global `src/styles.css` (~1000 lines) and no reusable component layer:
-22 files hand-type `className="button..."` (or similar) instead of using a shared component, and
-there's no loading-indicator primitive at all (loading states are plain `.hint` text). This
-document defines how that changes going forward — folder structure, CSS strategy, token
-organization, and which primitives to build — so the actual design system (built in a later pass)
-has a consistent place to live instead of growing ad hoc.
+The app used to have one global `src/styles.css` (~1000 lines) and no reusable component layer: 22
+files hand-typed `className="button..."` (or similar) instead of using a shared component, and
+there was no loading-indicator primitive at all (loading states were plain `.hint` text). This
+document defines the convention that replaced that — folder structure, CSS strategy, token
+organization, and which primitives to build — and **has now shipped in full**: `src/styles.css` is
+gone (deleted in Stage 9), every screen is built on the primitives and tokens below.
 
 ## Styling: CSS Modules
 
@@ -47,13 +47,13 @@ Convention: `ComponentName.module.css` with camelCase class names, imported as
 
 ## Design tokens
 
-Split `styles.css` into a small `src/styles/` folder, composed through one entry point via native
-`@import` (Vite bundles these at build time — no extra tooling). **Landed in Stage 1** — this is
-the actual structure, not a proposal:
+The old `styles.css` was split into a small `src/styles/` folder, composed through one entry point
+via native `@import` (Vite bundles these at build time — no extra tooling). **Landed in Stage 1,
+fully shipped by Stage 9** — this is the actual structure, not a proposal:
 
 ```
 src/styles/
-  index.css            # imports everything below, in this order, then ../styles.css last
+  index.css            # imports everything below, in this order
   tokens/
     colors.css          # --bg/--surface/--text/--line/--danger/--accent... dark on bare :root,
                          # light on :root[data-theme='light'] (dark-first, per DESIGN_SYSTEM.md §2.1)
@@ -64,7 +64,7 @@ src/styles/
     motion.css              # --duration-fast/--duration-base/--duration-sheet, --easing-standard/--easing-out
     z.css                   # --z-header/--z-sheet/--z-fullscreen
   base.css               # resets + body/html + self-hosted font imports
-  layout.css              # app-shell rules that aren't component-scoped — lands in Stage 4
+  layout.css              # app-shell rules that aren't component-scoped — landed in Stage 4
   preloadFonts.ts          # preloads the two latin woff2 subsets via Vite's `?url` imports
 ```
 
@@ -73,12 +73,13 @@ component pulls values from these tokens instead of inventing new hex codes, rem
 durations inline. Token _values_ are defined in [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md) §2 — this
 file only defines where they live.
 
-`src/styles.css` (the legacy stylesheet) is imported last and still controls every current screen —
-its `:root` block was widened to `:root, :root[data-theme='light']` so it has the same cascade
-specificity as the new tokens' light override in both themes, and five of its custom-property names
-(`--surface-muted`, `--hover`, `--focus`, `--primary`, `--primary-text`) now forward to the new
-tokens via `var()` rather than their own hex, per the macro plan's Stage 1 deliverable. It is
-deleted entirely in Stage 9.
+`src/styles.css` (the legacy stylesheet) existed through Stages 1–8, imported last so it kept
+controlling every screen not yet rewritten — its `:root` block was widened to
+`:root, :root[data-theme='light']` so it had the same cascade specificity as the new tokens' light
+override in both themes, and five of its custom-property names (`--surface-muted`, `--hover`,
+`--focus`, `--primary`, `--primary-text`) forwarded to the new tokens via `var()` rather than their
+own hex, per the macro plan's Stage 1 deliverable. **Deleted entirely in Stage 9** along with that
+`@import`, once every screen it was propping up had its own CSS Modules.
 
 Beyond `src/styles/`, the redesign also introduces:
 

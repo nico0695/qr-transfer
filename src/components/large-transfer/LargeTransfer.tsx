@@ -5,6 +5,7 @@ import { DEFAULT_SETTINGS, type TransferSettings } from '../../lib/transfer/prof
 import { SendFlow } from './SendFlow'
 import { TransferScanner } from './TransferScanner'
 import type { SourceKind } from './usePreparedPayload'
+import styles from './LargeTransfer.module.css'
 
 export interface LargeTransferProps {
   direction: AppRole
@@ -29,7 +30,7 @@ export default function LargeTransfer({ direction }: LargeTransferProps) {
   }
 
   return (
-    <div className="large-transfer">
+    <div className={styles.wrapper}>
       {direction === 'send' ? (
         <SendFlow
           source={source}

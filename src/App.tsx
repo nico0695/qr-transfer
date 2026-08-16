@@ -7,6 +7,7 @@ import { QRGenerator } from './components/QRGenerator'
 import { LangContext, messages } from './i18n'
 import { PRIMITIVES_DEMO_ENABLED } from './lib/demo'
 import { usePreferences } from './store/preferences'
+import styles from './App.module.css'
 
 // html5-qrcode is heavy, so the scanner is only loaded when Scan QR is opened.
 const QRScanner = lazy(() => import('./components/QRScanner'))
@@ -53,12 +54,12 @@ function QrTransferApp() {
       role === 'send' ? (
         <QRGenerator onShowStage={() => setView('stage')} />
       ) : (
-        <Suspense fallback={<p className="hint">{t.loadingScanner}</p>}>
+        <Suspense fallback={<p className={styles.hint}>{t.loadingScanner}</p>}>
           <QRScanner />
         </Suspense>
       )
     ) : (
-      <Suspense fallback={<p className="hint">{t.loadingLargeTransfer}</p>}>
+      <Suspense fallback={<p className={styles.hint}>{t.loadingLargeTransfer}</p>}>
         <LargeTransfer direction={role} />
       </Suspense>
     )

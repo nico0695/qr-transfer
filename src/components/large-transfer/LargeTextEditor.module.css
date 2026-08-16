@@ -66,6 +66,15 @@
   height: 100%;
 }
 
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
 .footer {
   padding: var(--sp-2) var(--sp-3);
   border-top: 1px solid var(--line-soft);

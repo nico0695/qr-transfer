@@ -38,8 +38,9 @@ in the same header — picks which of the two components renders per mode (`role
 `QRGenerator` / `SendFlow`; `role=receive` → `QRScanner` / `TransferScanner`); it replaced Quick
 QR's old Generate/Scan tabs and Large Transfer's own internal Send/Receive tabs, which no longer
 exist (`NavMenu.tsx`/`ModeTabs.tsx` are deleted). Every screen renders inside `AppShell`'s
-`compose`/`stage` panes (`src/components/app/AppShell/`) — for now everything is in `compose`
-until Stages 5–8 split each screen's own QR-display/camera portion into `stage`. Strings come
+`compose`/`stage` panes (`src/components/app/AppShell/`); each screen's own QR-display/camera
+portion portals into `stage` via `useStageSlot()` (Stages 5–8), keeping one component instance —
+and one camera-lifecycle or frame-loop hook — instead of duplicating it across two. Strings come
 from the typed es/en dictionary in `src/i18n.ts` via `useI18n()` — every user-visible string must
 be added to **both** `en` and `es` (the `es` object is typed as `Messages`, so TS flags
 omissions). See `DESIGN_SYSTEM.md` §5.1/§5.2/§6.1 and the macro plan's Stage 4.
@@ -103,25 +104,23 @@ code.
 
 ### Styling
 
-A design-system refactor is executing, stage by stage, per
-[`docs/specs/design-system-refactor/macro-plan.md`](docs/specs/design-system-refactor/macro-plan.md) —
-read that plan and [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) (token values, component specs)
-plus [`docs/frontend-architecture.md`](docs/frontend-architecture.md) (folder/CSS conventions)
-before touching any UI covered by an unstarted stage; check the plan's tracking table for what's
-already done.
+The design-system refactor described in
+[`docs/specs/design-system-refactor/macro-plan.md`](docs/specs/design-system-refactor/macro-plan.md)
+has shipped (Stages 0–9 done; only the optional Stage 10 animation kit remains) — read
+[`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) (token values, component specs) and
+[`docs/frontend-architecture.md`](docs/frontend-architecture.md) (folder/CSS conventions) before
+touching any UI.
 
-Target state: **CSS Modules** (no Tailwind, no CSS-in-JS, no Radix by default), design tokens
-split under `src/styles/tokens/`, reusable primitives under `src/components/primitives/` and
-app-scoped components under `src/components/app/` (folder-per-component: `Component.tsx` +
-`.module.css` + `index.ts`, extra files only when needed), CSS for micro-interactions + a `motion`
-kit for layout/presence transitions (Stage 10), self-hosted Inter + JetBrains Mono variable fonts,
-`lucide-react` icons, native `<dialog>` for the settings sheet/modal, a single **900px**
-breakpoint. Every color/spacing/radius/duration must resolve through a token — no hardcoded hex or
-raw px.
+**CSS Modules** (no Tailwind, no CSS-in-JS, no Radix by default), design tokens split under
+`src/styles/tokens/`, reusable primitives under `src/components/primitives/` and app-scoped
+components under `src/components/app/` (folder-per-component: `Component.tsx` + `.module.css` +
+`index.ts`, extra files only when needed), CSS for micro-interactions (a `motion` kit for
+layout/presence transitions is Stage 10, not yet built), self-hosted Inter + JetBrains Mono
+variable fonts, `lucide-react` icons, native `<dialog>` for the settings sheet/modal, a single
+**900px** breakpoint. Every color/spacing/radius/duration must resolve through a token — no
+hardcoded hex or raw px in component CSS (layout-only numbers — grid fractions, `minmax`,
+viewport-relative sizes — are fine).
 
-Until each stage lands, the app still runs on the legacy single `src/styles.css` with CSS
-variables (light on `:root`, dark on `:root[data-theme='dark']`, includes `--cm-*` CodeMirror
-colors, breakpoint 760px) — reuse its existing classes (`.button`, `.button-small`,
-`.button-primary`, `.tabs`, `.panel`, `.hint`, `.error`, `.actions`) for anything not yet covered
-by a completed stage, rather than inventing new global ones. `styles.css` is deleted entirely in
-Stage 9.
+`src/styles.css` (the legacy global stylesheet) is gone — deleted in Stage 9 along with every class
+it defined. There is no global stylesheet to fall back to for new UI; every component gets its own
+CSS Module.

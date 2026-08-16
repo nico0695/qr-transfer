@@ -1,7 +1,8 @@
 # Spec — Design System refactor (visual redesign)
 
-Status: **approved for planning** — decisions below were settled in a grilling session on
-2026-08-15. Execution plan: [`macro-plan.md`](./macro-plan.md).
+Status: **shipped** — Stages 0–9 of the execution plan are done (2026-08-16); only the optional
+Stage 10 animation kit remains. Decisions below were settled in a grilling session on 2026-08-15.
+Execution plan: [`macro-plan.md`](./macro-plan.md).
 Sources of truth: [`../../DESIGN_SYSTEM.md`](../../DESIGN_SYSTEM.md) (tokens, primitives,
 components — to be corrected in Stage 0), the prototype `App.dc.html` (to be copied to
 `docs/design/prototype/`), [`../../frontend-architecture.md`](../../frontend-architecture.md)

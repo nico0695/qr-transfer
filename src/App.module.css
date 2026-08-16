@@ -1,0 +1,6 @@
+.hint {
+  margin: 0;
+  font: var(--fs-ui) var(--font-ui);
+  color: var(--text-faint);
+  text-align: center;
+}

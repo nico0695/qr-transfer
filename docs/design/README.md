@@ -100,7 +100,7 @@ handful called out below as not screenshot-worthy:
 | `50-large-transfer-animated-qr` | Looping, slowest/fastest speed disabled, fullscreen                                                                                                                                                                  |
 | `60-large-transfer-receive`     | Idle/starting, scanning (WASM framed viewfinder), scanning (legacy `html5-qrcode` fallback), receiving with progress, missing-frames list open, verification-failed / incompatible-sender / permission-denied errors |
 | `70-large-transfer-received`    | Complete (text), complete with the read-only viewer open, complete (file, no preview), complete (file, image preview)                                                                                                |
-| `80-components`                 | Nav, tabs, segmented control, editor toolbar, summary list, actions row, dropzone, file card, notice, error, dialog, profile radio option                                                                            |
+| `80-components`                 | The 12 design-system primitives, cropped from `?demo=primitives`: Button, Input, SegmentedControl, Tabs, StatusDot, Chip, Card, Icon, Feedback, Dialog, ProgressBar, Spinner                                         |
 
 **Not captured** (transient or requires real hardware, documented instead of screenshotted):
 
@@ -108,13 +108,13 @@ handful called out below as not screenshot-worthy:
   load in well under a frame on a warm cache.
 - The multi-camera picker `<select>` in both scanners — Playwright's fake-device flag was used
   single-camera throughout this pass; the picker is a plain `<select>`, described in the flow docs.
-- The green "frame accepted" flash on the scan guide (`.scan-guide-hit`) — a 700 ms CSS fade,
-  disabled under `prefers-reduced-motion`; described, not screenshotted.
+- The green "frame accepted" flash on the scan guide (`CameraScanner`'s `hitKey` prop) — a 700 ms
+  CSS fade, disabled under `prefers-reduced-motion`; described, not screenshotted.
 - The `?debug=1` diagnostics overlay — intentionally unreachable without typing the query param;
   not part of the product surface a designer should touch.
-- CodeMirror's Find panel and "Wrap: off" long-line scrolling — present in the code
-  (`src/components/large-transfer/LargeTextEditor.tsx`) but dropped from this pass to keep the
-  matrix focused; straightforward to add back with `npm run screenshots -- --only 30`.
+- CodeMirror's built-in search panel (Cmd/Ctrl-F, `codemirrorSetup.ts`'s `searchKeymap`) — no
+  toolbar button since Stage 6, but the keymap still works; dropped from this pass to keep the
+  matrix focused.
 
 ## Known UX issues for the redesign
 
@@ -128,22 +128,23 @@ Observed while building this catalog — worth the designer's attention, not fix
 - ~~**Mobile "Show QR" pattern**~~ Resolved in the design-system refactor's Stage 5: "Show QR" now
   switches `AppShell`'s mobile pane to `stage` directly (`10-quick-qr-generate/04-qr-panel-after-show-qr`)
   instead of scrolling to a panel below the fold; on desktop both panes are already visible.
-- **Settings becomes a bottom sheet under 760 px** (`40-large-transfer-settings`) — consistent with
-  the rest of the mobile layout, but it's the app's only modal, so it's worth a deliberate look
-  rather than inheriting the desktop dialog's structure.
-- **Two scan engines, two viewfinders.** The default WASM engine draws a framed guide box
-  (`60-large-transfer-receive/02-scanning-framed`); the `html5-qrcode` fallback
-  (`03-scanning-legacy`) has its own corner-bracket viewfinder with a different visual language.
-  They're functionally equivalent but not visually unified — probably fine to leave as-is since
-  the fallback is rare, but flagging it.
-- **Error copy is dense but unstyled beyond a red paragraph** — every error state (camera denied,
-  verification failed, incompatible sender, too-large) uses the same `.error` treatment. An
-  opportunity to differentiate "user can retry" from "content problem" states visually.
+- ~~**Settings becomes a bottom sheet under 760 px**~~ Resolved in the design-system refactor's
+  Stage 7: the settings sheet is now the `Dialog` primitive (modal ≥900px / bottom sheet below,
+  one shared breakpoint with the rest of the app), given the same deliberate design pass as
+  everything else rather than inheriting ad hoc dialog CSS.
+- ~~**Two scan engines, two viewfinders.**~~ Resolved in Stage 8: both engines now render through
+  the same `CameraScanner` component (brackets/sweep/badge/hit-flash identical either way); only
+  the WASM engine additionally forces a square crop (`framed`), which is a functional necessity
+  (see `flows/large-transfer-receive.md`), not a visual-language difference.
+- ~~**Error copy is dense but unstyled beyond a red paragraph**~~ Resolved across Stages 5-8: every
+  error state now renders through the `Feedback level="error"` primitive (icon + tone, `role="alert"`),
+  and the action row differs by recoverability — e.g. an incompatible sender gets no "Try again",
+  since restarting can't fix it (see `flows/large-transfer-receive.md#errors`).
 
 ## Regenerating the catalog
 
 ```bash
-npm run screenshots              # full matrix, ~230 PNGs, ~6 minutes
+npm run screenshots              # full matrix, 242 PNGs, ~4 minutes
 npm run screenshots -- --list    # print module ids without capturing
 npm run screenshots -- --only 30 # re-run one module (id prefix match)
 ```

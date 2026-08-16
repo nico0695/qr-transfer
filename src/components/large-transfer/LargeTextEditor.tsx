@@ -135,7 +135,7 @@ export function LargeTextEditor({
         <span className={styles.title}>{title}</span>
         <div className={styles.actions}>
           <label>
-            <span className="visually-hidden">{t.format}</span>
+            <span className={styles.visuallyHidden}>{t.format}</span>
             <Input.Select
               className={styles.formatSelect}
               value={formatChoice}
