@@ -1,3 +1,4 @@
+import { AnimatePresence } from 'motion/react'
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Html5Qrcode, type CameraDevice } from 'html5-qrcode'
@@ -114,33 +115,37 @@ export default function QRScanner() {
 
   return (
     <>
-      {status === 'error' && (
-        <Feedback
-          level="error"
-          title={errorKey !== null ? t[errorKey] : ''}
-          actions={
-            <Button variant="secondary" size="sm" onClick={restart}>
-              {t.tryAgain}
-            </Button>
-          }
-        />
-      )}
-      {status === 'done' && (
-        <ResultPanel
-          title={t.scannedText}
-          text={result}
-          actions={
-            <>
-              <Button variant="secondary" size="sm" onClick={() => void copy(result)}>
-                {feedback === 'copied' ? t.copied : feedback === 'failed' ? t.copyFailed : t.copy}
-              </Button>
+      <AnimatePresence mode="wait">
+        {status === 'error' && (
+          <Feedback
+            key="error"
+            level="error"
+            title={errorKey !== null ? t[errorKey] : ''}
+            actions={
               <Button variant="secondary" size="sm" onClick={restart}>
-                {t.scanAgain}
+                {t.tryAgain}
               </Button>
-            </>
-          }
-        />
-      )}
+            }
+          />
+        )}
+        {status === 'done' && (
+          <ResultPanel
+            key="done"
+            title={t.scannedText}
+            text={result}
+            actions={
+              <>
+                <Button variant="secondary" size="sm" onClick={() => void copy(result)}>
+                  {feedback === 'copied' ? t.copied : feedback === 'failed' ? t.copyFailed : t.copy}
+                </Button>
+                <Button variant="secondary" size="sm" onClick={restart}>
+                  {t.scanAgain}
+                </Button>
+              </>
+            }
+          />
+        )}
+      </AnimatePresence>
       {showCamera &&
         stageNode &&
         createPortal(

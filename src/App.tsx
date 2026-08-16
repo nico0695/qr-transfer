@@ -1,3 +1,4 @@
+import { LazyMotion } from 'motion/react'
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { AppHeader, type AppMode, type AppRole } from './components/app/AppHeader'
 import { AppShell } from './components/app/AppShell'
@@ -18,16 +19,21 @@ const PrimitivesDemo = lazy(() => import('./components/demo/PrimitivesDemo'))
 
 const QUICK_QR_CHAR_LIMIT = 2000
 
-export default function App() {
-  if (PRIMITIVES_DEMO_ENABLED) {
-    return (
-      <Suspense fallback={null}>
-        <PrimitivesDemo />
-      </Suspense>
-    )
-  }
+// Split into its own chunk — the tween/easing runtime isn't needed to parse the entry bundle.
+const loadMotionFeatures = () => import('motion/react').then((res) => res.domAnimation)
 
-  return <QrTransferApp />
+export default function App() {
+  return (
+    <LazyMotion features={loadMotionFeatures} strict>
+      {PRIMITIVES_DEMO_ENABLED ? (
+        <Suspense fallback={null}>
+          <PrimitivesDemo />
+        </Suspense>
+      ) : (
+        <QrTransferApp />
+      )}
+    </LazyMotion>
+  )
 }
 
 function QrTransferApp() {

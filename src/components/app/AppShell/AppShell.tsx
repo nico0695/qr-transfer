@@ -1,7 +1,11 @@
+import * as m from 'motion/react-m'
 import { useState, type ReactNode } from 'react'
 import { MobileViewSwitcher, type PaneView } from '../MobileViewSwitcher'
 import styles from './AppShell.module.css'
 import { StageSlotContext } from './StageSlotContext'
+import { useReducedMotion } from '../../../lib/motion/reducedMotion'
+import { paneSwitch } from '../../../lib/motion/presets'
+import { useIsDesktop } from '../../../lib/theme/useIsDesktop'
 
 export interface AppShellProps {
   header: ReactNode
@@ -23,15 +27,38 @@ export function AppShell({
   viewGroupLabel,
 }: AppShellProps) {
   const [stageNode, setStageNode] = useState<HTMLDivElement | null>(null)
+  const reduced = useReducedMotion()
+  const isDesktop = useIsDesktop()
+
+  const composePane = paneSwitch(-1)
+  const stagePane = paneSwitch(1)
+  const composeActive = isDesktop || view === 'compose'
+  const stageActive = isDesktop || view === 'stage'
+  const transition = reduced ? { duration: 0 } : composePane.transition
 
   return (
     <div className={styles.shell}>
       {header}
       <div className={styles.body} data-view={view}>
-        <div className={styles.compose}>
+        <m.div
+          className={styles.compose}
+          initial={false}
+          animate={composeActive ? composePane.active : composePane.inactive}
+          transition={transition}
+          aria-hidden={!composeActive || undefined}
+          inert={!composeActive || undefined}
+        >
           <StageSlotContext.Provider value={stageNode}>{compose}</StageSlotContext.Provider>
-        </div>
-        <div className={styles.stage} ref={setStageNode} />
+        </m.div>
+        <m.div
+          className={styles.stage}
+          ref={setStageNode}
+          initial={false}
+          animate={stageActive ? stagePane.active : stagePane.inactive}
+          transition={transition}
+          aria-hidden={!stageActive || undefined}
+          inert={!stageActive || undefined}
+        />
       </div>
       <MobileViewSwitcher
         view={view}

@@ -86,7 +86,7 @@ Beyond `src/styles/`, the redesign also introduces:
 ```
 src/store/preferences.ts   # Zustand `persist` store — theme, language, last-used profile only
 src/lib/theme/              # contrast.ts, accent.ts, breakpoints.ts (BREAKPOINT_DESKTOP = 900)
-src/lib/motion/              # optional, Stage 10 — animation presets built on `motion`
+src/lib/motion/              # reducedMotion.ts (useReducedMotion/withReducedMotion), presets.ts
 src/components/app/           # App-scoped composed components (§5 of DESIGN_SYSTEM.md): AppHeader,
                                 # ContextLabel, TextEditor, Dropzone, FileCard, SummaryGrid, Feedback,
                                 # OpticalStage/{QrDisplay,CameraScanner}, ReceiveStatusPanel, ResultPanel,
@@ -184,16 +184,34 @@ toggle, for visual review without wiring up a real screen. Dev-only; not linked 
 
 ## Animation
 
-**Decision: CSS for micro-interactions everywhere; `motion` for layout/presence transitions,
-added late (Stage 10).**
+**Decision: CSS for micro-interactions everywhere; `motion` for layout/presence transitions
+(Stage 10).**
 
 Hover states, the spinner, and simple transitions stay native CSS — `.scan-guide-hit`'s
 `@keyframes` fade (disabled under `prefers-reduced-motion`) remains the pattern, using the
-`motion.css` duration/easing tokens. Pane switches, dialog/sheet enter-exit, and list stagger get
-a small `motion` (Framer Motion's successor, ~loadable on demand) kit in `src/lib/motion/`,
-introduced once the redesign's static screens exist (Stage 10, not earlier) — see the macro plan
-for the exact preset list. Every animation, CSS or `motion`, must respect
-`prefers-reduced-motion: reduce`.
+`motion.css` duration/easing tokens; this is untouched by Stage 10 and never will be — the QR
+loop, camera viewfinder, and progress fill stay CSS-only by design.
+
+Pane switches, dialog/sheet enter-exit, and list stagger go through a small kit in
+`src/lib/motion/`: `reducedMotion.ts` exports `useReducedMotion()` (mirrors
+`lib/theme/useIsDesktop.ts`'s `matchMedia` pattern) and `withReducedMotion(preset, reduced)`, the
+single point every consumer calls before handing a preset to a component — it collapses
+`initial`/`animate`/`exit` to the settled `animate` state with zero duration. `presets.ts` reads
+the same `--duration-*`/`--easing-*` tokens as the CSS table above via `getComputedStyle`, so
+there's one source of truth for timing regardless of which mechanism renders a given transition.
+
+Components import `m` (the lightweight, tree-shakeable component set) from `motion/react-m` —
+`motion/mini` and `motion/react-mini` only export the imperative `useAnimate` hook, no JSX
+components, so they don't work for this; `motion/react` (the full `framer-motion` re-export,
+including `AnimatePresence`) is reserved for lazy-loaded screens (`QRScanner`, `SendFlow`,
+`TransferScanner`, `TransferSummary`) so the heavier `AnimatePresence` machinery never lands in the
+eager entry chunk. `App.tsx` wraps the tree in `<LazyMotion features={loadMotionFeatures} strict>`,
+where `loadMotionFeatures` is a dynamic `import('motion/react').then(res => res.domAnimation)` —
+`strict` throws if a plain `motion.*` component sneaks in instead of `m.*`, and the dynamic import
+keeps the tween/easing runtime out of the main bundle's synchronous parse. Never import from
+`framer-motion` directly — always through a `motion/*` subpath.
+
+Every animation, CSS or `motion`, must respect `prefers-reduced-motion: reduce`.
 
 ## Out of scope for now
 

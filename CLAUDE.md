@@ -106,7 +106,7 @@ code.
 
 The design-system refactor described in
 [`docs/specs/design-system-refactor/macro-plan.md`](docs/specs/design-system-refactor/macro-plan.md)
-has shipped (Stages 0–9 done; only the optional Stage 10 animation kit remains) — read
+has shipped in full (Stages 0–10) — read
 [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) (token values, component specs) and
 [`docs/frontend-architecture.md`](docs/frontend-architecture.md) (folder/CSS conventions) before
 touching any UI.
@@ -114,8 +114,9 @@ touching any UI.
 **CSS Modules** (no Tailwind, no CSS-in-JS, no Radix by default), design tokens split under
 `src/styles/tokens/`, reusable primitives under `src/components/primitives/` and app-scoped
 components under `src/components/app/` (folder-per-component: `Component.tsx` + `.module.css` +
-`index.ts`, extra files only when needed), CSS for micro-interactions (a `motion` kit for
-layout/presence transitions is Stage 10, not yet built), self-hosted Inter + JetBrains Mono
+`index.ts`, extra files only when needed), CSS for micro-interactions + a `motion` kit
+(`src/lib/motion/`) for layout/presence transitions (Dialog, Feedback/ResultPanel, SummaryGrid,
+the mobile pane switch), self-hosted Inter + JetBrains Mono
 variable fonts, `lucide-react` icons, native `<dialog>` for the settings sheet/modal, a single
 **900px** breakpoint. Every color/spacing/radius/duration must resolve through a token — no
 hardcoded hex or raw px in component CSS (layout-only numbers — grid fractions, `minmax`,

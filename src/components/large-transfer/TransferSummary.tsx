@@ -1,3 +1,4 @@
+import { AnimatePresence } from 'motion/react'
 import { SummaryGrid, type SummaryGridCell } from '../app/SummaryGrid'
 import { Feedback } from '../primitives/Feedback'
 import { Spinner } from '../primitives/Spinner'
@@ -26,10 +27,13 @@ export function TransferSummary({ state, settings }: TransferSummaryProps) {
   }
   if (state.status === 'error') {
     return (
-      <Feedback
-        level="error"
-        title={state.error === 'sourceTooLarge' ? t.sourceTooLargeError : t.readFailedError}
-      />
+      <AnimatePresence>
+        <Feedback
+          key="error"
+          level="error"
+          title={state.error === 'sourceTooLarge' ? t.sourceTooLargeError : t.readFailedError}
+        />
+      </AnimatePresence>
     )
   }
 
@@ -68,17 +72,24 @@ export function TransferSummary({ state, settings }: TransferSummaryProps) {
   return (
     <>
       <SummaryGrid cells={cells} />
-      {level === 'tooLarge' && (
-        <Feedback level="error" title={t.tooLargeError(formatBytes(MAX_TRANSFER_BYTES))} />
-      )}
-      {(level === 'large' || level === 'veryLarge') && (
-        <Feedback
-          level="notice"
-          title={level === 'large' ? t.largeTransferWarning : t.veryLargeTransferWarning}
-        >
-          {t.largeTransferWarningBody(frames)}
-        </Feedback>
-      )}
+      <AnimatePresence mode="wait">
+        {level === 'tooLarge' && (
+          <Feedback
+            key="too-large"
+            level="error"
+            title={t.tooLargeError(formatBytes(MAX_TRANSFER_BYTES))}
+          />
+        )}
+        {(level === 'large' || level === 'veryLarge') && (
+          <Feedback
+            key="size-warning"
+            level="notice"
+            title={level === 'large' ? t.largeTransferWarning : t.veryLargeTransferWarning}
+          >
+            {t.largeTransferWarningBody(frames)}
+          </Feedback>
+        )}
+      </AnimatePresence>
     </>
   )
 }

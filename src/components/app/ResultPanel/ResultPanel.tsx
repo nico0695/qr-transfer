@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { fadeSlideUp } from '../../../lib/motion/presets'
 import { Feedback } from '../../primitives/Feedback'
 import styles from './ResultPanel.module.css'
 
@@ -15,7 +16,7 @@ export interface ResultPanelProps {
 
 export function ResultPanel({ title, meta, text, body, actions }: ResultPanelProps) {
   return (
-    <Feedback level="verified" title={title} actions={actions}>
+    <Feedback level="verified" title={title} actions={actions} motionPreset={fadeSlideUp()}>
       {meta !== undefined && <p className={styles.meta}>{meta}</p>}
       {text !== undefined && <pre className={styles.body}>{text}</pre>}
       {body}

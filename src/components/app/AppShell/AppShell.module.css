@@ -38,13 +38,26 @@
   }
 }
 
-/* Below 900px only one pane is visible at a time — the mobile view switcher toggles which. */
+/* Below 900px only one pane is active at a time — the mobile view switcher toggles which. Both
+   stay in the DOM (the stage pane is a portal target that must not remount) and occupy the same
+   box; the inactive one is pushed off pointer/AT interaction by JS (`aria-hidden`/`inert`) while
+   `motion` slides it out of view. */
 @media (max-width: 899px) {
+  .body {
+    position: relative;
+  }
+
+  .compose,
+  .stage {
+    position: absolute;
+    inset: 0;
+  }
+
   .body[data-view='compose'] .stage {
-    display: none;
+    pointer-events: none;
   }
 
   .body[data-view='stage'] .compose {
-    display: none;
+    pointer-events: none;
   }
 }

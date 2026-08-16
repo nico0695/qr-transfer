@@ -1,3 +1,4 @@
+import { AnimatePresence } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useStageSlot } from '../app/AppShell'
@@ -151,9 +152,11 @@ export function SendFlow({
           removeLabel={t.removeFile}
         />
       )}
-      {source === 'file' && multiDropNotice && file !== null && (
-        <Feedback level="notice" title={t.multiDropNotice(file.name)} />
-      )}
+      <AnimatePresence>
+        {source === 'file' && multiDropNotice && file !== null && (
+          <Feedback key="multi-drop-notice" level="notice" title={t.multiDropNotice(file.name)} />
+        )}
+      </AnimatePresence>
       <TransferSummary state={payloadState} settings={resolved} />
       <div className={styles.actions}>
         <Button variant="secondary" onClick={() => setSettingsOpen(true)}>

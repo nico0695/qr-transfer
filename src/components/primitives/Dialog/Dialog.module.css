@@ -26,30 +26,3 @@
   box-shadow: var(--sh-sheet);
   padding-bottom: env(safe-area-inset-bottom);
 }
-
-.modal[open],
-.sheet[open] {
-  opacity: 1;
-  transition:
-    opacity var(--duration-sheet) var(--easing-out),
-    transform var(--duration-sheet) var(--easing-out);
-}
-
-@starting-style {
-  .modal[open] {
-    opacity: 0;
-    transform: scale(0.96);
-  }
-
-  .sheet[open] {
-    opacity: 0;
-    transform: translateY(100%);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .modal[open],
-  .sheet[open] {
-    transition: none;
-  }
-}

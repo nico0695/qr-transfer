@@ -318,6 +318,24 @@ value copied unchanged onto `--bg: #F4F3F0` reads as visibly wrong — too heavy
 frame-accepted flash (`.scan-guide-hit`, 700ms). The animated QR loop itself is **not** disabled —
 it is functional, not decorative.
 
+**CSS vs. `motion` (`src/lib/motion/`)** — the table above stays CSS-only: infinite/functional
+animations (scan sweep, pulse, spin) and simple hover/press states never need JS. Layout and
+presence transitions where an element's mount/unmount or resting position changes go through
+`motion` (motion.dev) instead, reading the same duration/easing tokens via `getComputedStyle` so
+there is one source of truth:
+
+| Transition                         | Component                            | Preset                     |
+| ---------------------------------- | ------------------------------------ | -------------------------- |
+| Dialog enter/exit (modal/sheet)    | `Dialog`                             | `sheetEnter`               |
+| Feedback/ResultPanel mount/unmount | `Feedback` (`ResultPanel` overrides) | `presence` / `fadeSlideUp` |
+| Summary cell stagger               | `SummaryGrid`                        | `staggerList`              |
+| Mobile compose↔stage pane switch   | `AppShell`                           | `paneSwitch`               |
+
+Every preset collapses to the settled end-state with zero duration under
+`useReducedMotion()` (`src/lib/motion/reducedMotion.ts`), independently of the CSS-only handling
+above — a `motion`-reduced user sees exactly the same static end-state whether the transition
+would have been CSS or JS-driven.
+
 ### 2.7 Breakpoints & layout
 
 One breakpoint, **900px**. Not a CSS custom property — media queries can't read custom

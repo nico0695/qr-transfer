@@ -1,6 +1,6 @@
 # Macro plan — Design System refactor
 
-Status: **shipped** (Stages 0–9 done, 2026-08-16; Stage 10 optional, not started) · Spec:
+Status: **shipped** (Stages 0–10 done, 2026-08-16) · Spec:
 [`spec.md`](./spec.md) · Branch: `refactor/design-system` · Started: 2026-08-15
 
 > Execution note: stages land as direct commits on `refactor/design-system`, not one PR per

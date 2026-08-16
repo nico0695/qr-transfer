@@ -28,6 +28,7 @@
     "@lezer/highlight": "^1.2.3",
     "html5-qrcode": "^2.3.8",
     "lucide-react": "^1.31.0",
+    "motion": "^13.1.0",
     "qrcode": "^1.5.4",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
