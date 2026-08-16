@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useI18n } from '../../i18n'
 import { usePreferences } from '../../store/preferences'
 import { DEFAULT_SETTINGS, type TransferSettings } from '../../lib/transfer/profiles'
 import { SendFlow } from './SendFlow'
@@ -8,10 +7,13 @@ import type { SourceKind } from './usePreparedPayload'
 
 type Direction = 'send' | 'receive'
 
-export default function LargeTransfer() {
-  const t = useI18n()
-  const [direction, setDirection] = useState<Direction>('send')
-  // Kept here so switching Send↔Receive or Text↔File does not lose the draft, file or settings.
+export interface LargeTransferProps {
+  direction: Direction
+}
+
+export default function LargeTransfer({ direction }: LargeTransferProps) {
+  // Kept here so switching Text↔File does not lose the draft, file or settings; Send↔Receive
+  // itself is now App's `role`, shared with Quick QR (docs/DESIGN_SYSTEM.md §5.1).
   const [source, setSource] = useState<SourceKind>('text')
   const [text, setText] = useState('')
   const [file, setFile] = useState<File | null>(null)
@@ -29,26 +31,6 @@ export default function LargeTransfer() {
 
   return (
     <div className="large-transfer">
-      <div className="tabs" role="tablist" aria-label={t.navLarge}>
-        <button
-          type="button"
-          role="tab"
-          className="tab"
-          aria-selected={direction === 'send'}
-          onClick={() => setDirection('send')}
-        >
-          {t.send}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          className="tab"
-          aria-selected={direction === 'receive'}
-          onClick={() => setDirection('receive')}
-        >
-          {t.receive}
-        </button>
-      </div>
       {direction === 'send' ? (
         <SendFlow
           source={source}

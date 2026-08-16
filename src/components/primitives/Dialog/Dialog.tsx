@@ -3,7 +3,7 @@ import { DialogBody } from './components/DialogBody'
 import { DialogFooter } from './components/DialogFooter'
 import { DialogHeader } from './components/DialogHeader'
 import styles from './Dialog.module.css'
-import { useIsDesktop } from './useIsDesktop'
+import { useIsDesktop } from '../../../lib/theme/useIsDesktop'
 
 export interface DialogProps {
   open: boolean

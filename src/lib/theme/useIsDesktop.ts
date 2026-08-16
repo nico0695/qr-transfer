@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BREAKPOINT_DESKTOP } from '../../../lib/theme/breakpoints'
+import { BREAKPOINT_DESKTOP } from './breakpoints'
 
 export function useIsDesktop(): boolean {
   const [isDesktop, setIsDesktop] = useState(

@@ -1,0 +1,50 @@
+.shell {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  overflow: hidden;
+}
+
+@media (min-width: 900px) {
+  .body {
+    grid-template-columns: 1.35fr minmax(400px, var(--stage-max));
+    gap: var(--panel-gap);
+    max-width: var(--content-max);
+    margin-inline: auto;
+    width: 100%;
+    padding-inline: 24px;
+  }
+}
+
+.compose,
+.stage {
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--sp-5) 20px;
+}
+
+@media (min-width: 900px) {
+  .compose,
+  .stage {
+    padding: var(--sp-6) 0;
+  }
+}
+
+/* Below 900px only one pane is visible at a time — the mobile view switcher toggles which. */
+@media (max-width: 899px) {
+  .body[data-view='compose'] .stage {
+    display: none;
+  }
+
+  .body[data-view='stage'] .compose {
+    display: none;
+  }
+}

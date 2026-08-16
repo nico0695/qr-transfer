@@ -1,0 +1,96 @@
+.header {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2) var(--sp-4);
+  padding: var(--sp-2) 20px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+@media (min-width: 900px) {
+  .header {
+    height: var(--header-height);
+    flex-wrap: nowrap;
+    padding-inline: 24px;
+  }
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+@media (min-width: 900px) {
+  .left {
+    gap: var(--sp-6);
+  }
+}
+
+.logo {
+  font: var(--fs-h2) var(--font-ui);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex: none;
+}
+
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.iconButton:hover {
+  background: var(--surface-2);
+}
+
+.iconButton:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+.langButton {
+  padding: 0 var(--sp-3);
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--text-muted);
+  font: var(--fs-ui) var(--font-ui);
+  cursor: pointer;
+}
+
+.langButton:hover {
+  background: var(--surface-2);
+}
+
+.langButton:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}

@@ -1,2 +1,11 @@
-/* App-shell layout rules land here in Stage 4 (docs/specs/design-system-refactor/macro-plan.md).
-   Empty placeholder for now — the legacy .app/.header rules in ../../styles.css still apply. */
+/* Global rules the shell needs but that aren't component-scoped — docs/DESIGN_SYSTEM.md §1: no
+   page scroll for the primary task. AppShell (src/components/app/AppShell) does the actual
+   layout in its own CSS Module; this is only the belt-and-suspenders reset so nothing above it
+   in the tree can introduce a scrollbar. */
+
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}

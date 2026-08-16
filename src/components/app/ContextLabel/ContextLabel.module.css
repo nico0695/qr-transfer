@@ -1,0 +1,13 @@
+.label {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font: var(--fs-label) var(--font-ui);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: var(--sp-3);
+}

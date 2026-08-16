@@ -31,13 +31,18 @@ that also exports a component (see `usePreparedPayload.ts` next to `SendFlow.tsx
 
 ## Architecture
 
-Two sections chosen by a navbar in `App.tsx` (`NavMenu`): **Quick QR** (tabs Generate/Scan —
-`QRGenerator`, `QRScanner`) and **Large Transfer** (`components/large-transfer/`, lazy-loaded).
-`App` owns section/mode/theme/lang; strings come from the typed es/en dictionary in `src/i18n.ts`
-via `useI18n()` — every user-visible string must be added to **both** `en` and `es` (the `es`
-object is typed as `Messages`, so TS flags omissions). The design-system refactor's Stage 4
-replaces the Generate/Scan tabs with a Send/Receive segmented control shared by both sections (a
-`role` state, not a mode-specific tab set) — see `DESIGN_SYSTEM.md` §5.1 and the macro plan.
+Two `mode`s chosen by `Tabs` in `AppHeader` (`src/components/app/AppHeader/`): **Quick QR**
+(`QRGenerator`, `QRScanner`) and **Large Transfer** (`components/large-transfer/`, lazy-loaded).
+A shared `role: 'send' | 'receive'` — also owned by `App.tsx`, controlled by a `SegmentedControl`
+in the same header — picks which of the two components renders per mode (`role=send` →
+`QRGenerator` / `SendFlow`; `role=receive` → `QRScanner` / `TransferScanner`); it replaced Quick
+QR's old Generate/Scan tabs and Large Transfer's own internal Send/Receive tabs, which no longer
+exist (`NavMenu.tsx`/`ModeTabs.tsx` are deleted). Every screen renders inside `AppShell`'s
+`compose`/`stage` panes (`src/components/app/AppShell/`) — for now everything is in `compose`
+until Stages 5–8 split each screen's own QR-display/camera portion into `stage`. Strings come
+from the typed es/en dictionary in `src/i18n.ts` via `useI18n()` — every user-visible string must
+be added to **both** `en` and `es` (the `es` object is typed as `Messages`, so TS flags
+omissions). See `DESIGN_SYSTEM.md` §5.1/§5.2/§6.1 and the macro plan's Stage 4.
 
 ### Large Transfer
 

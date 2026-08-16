@@ -37,6 +37,16 @@ const en = {
   navLarge: 'Large Transfer',
   navLabel: 'Sections',
   loadingLargeTransfer: 'Loading Large Transfer…',
+  // App shell — context label, mobile view switcher
+  ctxQuick: 'Quick QR',
+  ctxLarge: 'Large Transfer',
+  roleSend: 'Send',
+  roleReceive: 'Receive',
+  limitChars: (n: number) => `Up to ${n} characters`,
+  srcText: 'Text',
+  srcFile: 'File',
+  viewCompose: 'Content',
+  viewStage: 'Stage',
   // Large transfer — common
   send: 'Send',
   receive: 'Receive',
@@ -172,6 +182,16 @@ const es: Messages = {
   navLarge: 'Transferencia grande',
   navLabel: 'Secciones',
   loadingLargeTransfer: 'Cargando transferencia grande…',
+  // App shell — context label, mobile view switcher
+  ctxQuick: 'QR rápido',
+  ctxLarge: 'Transferencia grande',
+  roleSend: 'Enviar',
+  roleReceive: 'Recibir',
+  limitChars: (n: number) => `Hasta ${n} caracteres`,
+  srcText: 'Texto',
+  srcFile: 'Archivo',
+  viewCompose: 'Contenido',
+  viewStage: 'Vista',
   // Large transfer — common
   send: 'Enviar',
   receive: 'Recibir',
