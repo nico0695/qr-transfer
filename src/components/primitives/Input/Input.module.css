@@ -1,0 +1,35 @@
+.textarea,
+.select {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  font: var(--fs-ui) var(--font-ui);
+  color: var(--text);
+  padding: var(--sp-2) var(--sp-3);
+}
+
+.textarea::placeholder,
+.select::placeholder {
+  color: var(--text-faint);
+}
+
+.textarea:focus-visible,
+.select:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+.textarea {
+  resize: vertical;
+  width: 100%;
+}
+
+.range {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.range:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}

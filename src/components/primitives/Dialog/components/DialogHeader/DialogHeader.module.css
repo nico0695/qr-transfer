@@ -1,0 +1,30 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-6) var(--sp-6) 0;
+}
+
+.title {
+  margin: 0;
+  font: var(--fs-h2) var(--font-ui);
+  font-weight: 700;
+}
+
+.close {
+  background: none;
+  border: none;
+  padding: var(--sp-1);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.close:hover {
+  color: var(--text);
+}
+
+.close:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}

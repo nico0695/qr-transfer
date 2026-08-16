@@ -1,0 +1,4 @@
+.body {
+  padding: var(--sp-4) var(--sp-6);
+  overflow-y: auto;
+}

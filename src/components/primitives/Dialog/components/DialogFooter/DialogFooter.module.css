@@ -1,0 +1,6 @@
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  padding: 0 var(--sp-6) var(--sp-6);
+}

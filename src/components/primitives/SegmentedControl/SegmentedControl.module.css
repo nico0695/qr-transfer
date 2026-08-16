@@ -1,0 +1,29 @@
+.track {
+  display: inline-flex;
+  gap: var(--sp-1);
+  padding: 3px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-control);
+}
+
+.segment {
+  padding: var(--sp-2) var(--sp-3);
+  border: none;
+  border-radius: calc(var(--r-control) - 3px);
+  background: transparent;
+  font: var(--fs-ui) var(--font-ui);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--easing-standard);
+}
+
+.segment[aria-checked='true'] {
+  background: var(--surface-active);
+  color: var(--text-strong);
+}
+
+.segment:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}

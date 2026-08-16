@@ -86,12 +86,13 @@ if you need a Spanish pass on specific screens — the layout does not change, o
 
 ## Coverage
 
-238 PNGs across 9 modules. Every discriminated-union state in the codebase is represented except a
+242 PNGs across 10 modules. Every discriminated-union state in the codebase is represented except a
 handful called out below as not screenshot-worthy:
 
 | Module                          | States captured                                                                                                                                                                                                      |
 | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `00-app-shell`                  | Home, header + nav crop, Large Transfer home                                                                                                                                                                         |
+| `05-primitives`                 | Every design-system primitive (`?demo=primitives`, dev-only review page — see the [macro plan](../specs/design-system-refactor/macro-plan.md) Stage 2)                                                               |
 | `10-quick-qr-generate`          | Empty, filled (QR rendered), character-limit reached, mobile "Show QR" scroll                                                                                                                                        |
 | `20-quick-qr-scan`              | Starting, scanning (viewfinder), done (decoded text), permission / not-readable / generic camera errors                                                                                                              |
 | `30-large-transfer-send`        | Text empty/filled/Markdown/JSON highlighting/fullscreen, file dropzone idle/dragging, file card plain/image, multi-file-drop notice, summary ready (text & file) / large / very large / too large, preparing         |

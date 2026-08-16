@@ -1,0 +1,97 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  border-radius: var(--r-control);
+  font: var(--fs-ui) var(--font-ui);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--easing-standard);
+  position: relative;
+}
+
+.button:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+.button:disabled {
+  cursor: not-allowed;
+}
+
+/* Sizes */
+.md {
+  height: 42px;
+  padding: 0 var(--sp-4);
+}
+
+.sm {
+  height: 38px;
+  padding: 0 var(--sp-3);
+}
+
+.icon {
+  height: 34px;
+  width: 34px;
+  padding: 0;
+}
+
+/* 44px touch target on icon-only buttons without inflating the visual box. */
+.icon::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+}
+
+/* Variants */
+.primary {
+  background: var(--accent);
+  color: var(--on-accent);
+  border: none;
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+:root[data-theme='light'] .primary {
+  border: 1px solid var(--line);
+}
+
+.secondary {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--text-muted);
+}
+
+.secondary:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+
+.destructive {
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-line);
+  color: var(--danger);
+}
+
+.destructive:hover:not(:disabled) {
+  background: var(--danger-line);
+}
+
+.button:disabled {
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+  color: var(--text-faint);
+}
+
+.loading {
+  color: transparent;
+}
+
+.spinnerOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

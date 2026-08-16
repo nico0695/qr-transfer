@@ -522,7 +522,7 @@ States: `pending` · `in progress` · `done` · `blocked` · `skipped`
 | --- | -------------------------------------- | ---------- | -------- | ---- | ------- | --------- | ----------------------------------------------------------------- |
 | 0   | Docs & source of truth                 | —          | low      | S    | done    | `cc63318` | DS v1.1 consistent; prototype versioned; docs aligned             |
 | 1   | Tokens, theme bootstrap, fonts, icons  | 0          | medium   | M    | done    | `f4a1257` | Offline bundle; no flash; contrast tests green                    |
-| 2   | Primitives + demo page                 | 1          | medium   | L    | pending |           | 12 primitives on `?demo=primitives`; module 05 captured           |
+| 2   | Primitives + demo page                 | 1          | medium   | L    | done    | (pending) | 12 primitives on `?demo=primitives`; module 05 captured           |
 | 3   | Preferences store                      | 1          | low      | S    | pending |           | theme/lang/profile survive reload; legacy key migrated            |
 | 4   | App shell                              | 2, 3       | high     | L    | pending |           | No page scroll; switcher <900; Send/Receive drives both modes     |
 | 5   | Quick QR                               | 4          | medium   | M    | pending |           | Generate/scan restyled; camera matrix OK; modules 10/20           |
@@ -541,6 +541,7 @@ States: `pending` · `in progress` · `done` · `blocked` · `skipped`
 | 2026-08-15 | 0     | DS v1.1 corrections applied in place; prototype versioned at `docs/design/prototype/`; `frontend-architecture.md`, `CLAUDE.md`, `technical-overview.md` aligned; exit criteria green                                                                                                                   |
 | 2026-08-15 | 1     | Token layer, theme bootstrap, self-hosted fonts, lucide-react installed; legacy `styles.css` widened to `:root, :root[data-theme='light']` and 5 tokens aliased forward so both stylesheets agree on cascade specificity; verified visually in both themes with no console errors; exit criteria green |
 | 2026-08-15 | 1     | Review fixup `5681b0c`: resolved a `--cm-selection`/`--cm-match` name collision the first pass missed, deduplicated theme-invariant tokens in `colors.css`, wired up `applyAccent()` at bootstrap                                                                                                      |
+| 2026-08-15 | 2     | 12 primitives shipped under `src/components/primitives/`; `?demo=primitives` page (own chunk, verified via build); Dialog focus trap + Escape-to-close + focus restoration verified in a real browser; screenshot module `05-primitives` added and captured (4 shots); exit criteria green             |
 
 ---
 

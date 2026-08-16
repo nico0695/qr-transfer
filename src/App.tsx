@@ -3,11 +3,14 @@ import { ModeTabs, type Mode } from './components/ModeTabs'
 import { NavMenu, type Section } from './components/NavMenu'
 import { QRGenerator } from './components/QRGenerator'
 import { detectLang, LangContext, messages, type Lang } from './i18n'
+import { PRIMITIVES_DEMO_ENABLED } from './lib/demo'
 
 // html5-qrcode is heavy, so the scanner is only loaded when Scan QR is opened.
 const QRScanner = lazy(() => import('./components/QRScanner'))
 // Large Transfer pulls in CodeMirror and the scanner; loaded only when that section is opened.
 const LargeTransfer = lazy(() => import('./components/large-transfer/LargeTransfer'))
+// Dev-only primitives review page (?demo=primitives) — never part of the app's own navigation.
+const PrimitivesDemo = lazy(() => import('./components/demo/PrimitivesDemo'))
 
 type Theme = 'light' | 'dark'
 
@@ -16,6 +19,18 @@ function detectTheme(): Theme {
 }
 
 export default function App() {
+  if (PRIMITIVES_DEMO_ENABLED) {
+    return (
+      <Suspense fallback={null}>
+        <PrimitivesDemo />
+      </Suspense>
+    )
+  }
+
+  return <QrTransferApp />
+}
+
+function QrTransferApp() {
   const [section, setSection] = useState<Section>('quick')
   const [mode, setMode] = useState<Mode>('generate')
   const [theme, setTheme] = useState<Theme>(detectTheme)

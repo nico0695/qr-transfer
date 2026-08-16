@@ -155,7 +155,8 @@ their replacement past the stage that introduces it.
 
 ## Initial primitives inventory
 
-12 primitives, settled in the design-system refactor spec (`docs/specs/design-system-refactor/spec.md`).
+**Shipped in Stage 2** (`src/components/primitives/`), reviewable at `?demo=primitives`. 12
+primitives, settled in the design-system refactor spec (`docs/specs/design-system-refactor/spec.md`).
 No `Skeleton` — no screen in this redesign needs a placeholder-shape loading state.
 
 | Primitive          | Replaces / covers                                                                       |
