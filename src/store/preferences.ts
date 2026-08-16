@@ -28,8 +28,12 @@ function detectLang(): Lang {
   return window.navigator.language.toLowerCase().startsWith('es') ? 'es' : 'en'
 }
 
-/** Reads the pre-store profile key once and removes it — there is nothing left to migrate after. */
-function migrateLegacyProfile(): TransferProfileId {
+/**
+ * Initial profile when nothing is stored yet under the new key (persist's rehydration overrides
+ * this once it exists). Along the way, reads the pre-store profile key once and removes it —
+ * there is nothing left to migrate after.
+ */
+function resolveInitialProfile(): TransferProfileId {
   try {
     const legacy = window.localStorage.getItem(LEGACY_PROFILE_KEY)
     window.localStorage.removeItem(LEGACY_PROFILE_KEY)
@@ -44,7 +48,7 @@ export const usePreferences = create<Preferences>()(
     (set) => ({
       theme: detectTheme(),
       lang: detectLang(),
-      profile: migrateLegacyProfile(),
+      profile: resolveInitialProfile(),
       setTheme: (theme) => set({ theme }),
       setLang: (lang) => set({ lang }),
       setProfile: (profile) => set({ profile }),
