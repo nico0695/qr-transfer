@@ -1,0 +1,28 @@
+.speed {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.speedValue {
+  min-width: 4.5rem;
+  text-align: center;
+  font: var(--fs-data) var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Always on the fullscreen overlay's --qr-paper (white) background regardless of theme, so this
+   deliberately uses the theme-invariant optical-channel tokens, not the theme-variable ones —
+   docs/DESIGN_SYSTEM.md §5.8 "exit button top-right (dark pill, fixed)". */
+.exitButton {
+  position: fixed;
+  top: var(--sp-4);
+  right: var(--sp-4);
+  background: var(--qr-ink);
+  border-color: var(--qr-ink);
+  color: var(--qr-paper);
+}
+
+.exitButton:hover {
+  opacity: 0.85;
+}

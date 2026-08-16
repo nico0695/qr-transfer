@@ -1,0 +1,41 @@
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: 14rem;
+  padding: var(--sp-8) var(--sp-4);
+  text-align: center;
+  transition: border-color var(--duration-fast) var(--easing-standard);
+}
+
+.dropzone.dragging {
+  border-color: var(--accent);
+  background: var(--surface-2);
+}
+
+.icon {
+  color: var(--text-faint);
+}
+
+.title {
+  margin: 0;
+  font: var(--fs-body) var(--font-ui);
+  font-weight: 650;
+}
+
+.hint {
+  margin: 0;
+  font: var(--fs-ui) var(--font-ui);
+  color: var(--text-faint);
+}
+
+.hiddenInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

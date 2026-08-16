@@ -1,0 +1,29 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+  gap: 1px;
+  background: var(--line-soft);
+  border-radius: var(--r-card);
+  overflow: hidden;
+}
+
+.cell {
+  padding: var(--sp-3);
+  background: var(--surface);
+}
+
+.key {
+  display: block;
+  font: var(--fs-label) var(--font-ui);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--text-faint);
+}
+
+.value {
+  display: block;
+  margin-top: var(--sp-1);
+  font: var(--fs-data) var(--font-mono);
+  color: var(--text-strong);
+  overflow-wrap: anywhere;
+}

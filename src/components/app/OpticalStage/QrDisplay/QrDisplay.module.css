@@ -50,3 +50,68 @@
   color: var(--danger);
   text-align: center;
 }
+
+.outerFullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-fullscreen);
+  background: var(--qr-paper);
+  border-radius: 0;
+}
+
+.loop {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+  overflow-y: auto;
+}
+
+.loopFullscreen {
+  justify-content: center;
+  gap: var(--sp-4);
+}
+
+.loopImage {
+  width: min(46vh, 300px);
+  height: min(46vh, 300px);
+  background: var(--qr-paper);
+  border-radius: var(--r-card);
+  box-shadow: var(--sh-qr);
+  padding: var(--qr-quiet);
+  image-rendering: auto;
+}
+
+.loopImageFullscreen {
+  width: min(74vh, 74vw);
+  height: min(74vh, 74vw);
+  box-shadow: none;
+}
+
+.loopCaption {
+  margin: 0;
+  font: var(--fs-data) var(--font-mono);
+  color: var(--text-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Fullscreen's background is always --qr-paper (white), regardless of theme, so its text must
+   use --qr-ink rather than the theme-dependent --text-strong (which would go white-on-white in
+   dark mode). */
+.loopCaptionFullscreen {
+  color: var(--qr-ink);
+}
+
+.loopHint {
+  margin: 0;
+  font: var(--fs-ui-sm) var(--font-ui);
+  color: var(--text-faint);
+  text-align: center;
+}
+
+.loopActions {
+  display: flex;
+  gap: var(--sp-2);
+}

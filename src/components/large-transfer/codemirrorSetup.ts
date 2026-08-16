@@ -1,8 +1,8 @@
-import { defaultKeymap, history, historyKeymap, redo, undo } from '@codemirror/commands'
+import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { json } from '@codemirror/lang-json'
 import { markdown } from '@codemirror/lang-markdown'
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language'
-import { openSearchPanel, search, searchKeymap } from '@codemirror/search'
+import { search, searchKeymap } from '@codemirror/search'
 import { Compartment, EditorState, type Extension } from '@codemirror/state'
 import {
   drawSelection,
@@ -13,8 +13,6 @@ import {
 } from '@codemirror/view'
 import { tags } from '@lezer/highlight'
 import type { ContentFormat } from '../../lib/transfer/types'
-
-export { openSearchPanel, redo, undo }
 
 /** Colors come from CSS variables so highlighting follows the app theme (light/dark). */
 const highlightStyle = HighlightStyle.define([

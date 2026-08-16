@@ -1,0 +1,75 @@
+.shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--cm-bg);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-card);
+  overflow: hidden;
+}
+
+.shell.fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-fullscreen);
+  height: 100dvh;
+  border: none;
+  border-radius: 0;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2) var(--sp-3);
+  flex-wrap: wrap;
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--surface-2);
+}
+
+.title {
+  font: var(--fs-label) var(--font-ui);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.formatSelect {
+  min-width: 100px;
+}
+
+.host {
+  flex: none;
+  height: min(60svh, 32rem);
+}
+
+.shell.tall .host {
+  height: min(70svh, 40rem);
+}
+
+.shell.fullscreen .host {
+  flex: 1 1 0;
+  min-height: 0;
+  height: auto;
+}
+
+.host :global(.cm-editor) {
+  height: 100%;
+}
+
+.footer {
+  padding: var(--sp-2) var(--sp-3);
+  border-top: 1px solid var(--line-soft);
+  background: var(--surface-2);
+  font: var(--fs-data) var(--font-mono);
+  color: var(--text-faint);
+}

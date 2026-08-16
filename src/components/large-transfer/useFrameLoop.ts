@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { frameIndexAt, preloadWindow } from '../../lib/transfer/frameLoop'
 
 /** Frames kept decoded ahead of the visible one. */
@@ -18,8 +18,19 @@ const PRELOAD_AHEAD = 3
  */
 export function useFrameLoop(images: readonly string[], frameMs: number) {
   const [index, setIndex] = useState(0)
-  const imageRef = useRef<HTMLImageElement | null>(null)
+  const elementRef = useRef<HTMLImageElement | null>(null)
+  // Mirrors whatever src the element should currently show, so a node that mounts (or remounts,
+  // e.g. when a portal's target container swaps) after a frame change can be painted immediately
+  // instead of waiting for the animation effect to run again — it won't, since its deps didn't change.
+  const currentSrcRef = useRef<string | null>(null)
   const decodedRef = useRef(new Set<number>())
+
+  const imageRef = useCallback((node: HTMLImageElement | null) => {
+    elementRef.current = node
+    if (node !== null && currentSrcRef.current !== null) {
+      node.src = currentSrcRef.current
+    }
+  }, [])
 
   useEffect(() => {
     decodedRef.current = new Set()
@@ -28,8 +39,6 @@ export function useFrameLoop(images: readonly string[], frameMs: number) {
   useEffect(() => {
     const total = images.length
     if (total === 0) return
-    const element = imageRef.current
-    if (element === null) return
 
     let handle = 0
     let shown = -1
@@ -50,7 +59,8 @@ export function useFrameLoop(images: readonly string[], frameMs: number) {
       const next = total === 1 ? 0 : frameIndexAt(performance.now() - startedAt, frameMs, total)
       if (next !== shown) {
         shown = next
-        element.src = images[next]
+        currentSrcRef.current = images[next]
+        if (elementRef.current !== null) elementRef.current.src = images[next]
         setIndex(next)
         preload(next)
       }

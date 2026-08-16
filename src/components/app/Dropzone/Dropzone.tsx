@@ -1,13 +1,19 @@
-import { useRef, useState, type DragEvent, type ChangeEvent } from 'react'
-import { useI18n } from '../../i18n'
+import { useRef, useState, type ChangeEvent, type DragEvent } from 'react'
+import { cx } from '../../../lib/cx'
+import { Button } from '../../primitives/Button'
+import { Card } from '../../primitives/Card'
+import { Icon } from '../../primitives/Icon'
+import styles from './Dropzone.module.css'
 
-interface FileInputProps {
+export interface DropzoneProps {
   onSelect: (file: File, droppedCount: number) => void
+  title: string
+  chooseLabel: string
+  hint: string
 }
 
 /** Drop zone + native file picker. One file per transfer; extra dropped files are ignored. */
-export function FileInput({ onSelect }: FileInputProps) {
-  const t = useI18n()
+export function Dropzone({ onSelect, title, chooseLabel, hint }: DropzoneProps) {
   const inputRef = useRef<HTMLInputElement | null>(null)
   const [dragging, setDragging] = useState(false)
 
@@ -33,25 +39,27 @@ export function FileInput({ onSelect }: FileInputProps) {
   }
 
   return (
-    <div
-      className={`dropzone${dragging ? ' is-dragging' : ''}`}
+    <Card
+      dashed
+      radius="card"
+      className={cx(styles.dropzone, dragging && styles.dragging)}
       onDrop={onDrop}
       onDragOver={onDragOver}
       onDragLeave={() => setDragging(false)}
     >
-      <p className="dropzone-title">{t.dropFileHere}</p>
-      <p className="hint">{t.or}</p>
-      <button type="button" className="button" onClick={() => inputRef.current?.click()}>
-        {t.chooseFile}
-      </button>
+      <Icon name="file-up" size={26} className={styles.icon} />
+      <p className={styles.title}>{title}</p>
+      <Button variant="primary" onClick={() => inputRef.current?.click()}>
+        {chooseLabel}
+      </Button>
       <input
         ref={inputRef}
         type="file"
-        className="visually-hidden"
-        aria-label={t.chooseFile}
+        className={styles.hiddenInput}
+        aria-label={chooseLabel}
         onChange={onChange}
       />
-      <p className="hint">{t.oneFileHint}</p>
-    </div>
+      <p className={styles.hint}>{hint}</p>
+    </Card>
   )
 }

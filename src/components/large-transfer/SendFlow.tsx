@@ -1,4 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { useStageSlot } from '../app/AppShell'
+import { Dropzone } from '../app/Dropzone'
+import { FileCard } from '../app/FileCard'
+import { QrDisplay } from '../app/OpticalStage/QrDisplay'
+import { Button } from '../primitives/Button'
+import { Feedback } from '../primitives/Feedback'
+import { Icon } from '../primitives/Icon'
+import { Spinner } from '../primitives/Spinner'
 import { useI18n } from '../../i18n'
 import { formatBytes, formatNumber } from '../../lib/format'
 import { sizeLevel } from '../../lib/transfer/config'
@@ -6,14 +15,13 @@ import { resolveSettings, type TransferSettings as Settings } from '../../lib/tr
 import { buildTransfer } from '../../lib/transfer/transfer'
 import type { PreparedTransfer } from '../../lib/transfer/types'
 import { AnimatedQR } from './AnimatedQR'
-import { FileInput } from './FileInput'
-import { FilePreview } from './FilePreview'
-import { LargeTextEditor } from './LargeTextEditor'
 import { renderFrameImages } from './qrFrames'
 import { SourceSelector } from './SourceSelector'
 import { TransferSettings } from './TransferSettings'
 import { TransferSummary } from './TransferSummary'
 import { usePreparedPayload, useTextBytes, type SourceKind } from './usePreparedPayload'
+import { LargeTextEditor } from './LargeTextEditor'
+import styles from './SendFlow.module.css'
 
 type SenderState =
   | { status: 'editing' }
@@ -42,6 +50,7 @@ export function SendFlow({
   onSettingsChange,
 }: SendFlowProps) {
   const t = useI18n()
+  const stageNode = useStageSlot()
   const [state, setState] = useState<SenderState>({ status: 'editing' })
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [multiDropNotice, setMultiDropNotice] = useState(false)
@@ -84,11 +93,12 @@ export function SendFlow({
 
   if (state.status === 'preparing') {
     return (
-      <div className="panel panel-center">
-        <p className="hint">{t.preparing}</p>
-        <button type="button" className="button" onClick={cancelPreparing}>
+      <div className={styles.preparing}>
+        <Spinner size="md" aria-label={t.preparing} />
+        <p className={styles.preparingLabel}>{t.preparing}</p>
+        <Button variant="secondary" onClick={cancelPreparing}>
           {t.cancel}
-        </button>
+        </Button>
       </div>
     )
   }
@@ -106,7 +116,7 @@ export function SendFlow({
   }
 
   return (
-    <div className="panel">
+    <div className={styles.panel}>
       <SourceSelector value={source} onChange={onSourceChange} />
       {source === 'text' ? (
         <LargeTextEditor
@@ -115,42 +125,44 @@ export function SendFlow({
           title={t.editorLabel}
           placeholder={t.editorPlaceholder}
           footer={
-            <ul className="stats-list">
-              <li>
-                {formatNumber(text.length)} {t.characters}
-              </li>
-              <li>{formatBytes(textBytes)}</li>
-            </ul>
+            <span>
+              {formatNumber(text.length)} {t.characters} · {formatBytes(textBytes)}
+            </span>
           }
         />
       ) : file === null ? (
-        <FileInput onSelect={selectFile} />
+        <Dropzone
+          onSelect={selectFile}
+          title={t.dropFileHere}
+          chooseLabel={t.chooseFile}
+          hint={t.oneFileHint}
+        />
       ) : (
-        <FilePreview
+        <FileCard
           file={file}
           onChange={selectFile}
           onRemove={() => {
             setMultiDropNotice(false)
             onFileChange(null)
           }}
+          unnamedLabel={t.unnamedFile}
+          unknownTypeLabel={t.unknownType}
+          changeLabel={t.changeFile}
+          removeLabel={t.removeFile}
         />
       )}
       {source === 'file' && multiDropNotice && file !== null && (
-        <p className="notice">{t.multiDropNotice(file.name)}</p>
+        <Feedback level="notice" title={t.multiDropNotice(file.name)} />
       )}
       <TransferSummary state={payloadState} settings={resolved} />
-      <div className="actions actions-between">
-        <button type="button" className="button" onClick={() => setSettingsOpen(true)}>
+      <div className={styles.actions}>
+        <Button variant="secondary" onClick={() => setSettingsOpen(true)}>
+          <Icon name="settings" size={16} />
           {t.settings}
-        </button>
-        <button
-          type="button"
-          className="button button-primary"
-          disabled={!canStart}
-          onClick={() => void start()}
-        >
+        </Button>
+        <Button variant="primary" disabled={!canStart} onClick={() => void start()}>
           {t.startTransfer}
-        </button>
+        </Button>
       </div>
       <TransferSettings
         open={settingsOpen}
@@ -158,6 +170,17 @@ export function SendFlow({
         onChange={onSettingsChange}
         onClose={() => setSettingsOpen(false)}
       />
+      {stageNode &&
+        createPortal(
+          <QrDisplay
+            isEmpty
+            error={false}
+            errorLabel=""
+            placeholderLabel={t.qrPlaceholder}
+            canvasRef={{ current: null }}
+          />,
+          stageNode,
+        )}
     </div>
   )
 }

@@ -143,12 +143,14 @@ button), centred on desktop and a bottom sheet under 760 px, with real radio inp
 States (`SendFlow`): `editing → preparing → transferring` (Stop returns to `editing`, keeping the
 text / file / source / settings, which live in `LargeTransfer`).
 
-- **Editing** — `Source [Text | File]` segmented control (buttons with `aria-pressed`).
-  - Text: CodeMirror editor with Undo, Redo, Find, Wrap, Format `Auto | Text | Markdown | JSON`,
-    Copy, Clear, Fullscreen; footer with characters and UTF-8 bytes. Format only changes syntax
-    highlighting.
-  - File: drop zone ("Drop a file here — or — Choose file", one file per transfer; extra dropped
-    files are ignored with a note) → card with name, size, MIME, image thumbnail
+- **Editing** — `Source [Text | File]` `SegmentedControl` primitive (`role="radiogroup"`).
+  - Text: CodeMirror editor with Format `Auto | Text | Markdown | JSON`, Copy, Clear, Fullscreen;
+    footer with characters and UTF-8 bytes. Format only changes syntax highlighting. Line-wrap is
+    always on. Undo/Redo/Find lost their toolbar buttons in the design-system refactor, but the
+    keymaps (Cmd/Ctrl-Z, Cmd/Ctrl-Shift-Z, Cmd/Ctrl-F) are still wired up in `codemirrorSetup.ts`
+    and undo history survives the fullscreen toggle (same `EditorView`, never remounted).
+  - File: `Dropzone` ("Drop a file here", "Choose file", one file per transfer; extra dropped
+    files are ignored with a note) → `FileCard` with name, size, MIME, image thumbnail
     (`URL.createObjectURL`, revoked on change/unmount), Change and Remove.
   - Below: live summary — Filename / Characters, Original size, Transfer size, Compression
     (% or "none"), QR frames, Estimated loop (`frames × frameMs`) with the profile name. From
@@ -301,8 +303,10 @@ scanning is reliable, **Fast** halves the loop time. Requires a browser with `Co
   `localStorage` (the only persisted values).
 - `src/components/large-transfer/` — UI: `LargeTransfer` (Send/Receive, holds source, draft, file
   and settings), `SendFlow`, `SourceSelector`, `LargeTextEditor` + `codemirrorSetup.ts`,
-  `FileInput`, `FilePreview`, `usePreparedPayload.ts`, `TransferSummary`, `TransferSettings`,
-  `AnimatedQR`, `qrFrames.ts`, `TransferScanner`, `ReceivedContent`, `ReceivedFile`.
+  `usePreparedPayload.ts`, `TransferSummary`, `TransferSettings`, `AnimatedQR`, `qrFrames.ts`,
+  `TransferScanner`, `ReceivedContent`, `ReceivedFile`.
+- `src/components/app/{Dropzone,FileCard,SummaryGrid}/` — File-source picker/card and the generic
+  key/value grid `TransferSummary` renders into.
 - `src/lib/scan/` — receiver capture pipeline, no React:
   - `roi.ts` — `computeRoi` (crop and decode size in camera pixels), `pixelsPerModule`.
   - `captureLoop.ts` — camera, frame loop and pixel handling for the WASM engine.

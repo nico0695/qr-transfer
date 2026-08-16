@@ -1,8 +1,8 @@
 # Large Transfer — Send
 
 > Compose (text or one file) → review a summary → optional settings → start → animated QR loop.
-> Source: `src/components/large-transfer/{SendFlow,SourceSelector,LargeTextEditor,FileInput,
-FilePreview,TransferSummary,TransferSettings,AnimatedQR}.tsx`.
+> Source: `src/components/large-transfer/{SendFlow,SourceSelector,LargeTextEditor,TransferSummary,
+TransferSettings,AnimatedQR}.tsx`, `src/components/app/{Dropzone,FileCard,SummaryGrid}/`.
 
 ## Table of Contents
 
@@ -24,9 +24,11 @@ NavMenu → "Large Transfer" → "Send" tab (default direction). State shape
 
 ## Composing — Text
 
-The default source. A CodeMirror 6 editor (`LargeTextEditor.tsx`) with Undo/Redo, Find, line-wrap
-toggle, a format picker (Auto detects Markdown/JSON/plain text and highlights accordingly), Copy,
-Clear and Fullscreen. Character/byte counters sit in the footer.
+The default source. A CodeMirror 6 editor (`LargeTextEditor.tsx`) with a format picker (Auto
+detects Markdown/JSON/plain text and highlights accordingly), Copy, Clear and a Fullscreen icon
+button. Character/byte counters sit in the footer. Line-wrap is always on now; Undo/Redo/Find lost
+their toolbar buttons but the CodeMirror keymaps (Cmd/Ctrl-Z, Cmd/Ctrl-Shift-Z, Cmd/Ctrl-F) still
+work — fullscreen keeps the same `EditorView`, so undo history survives the toggle.
 
 | State                 | Trigger                                  | Desktop                                                                             | Mobile                                                                             |
 | --------------------- | ---------------------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
@@ -41,12 +43,13 @@ Clear and Fullscreen. Character/byte counters sit in the footer.
 | Fullscreen            | Toolbar "Fullscreen" (Escape exits)      | ![](../screens/30-large-transfer-send/05-text-fullscreen.desktop.light.png)         | ![](../screens/30-large-transfer-send/05-text-fullscreen.mobile.light.png)         |
 | Fullscreen — dark     |                                          | ![](../screens/30-large-transfer-send/05-text-fullscreen.desktop.dark.png)          | ![](../screens/30-large-transfer-send/05-text-fullscreen.mobile.dark.png)          |
 
-Not screenshotted this pass (present in code, straightforward to add — see `README.md`): the Find
-panel and "Wrap: off" with a long unwrapped line scrolling horizontally.
+Not screenshotted this pass: CodeMirror's built-in search panel (Cmd/Ctrl-F).
 
 ## Composing — File
 
-Switch the `SourceSelector` segmented control to "File". Exactly one file per transfer.
+Switch the `SourceSelector` (a `SegmentedControl` primitive) to "File". Exactly one file per
+transfer. An empty selection shows `Dropzone`; once a file is picked, `FileCard` replaces it with
+a thumbnail (images) or file-type icon, name/size/MIME, and Change/Remove.
 
 | State                       | Trigger                                            | Desktop                                                                            | Mobile                                                                            |
 | --------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
@@ -127,7 +130,10 @@ for large content this is visible as a dedicated screen.
 
 Once rendering finishes, `AnimatedQR.tsx` takes over: a looping QR with frame index ("4 / 14"),
 profile + speed label, Slower/Faster (disabled at the fastest/slowest preset), Fullscreen, and
-Stop.
+Stop. It renders through a single `createPortal` into `OpticalStage`'s `QrDisplay`, whose target
+container swaps between the compose pane and `document.body` for fullscreen — the same `<img>`
+node stays mounted throughout so `useFrameLoop`'s imperative `.src` writes keep landing on the
+element actually on screen.
 
 | State             | Trigger                                | Desktop                                                                             | Mobile                                                                             |
 | ----------------- | -------------------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
@@ -144,24 +150,24 @@ Stop.
 
 ## Copy inventory
 
-| Key                                                                              | English                                                                                                      |
-| -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `send` / `receive`                                                               | Send / Receive                                                                                               |
-| `sourceLabel`, `sourceText`, `sourceFile`                                        | Source / Text / File                                                                                         |
-| `editorLabel`, `editorPlaceholder`                                               | Text to transfer / Paste or type a large text…                                                               |
-| `undo` `redo` `find` `wrapOn` `wrapOff` `format` `formatAuto/Text/Markdown/Json` | Undo, Redo, Find, Wrap: on/off, Format, Auto/Text/Markdown/JSON                                              |
-| `dropFileHere` `or` `chooseFile` `oneFileHint`                                   | Drop a file here / or / Choose file / One file per transfer.                                                 |
-| `changeFile` `removeFile` `unnamedFile` `unknownType`                            | Change / Remove / Unnamed file / unknown type                                                                |
-| `multiDropNotice(name)`                                                          | Only one file per transfer — using "{name}".                                                                 |
-| `summaryFilename/Characters/Original/Transfer/Compression/Frames/Loop`           | Filename, Characters, Original size, Transfer size, Compression, QR frames, Estimated loop                   |
-| `largeTransferWarning(Body)` / `veryLargeTransferWarning`                        | Large transfer / "…requires N QR frames and may take longer to scan." / Very large transfer                  |
-| `tooLargeError(maxKb)`                                                           | This content is too large to transfer with QR codes (limit {maxKb} after compression).                       |
-| `sourceTooLargeError` / `readFailedError`                                        | This file is too large to transfer with QR codes. / The file could not be read.                              |
-| `preparing`                                                                      | Preparing transfer…                                                                                          |
-| `startTransfer`                                                                  | Start transfer                                                                                               |
-| `settings` `settingsTitle` `profileLabel`                                        | Settings / Transfer settings / Profile                                                                       |
-| `profileNames` `profileDescriptions`                                             | Balanced/Reliable/Fast + one-line descriptions                                                               |
-| `advanced` `frameDuration` `profileDefault(ms)` `resetDefaults`                  | Advanced / Frame duration / Profile default ({ms} ms) / Reset defaults                                       |
-| `loopingEvery(ms)` `slower` `faster` `stopTransfer`                              | Looping every {ms} ms / Slower / Faster / Stop transfer                                                      |
-| `transferHint` `brightnessHint`                                                  | Point the receiving camera at this QR and keep it steady. / For better scanning, increase screen brightness. |
-| `fullscreen` `exitFullscreen` `cancel` `close` `done`                            | Fullscreen / Exit fullscreen / Cancel / Close / Done                                                         |
+| Key                                                                    | English                                                                                                      |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `send` / `receive`                                                     | Send / Receive                                                                                               |
+| `sourceLabel`, `sourceText`, `sourceFile`                              | Source / Text / File                                                                                         |
+| `editorLabel`, `editorPlaceholder`                                     | Text to transfer / Paste or type a large text…                                                               |
+| `format` `formatAuto/Text/Markdown/Json`                               | Format, Auto/Text/Markdown/JSON                                                                              |
+| `dropFileHere` `chooseFile` `oneFileHint`                              | Drop a file here / Choose file / One file per transfer.                                                      |
+| `changeFile` `removeFile` `unnamedFile` `unknownType`                  | Change / Remove / Unnamed file / unknown type                                                                |
+| `multiDropNotice(name)`                                                | Only one file per transfer — using "{name}".                                                                 |
+| `summaryFilename/Characters/Original/Transfer/Compression/Frames/Loop` | Filename, Characters, Original size, Transfer size, Compression, QR frames, Estimated loop                   |
+| `largeTransferWarning(Body)` / `veryLargeTransferWarning`              | Large transfer / "…requires N QR frames and may take longer to scan." / Very large transfer                  |
+| `tooLargeError(maxKb)`                                                 | This content is too large to transfer with QR codes (limit {maxKb} after compression).                       |
+| `sourceTooLargeError` / `readFailedError`                              | This file is too large to transfer with QR codes. / The file could not be read.                              |
+| `preparing`                                                            | Preparing transfer…                                                                                          |
+| `startTransfer`                                                        | Start transfer                                                                                               |
+| `settings` `settingsTitle` `profileLabel`                              | Settings / Transfer settings / Profile                                                                       |
+| `profileNames` `profileDescriptions`                                   | Balanced/Reliable/Fast + one-line descriptions                                                               |
+| `advanced` `frameDuration` `profileDefault(ms)` `resetDefaults`        | Advanced / Frame duration / Profile default ({ms} ms) / Reset defaults                                       |
+| `loopingEvery(ms)` `slower` `faster` `stopTransfer`                    | Looping every {ms} ms / Slower / Faster / Stop transfer                                                      |
+| `transferHint` `brightnessHint`                                        | Point the receiving camera at this QR and keep it steady. / For better scanning, increase screen brightness. |
+| `fullscreen` `exitFullscreen` `cancel` `close` `done`                  | Fullscreen / Exit fullscreen / Cancel / Close / Done                                                         |
