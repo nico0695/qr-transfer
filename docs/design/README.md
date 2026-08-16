@@ -93,7 +93,7 @@ handful called out below as not screenshot-worthy:
 | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `00-app-shell`                  | Home, header + nav crop, Large Transfer home                                                                                                                                                                         |
 | `05-primitives`                 | Every design-system primitive (`?demo=primitives`, dev-only review page — see the [macro plan](../specs/design-system-refactor/macro-plan.md) Stage 2)                                                               |
-| `10-quick-qr-generate`          | Empty, filled (QR rendered), character-limit reached, mobile "Show QR" scroll                                                                                                                                        |
+| `10-quick-qr-generate`          | Empty, filled (QR rendered), character-limit reached, mobile "Show QR" pane switch                                                                                                                                   |
 | `20-quick-qr-scan`              | Starting, scanning (viewfinder), done (decoded text), permission / not-readable / generic camera errors                                                                                                              |
 | `30-large-transfer-send`        | Text empty/filled/Markdown/JSON highlighting/fullscreen, file dropzone idle/dragging, file card plain/image, multi-file-drop notice, summary ready (text & file) / large / very large / too large, preparing         |
 | `40-large-transfer-settings`    | Dialog default, a profile selected, Advanced (frame duration) open — renders as a bottom sheet on mobile                                                                                                             |
@@ -125,9 +125,9 @@ Observed while building this catalog — worth the designer's attention, not fix
 - **No routing.** Section, mode, direction and dialogs are all in-memory `useState`; there is no
   deep link to "Large Transfer → Receive" or a shareable URL for any state. Screenshots in this
   catalog can only be reached by the click sequence documented in each flow.
-- **Mobile "Show QR" pattern** (`10-quick-qr-generate/04-qr-panel-after-show-qr`) — on mobile the
-  QR only appears below the fold and needs an extra tap + scroll; on desktop it's a sidebar,
-  always visible. Worth deciding if that's the right split-screen behavior or a stopgap.
+- ~~**Mobile "Show QR" pattern**~~ Resolved in the design-system refactor's Stage 5: "Show QR" now
+  switches `AppShell`'s mobile pane to `stage` directly (`10-quick-qr-generate/04-qr-panel-after-show-qr`)
+  instead of scrolling to a panel below the fold; on desktop both panes are already visible.
 - **Settings becomes a bottom sheet under 760 px** (`40-large-transfer-settings`) — consistent with
   the rest of the mobile layout, but it's the app's only modal, so it's worth a deliberate look
   rather than inheriting the desktop dialog's structure.

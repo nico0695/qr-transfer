@@ -3,11 +3,8 @@ import { createContext, useContext } from 'react'
 export type Lang = 'es' | 'en'
 
 const en = {
-  subtitle: 'Transfer text between devices using QR codes.',
   switchToDark: 'Switch to dark mode',
   switchToLight: 'Switch to light mode',
-  tabGenerate: 'Generate QR',
-  tabScan: 'Scan QR',
   textLabel: 'Text to transfer',
   textPlaceholder: 'Type or paste the text you want to transfer…',
   limitReached: ' — limit reached',
@@ -146,11 +143,8 @@ const en = {
 export type Messages = typeof en
 
 const es: Messages = {
-  subtitle: 'Transferí texto entre dispositivos usando códigos QR.',
   switchToDark: 'Cambiar a modo oscuro',
   switchToLight: 'Cambiar a modo claro',
-  tabGenerate: 'Generar QR',
-  tabScan: 'Escanear QR',
   textLabel: 'Texto a transferir',
   textPlaceholder: 'Escribí o pegá el texto que querés transferir…',
   limitReached: ' — límite alcanzado',
