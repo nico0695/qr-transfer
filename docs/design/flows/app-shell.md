@@ -20,9 +20,11 @@ Every screen shares one shell (docs/DESIGN_SYSTEM.md §5.1, §5.2, §5.14, §6.1
    `Tabs` row switching `mode` (Quick QR / Large Transfer), a `SegmentedControl` switching `role`
    (Send / Receive) — **shared by both modes**, not a per-mode control — and theme/language
    toggle buttons. Wraps onto a second row below 900px instead of overflowing.
-2. **`AppShell`** — `100dvh`, no page scroll. A `compose` pane (1.35fr) and a `stage` pane
-   (`minmax(400px, var(--stage-max))`) side by side at ≥900px; below that, only one pane is
-   visible at a time, toggled by `MobileViewSwitcher` (fixed bottom bar, safe-area padding).
+2. **`AppShell`** — `100dvh`, no page scroll. Default `split` layout: a `compose` pane (1.35fr)
+   and a `stage` pane (`minmax(400px, var(--stage-max))`) side by side at ≥900px; below that, only
+   one pane is visible at a time, toggled by `MobileViewSwitcher` (fixed bottom bar, safe-area
+   padding). Large Transfer send switches the shell to `compose-hero` (editing, compose centered at
+   `--compose-max`) or `stage-hero` (preparing / looping, stage full width) and hides the switcher.
    `ContextLabel` (a live-status dot + mode · role · constraint, uppercase micro-label) sits at
    the top of the compose pane.
 3. **Screen content** — for now, Quick QR and Large Transfer render entirely inside the `compose`

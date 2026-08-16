@@ -69,6 +69,11 @@ const en = {
   sourceTooLargeError: 'This file is too large to transfer with QR codes.',
   readFailedError: 'The file could not be read.',
   preparing: 'Preparing transfer…',
+  sending: 'Sending',
+  sendingMetaText: (chars: string, frames: string, profile: string) =>
+    `${chars} chars · ${frames} frames · ${profile}`,
+  sendingMetaFile: (name: string, size: string, frames: string, profile: string) =>
+    `${name} · ${size} · ${frames} frames · ${profile}`,
   // Source
   sourceLabel: 'Source',
   sourceText: 'Text',
@@ -201,6 +206,11 @@ const es: Messages = {
   sourceTooLargeError: 'El archivo es demasiado grande para transferir con códigos QR.',
   readFailedError: 'No se pudo leer el archivo.',
   preparing: 'Preparando transferencia…',
+  sending: 'Enviando',
+  sendingMetaText: (chars: string, frames: string, profile: string) =>
+    `${chars} car. · ${frames} códigos · ${profile}`,
+  sendingMetaFile: (name: string, size: string, frames: string, profile: string) =>
+    `${name} · ${size} · ${frames} códigos · ${profile}`,
   // Source
   sourceLabel: 'Origen',
   sourceText: 'Texto',

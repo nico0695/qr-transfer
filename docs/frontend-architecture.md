@@ -90,7 +90,7 @@ src/lib/motion/              # reducedMotion.ts (useReducedMotion/withReducedMot
 src/components/app/           # App-scoped composed components (§5 of DESIGN_SYSTEM.md): AppHeader,
                                 # ContextLabel, TextEditor, Dropzone, FileCard, SummaryGrid, Feedback,
                                 # OpticalStage/{QrDisplay,CameraScanner}, ReceiveStatusPanel, ResultPanel,
-                                # SettingsSheet, ProfileOption, MobileViewSwitcher
+                                # SettingsSheet, ProfileOption, MobileViewSwitcher, SendingStrip
 ```
 
 `src/components/app/` follows the same folder-per-component convention as `primitives/` below

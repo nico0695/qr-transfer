@@ -126,19 +126,28 @@ primitive itself (Stage 2) — this flow only supplies the settings-specific con
 ## Preparing and the animated QR
 
 "Start transfer" renders every QR frame as a PNG (`renderFrameImages`) before showing anything —
-for large content this is visible as a dedicated screen.
+for large content this is visible as a preparing state **on the stage** (spinner + Cancel + a
+compact `SendingStrip`). The compose form stays mounted and hidden (`stage-hero`); it is not
+replaced by the loader.
+
+The editing compose pane is a `compose-hero` column (centered, max 720px) with Settings + Start
+**pinned** to the bottom of the pane so they stay in the viewport. The CodeMirror host fills the
+space left after the summary, instead of a fixed `60svh` that pushed Start below the fold.
 
 | State            | Trigger                               | Desktop                                                                      | Mobile                                                                      |
 | ---------------- | ------------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
 | Preparing        | Start clicked, frames still rendering | ![](../screens/30-large-transfer-send/19-preparing-screen.desktop.light.png) | ![](../screens/30-large-transfer-send/19-preparing-screen.mobile.light.png) |
 | Preparing — dark |                                       | ![](../screens/30-large-transfer-send/19-preparing-screen.desktop.dark.png)  | ![](../screens/30-large-transfer-send/19-preparing-screen.mobile.dark.png)  |
 
-Once rendering finishes, `AnimatedQR.tsx` takes over: a looping QR with frame index ("4 / 14"),
-profile + speed label, Slower/Faster (disabled at the fastest/slowest preset), Fullscreen, and
-Stop. It renders through a single `createPortal` into `OpticalStage`'s `QrDisplay`, whose target
-container swaps between the compose pane and `document.body` for fullscreen — the same `<img>`
-node stays mounted throughout so `useFrameLoop`'s imperative `.src` writes keep landing on the
-element actually on screen.
+Once rendering finishes, `AnimatedQR.tsx` takes over: a looping QR (sized `min(56dvh, 520px)` on
+desktop, `min(48dvh, 100%)` on mobile) with a `SendingStrip` of what is being sent, frame index
+("4 / 14"), profile + speed label, Slower/Faster (disabled at the fastest/slowest preset),
+Fullscreen, and Stop. It renders through a single `createPortal` into `OpticalStage`'s
+`QrDisplay`, whose target container swaps between the stage pane and `document.body` for
+fullscreen — the same `<img>` node stays mounted throughout so `useFrameLoop`'s imperative `.src`
+writes keep landing on the element actually on screen. Stop returns to `compose-hero` with the
+source, text/file and settings intact. On mobile there is no Content/Stage switcher in this flow
+— Start jumps to the stage automatically.
 
 | State             | Trigger                                | Desktop                                                                             | Mobile                                                                             |
 | ----------------- | -------------------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
@@ -169,6 +178,9 @@ element actually on screen.
 | `tooLargeError(maxKb)`                                                 | This content is too large to transfer with QR codes (limit {maxKb} after compression).                       |
 | `sourceTooLargeError` / `readFailedError`                              | This file is too large to transfer with QR codes. / The file could not be read.                              |
 | `preparing`                                                            | Preparing transfer…                                                                                          |
+| `sending`                                                              | Sending                                                                                                      |
+| `sendingMetaText(chars, frames, profile)`                              | {chars} chars · {frames} frames · {profile}                                                                  |
+| `sendingMetaFile(name, size, frames, profile)`                         | {name} · {size} · {frames} frames · {profile}                                                                |
 | `startTransfer`                                                        | Start transfer                                                                                               |
 | `settings` `settingsTitle` `profileLabel`                              | Settings / Transfer settings / Profile                                                                       |
 | `profileNames` `profileDescriptions`                                   | Balanced/Reliable/Fast + one-line descriptions                                                               |

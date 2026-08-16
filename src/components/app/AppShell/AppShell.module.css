@@ -41,7 +41,7 @@
 /* Below 900px only one pane is active at a time — the mobile view switcher toggles which. Both
    stay in the DOM (the stage pane is a portal target that must not remount) and occupy the same
    box; the inactive one is pushed off pointer/AT interaction by JS (`aria-hidden`/`inert`) while
-   `motion` slides it out of view. */
+   `motion` slides it out of view. Hero layouts use the same stacking at every width. */
 @media (max-width: 899px) {
   .body {
     position: relative;
@@ -60,4 +60,43 @@
   .body[data-view='stage'] .compose {
     pointer-events: none;
   }
+}
+
+@media (min-width: 900px) {
+  .body[data-layout='compose-hero'],
+  .body[data-layout='stage-hero'] {
+    position: relative;
+    grid-template-columns: 1fr;
+  }
+
+  .body[data-layout='compose-hero'] .compose,
+  .body[data-layout='compose-hero'] .stage,
+  .body[data-layout='stage-hero'] .compose,
+  .body[data-layout='stage-hero'] .stage {
+    position: absolute;
+    inset: 0;
+  }
+}
+
+.body[data-layout='compose-hero'] .compose {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-width: var(--compose-max);
+  margin-inline: auto;
+  width: 100%;
+}
+
+.body[data-layout='compose-hero'] .stage,
+.body[data-layout='stage-hero'] .compose {
+  pointer-events: none;
+}
+
+.body[data-layout='stage-hero'] .stage {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-width: var(--compose-max);
+  margin-inline: auto;
+  width: 100%;
 }

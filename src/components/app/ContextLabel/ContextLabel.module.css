@@ -10,4 +10,5 @@
   overflow: hidden;
   text-overflow: ellipsis;
   margin-bottom: var(--sp-3);
+  flex: none;
 }

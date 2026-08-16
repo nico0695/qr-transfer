@@ -1,20 +1,20 @@
 import { AnimatePresence } from 'motion/react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { useStageSlot } from '../app/AppShell'
+import { useShellLayout, useStageSlot } from '../app/AppShell'
 import { Dropzone } from '../app/Dropzone'
 import { FileCard } from '../app/FileCard'
 import { QrDisplay } from '../app/OpticalStage/QrDisplay'
+import { SendingStrip } from '../app/SendingStrip'
 import { SettingsSheet } from '../app/SettingsSheet'
 import { Button } from '../primitives/Button'
 import { Feedback } from '../primitives/Feedback'
 import { Icon } from '../primitives/Icon'
-import { Spinner } from '../primitives/Spinner'
 import { useI18n } from '../../i18n'
 import { formatBytes, formatNumber } from '../../lib/format'
 import { sizeLevel } from '../../lib/transfer/config'
 import { resolveSettings, type TransferSettings as Settings } from '../../lib/transfer/profiles'
-import { buildTransfer } from '../../lib/transfer/transfer'
+import { buildTransfer, countFrames } from '../../lib/transfer/transfer'
 import type { PreparedTransfer } from '../../lib/transfer/types'
 import { AnimatedQR } from './AnimatedQR'
 import { LargeTextEditor } from './LargeTextEditor'
@@ -52,6 +52,7 @@ export function SendFlow({
 }: SendFlowProps) {
   const t = useI18n()
   const stageNode = useStageSlot()
+  const { setLayout, setView } = useShellLayout()
   const [state, setState] = useState<SenderState>({ status: 'editing' })
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [multiDropNotice, setMultiDropNotice] = useState(false)
@@ -62,6 +63,13 @@ export function SendFlow({
 
   // Abandon an in-flight QR rendering if the component unmounts.
   useEffect(() => () => void (renderTokenRef.current += 1), [])
+
+  useLayoutEffect(() => {
+    setLayout(state.status === 'editing' ? 'compose-hero' : 'stage-hero')
+    setView(state.status === 'editing' ? 'compose' : 'stage')
+  }, [state.status, setLayout, setView])
+
+  useEffect(() => () => setLayout('split'), [setLayout])
 
   const canStart =
     payloadState.status === 'ready' &&
@@ -92,76 +100,81 @@ export function SendFlow({
     onFileChange(selected)
   }
 
-  if (state.status === 'preparing') {
-    return (
-      <div className={styles.preparing}>
-        <Spinner size="md" aria-label={t.preparing} />
-        <p className={styles.preparingLabel}>{t.preparing}</p>
-        <Button variant="secondary" onClick={cancelPreparing}>
-          {t.cancel}
-        </Button>
-      </div>
-    )
-  }
-
-  if (state.status === 'transferring') {
-    return (
-      <AnimatedQR
-        images={state.images}
-        frameMs={resolved.frameMs}
-        profileName={t.profileNames[resolved.profile.id]}
-        onFrameMsChange={(ms) => onSettingsChange({ ...settings, frameMs: ms })}
-        onStop={() => setState({ status: 'editing' })}
-      />
-    )
-  }
+  const profileName = t.profileNames[resolved.profile.id]
+  const readyPayload = payloadState.status === 'ready' ? payloadState.payload : null
+  const frameCount =
+    readyPayload === null ? 0 : countFrames(readyPayload.stats.transferBytes, resolved.chunkSize)
+  const sendingMeta =
+    readyPayload === null
+      ? ''
+      : source === 'text'
+        ? t.sendingMetaText(formatNumber(text.length), formatNumber(frameCount), profileName)
+        : t.sendingMetaFile(
+            file?.name || t.unnamedFile,
+            formatBytes(readyPayload.stats.transferBytes),
+            formatNumber(frameCount),
+            profileName,
+          )
+  const sendingStrip = (
+    <SendingStrip
+      live={state.status === 'transferring'}
+      title={state.status === 'preparing' ? t.preparing : t.sending}
+      meta={sendingMeta}
+    />
+  )
 
   return (
     <div className={styles.panel}>
-      <SourceSelector value={source} onChange={onSourceChange} />
-      {source === 'text' ? (
-        <LargeTextEditor
-          value={text}
-          onChange={onTextChange}
-          title={t.editorLabel}
-          placeholder={t.editorPlaceholder}
-          footer={
-            <span>
-              {formatNumber(text.length)} {t.characters} · {formatBytes(textBytes)}
-            </span>
-          }
-        />
-      ) : file === null ? (
-        <Dropzone
-          onSelect={selectFile}
-          title={t.dropFileHere}
-          chooseLabel={t.chooseFile}
-          hint={t.oneFileHint}
-        />
-      ) : (
-        <FileCard
-          file={file}
-          onChange={selectFile}
-          onRemove={() => {
-            setMultiDropNotice(false)
-            onFileChange(null)
-          }}
-          unnamedLabel={t.unnamedFile}
-          unknownTypeLabel={t.unknownType}
-          changeLabel={t.changeFile}
-          removeLabel={t.removeFile}
-        />
-      )}
-      <AnimatePresence>
-        {source === 'file' && multiDropNotice && file !== null && (
-          <Feedback key="multi-drop-notice" level="notice" title={t.multiDropNotice(file.name)} />
+      <div className={styles.scroll}>
+        <SourceSelector value={source} onChange={onSourceChange} />
+        {source === 'text' ? (
+          <div className={styles.fill}>
+            <LargeTextEditor
+              value={text}
+              onChange={onTextChange}
+              title={t.editorLabel}
+              placeholder={t.editorPlaceholder}
+              footer={
+                <span>
+                  {formatNumber(text.length)} {t.characters} · {formatBytes(textBytes)}
+                </span>
+              }
+            />
+          </div>
+        ) : file === null ? (
+          <div className={styles.fill}>
+            <Dropzone
+              onSelect={selectFile}
+              title={t.dropFileHere}
+              chooseLabel={t.chooseFile}
+              hint={t.oneFileHint}
+            />
+          </div>
+        ) : (
+          <FileCard
+            file={file}
+            onChange={selectFile}
+            onRemove={() => {
+              setMultiDropNotice(false)
+              onFileChange(null)
+            }}
+            unnamedLabel={t.unnamedFile}
+            unknownTypeLabel={t.unknownType}
+            changeLabel={t.changeFile}
+            removeLabel={t.removeFile}
+          />
         )}
-      </AnimatePresence>
-      <TransferSummary state={payloadState} settings={resolved} />
+        <AnimatePresence>
+          {source === 'file' && multiDropNotice && file !== null && (
+            <Feedback key="multi-drop-notice" level="notice" title={t.multiDropNotice(file.name)} />
+          )}
+        </AnimatePresence>
+        <TransferSummary state={payloadState} settings={resolved} />
+      </div>
       <div className={styles.actions}>
         <Button variant="secondary" onClick={() => setSettingsOpen(true)}>
           <Icon name="settings" size={16} />
-          {t.settings} · {t.profileNames[resolved.profile.id]}
+          {t.settings} · {profileName}
         </Button>
         <Button variant="primary" disabled={!canStart} onClick={() => void start()}>
           {t.startTransfer}
@@ -173,17 +186,36 @@ export function SendFlow({
         onChange={onSettingsChange}
         onClose={() => setSettingsOpen(false)}
       />
-      {stageNode &&
+      {state.status === 'preparing' &&
+        stageNode &&
         createPortal(
           <QrDisplay
-            isEmpty
+            isEmpty={false}
             error={false}
             errorLabel=""
-            placeholderLabel={t.qrPlaceholder}
-            canvasRef={{ current: null }}
+            placeholderLabel=""
+            header={sendingStrip}
+            preparing={{
+              label: t.preparing,
+              action: (
+                <Button variant="secondary" onClick={cancelPreparing}>
+                  {t.cancel}
+                </Button>
+              ),
+            }}
           />,
           stageNode,
         )}
+      {state.status === 'transferring' && (
+        <AnimatedQR
+          images={state.images}
+          frameMs={resolved.frameMs}
+          profileName={profileName}
+          header={sendingStrip}
+          onFrameMsChange={(ms) => onSettingsChange({ ...settings, frameMs: ms })}
+          onStop={() => setState({ status: 'editing' })}
+        />
+      )}
     </div>
   )
 }

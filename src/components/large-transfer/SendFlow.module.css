@@ -1,7 +1,30 @@
 .panel {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
   gap: var(--sp-4);
+}
+
+.scroll {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  gap: var(--sp-4);
+}
+
+.fill {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 12rem;
+}
+
+.fill > * {
+  flex: 1;
+  min-height: 0;
 }
 
 .actions {
@@ -9,18 +32,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-3);
-}
-
-.preparing {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--sp-3);
-  padding: var(--sp-8) 0;
-}
-
-.preparingLabel {
-  margin: 0;
-  font: var(--fs-body) var(--font-ui);
-  color: var(--text-muted);
+  flex: none;
+  padding-top: var(--sp-3);
+  background: var(--bg);
 }

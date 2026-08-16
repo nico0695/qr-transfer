@@ -1,7 +1,8 @@
 .shell {
   display: flex;
   flex-direction: column;
-  min-height: 0;
+  flex: 1;
+  min-height: 12rem;
   background: var(--cm-bg);
   border: 1px solid var(--line-soft);
   border-radius: var(--r-card);
@@ -48,12 +49,13 @@
 }
 
 .host {
-  flex: none;
-  height: min(60svh, 32rem);
+  flex: 1 1 0;
+  min-height: 0;
+  height: auto;
 }
 
 .shell.tall .host {
-  height: min(70svh, 40rem);
+  min-height: min(70svh, 40rem);
 }
 
 .shell.fullscreen .host {

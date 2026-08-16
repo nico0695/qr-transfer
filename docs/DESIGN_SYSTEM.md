@@ -270,12 +270,13 @@ Minimum interactive text size: **12.5px** (`--fs-ui-sm`). Never go smaller for a
 
 Layout constants (not on the 4px scale, but fixed):
 
-| Token             | Value  | Usage                                      |
-| ----------------- | ------ | ------------------------------------------ |
-| `--header-height` | 60px   | App header                                 |
-| `--panel-gap`     | 16px   | Gap between compose pane and optical stage |
-| `--content-max`   | 1320px | Max width of the two-pane layout, centered |
-| `--stage-max`     | 560px  | Max width of the optical stage column      |
+| Token             | Value  | Usage                                                                           |
+| ----------------- | ------ | ------------------------------------------------------------------------------- |
+| `--header-height` | 60px   | App header                                                                      |
+| `--panel-gap`     | 16px   | Gap between compose pane and optical stage                                      |
+| `--content-max`   | 1320px | Max width of the two-pane layout, centered                                      |
+| `--stage-max`     | 560px  | Max width of the optical stage column                                           |
+| `--compose-max`   | 720px  | Max width of the compose column in hero layouts (Large Transfer send · editing) |
 
 ### 2.4 Radius
 
@@ -343,10 +344,10 @@ properties — it's the TypeScript constant `BREAKPOINT_DESKTOP = 900` (`src/lib
 used both to build the `@media` query and to drive JS behavior (e.g. `Dialog`'s `modal`/`sheet`
 variant, the mobile view switcher's visibility).
 
-| Range   | Layout                                                                                                            |
-| ------- | ----------------------------------------------------------------------------------------------------------------- |
-| < 900px | Single column. Bottom view-switcher (Content ↔ Stage) toggles which pane is visible. Sheet has safe-area padding. |
-| ≥ 900px | Two columns (`1.35fr` compose / `minmax(400px, var(--stage-max))` stage) inside `100dvh`, no page scroll.         |
+| Range   | Layout                                                                                                                                                                                                         |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| < 900px | Single column. Bottom view-switcher (Content ↔ Stage) toggles which pane is visible — only in `split` layout. Sheet has safe-area padding.                                                                     |
+| ≥ 900px | Default `split`: two columns (`1.35fr` compose / `minmax(400px, var(--stage-max))` stage) inside `100dvh`, no page scroll. Hero layouts (`compose-hero` / `stage-hero`) collapse to one column at every width. |
 
 Container: `max-width: var(--content-max)`, centered, `padding-inline: 20px` (< 900px) /
 `24px` (≥ 900px).
@@ -561,7 +562,8 @@ Title: `--fs-ui`, 700 weight, status color. Body: `--fs-ui-sm` (12.5px), `--text
 - Card primitive at `--r-stage`, centered content, fills the stage column height.
 - **Empty:** dashed inner box (`1px dashed var(--line)`) with qr-code icon (38px) + placeholder text.
 - **Ready:** white card (`--qr-paper`, `--qr-quiet` padding, `--r-card`, `--sh-qr`) containing the `<canvas>` QR at `min(46vh, 300px)`, caption below (`--fs-data`).
-- **Looping (Large Transfer):** adds frame counter caption ("4 / 14"), Slower/Faster button row, Fullscreen + Stop button row, hint text.
+- **Preparing (Large Transfer):** spinner + label + Cancel, optional `SendingStrip` header. Occupies the stage, not the compose pane.
+- **Looping (Large Transfer):** `SendingStrip` header (what is being sent), QR at `min(56dvh, 520px)` desktop / `min(48dvh, 100%)` mobile, frame counter caption ("4 / 14"), Slower/Faster, Fullscreen + Stop, one-line hint. The compose editor stays mounted but hidden.
 - **Fullscreen:** `position: fixed; inset:0; z-index: var(--z-fullscreen)`, pure white background, QR scaled to `min(74vh,74vw)`, exit button top-right (dark pill, fixed).
 
 ### 5.9 Optical stage — Camera / scanner
@@ -606,13 +608,20 @@ Title: `--fs-ui`, 700 weight, status color. Body: `--fs-ui-sm` (12.5px), `--text
 
 - Fixed bottom bar, `--surface` background, `border-top: 1px solid var(--line-soft)`, safe-area bottom padding.
 - Two equal-width buttons (icon + label), active state = `--surface-active` background + `--text-strong`.
-- Only rendered below the desktop breakpoint; swaps between Compose and Stage panes since both can't fit on screen at once.
+- Only rendered below the desktop breakpoint **and** when the shell is in `split` layout. Hero layouts (Large Transfer send) have a single pane per phase, so the switcher is hidden.
+
+### 5.15 Sending strip (Large Transfer send · preparing / looping)
+
+- Dense row, not a nested Card: `StatusDot` + title (`--fs-ui`, `--text-strong`) + one `--fs-data` meta line (source · size · frames · profile), ellipsis on overflow.
+- Sits at the top of the optical-stage card. Hidden in fullscreen. Not editable — Stop returns to compose-hero to change the payload.
 
 ---
 
 ## 6. Patterns
 
 ### 6.1 Two-pane app shell
+
+Default layout (`split`) — Quick QR and Large Transfer receive:
 
 ```
 ┌─────────────────────────────────────────── header (60px) ───┐
@@ -621,17 +630,27 @@ Title: `--fs-ui`, 700 weight, status color. Body: `--fs-ui-sm` (12.5px), `--text
 │                                │                              │
 │  COMPOSE PANE (1.35fr)         │  OPTICAL STAGE (400–560px)   │
 │  context label                 │  QR display / camera scanner │
-│  editor or dropzone/file card   │                              │
-│  notice/error (conditional)     │                              │
-│  summary grid (conditional)     │                              │
-│  primary action row             │                              │
+│  editor or status / result      │                              │
 │                                │                              │
 └───────────────────────────────┴─────────────────────────────┘
 ```
 
-Below 640px this collapses to a single column with the bottom view switcher (5.14) toggling which
-pane is visible. Neither pane ever requires page-level scroll — only their own internal content
-scrolls (editor textarea, result body, missing-frames list).
+Large Transfer send is sequential (`editing → preparing → transferring`), so it uses a **phase-aware
+hero** instead of an empty second column:
+
+```
+compose-hero (editing)                    stage-hero (preparing / looping)
+┌──────── compose max 720px ────────┐    ┌──────────── stage full width ────────────┐
+│ context · source · editor/file     │    │ SendingStrip (name · size · frames)      │
+│ summary (scrolls)                  │    │ QR large / preparing spinner             │
+│ ── Settings + Start (pinned) ──    │    │ Slower/Faster · Fullscreen · Stop        │
+└────────────────────────────────────┘    └──────────────────────────────────────────┘
+```
+
+Below 900px `split` collapses to a single column with the bottom view switcher (5.14). Hero
+layouts have no switcher — the phase change _is_ the pane change. Neither pane ever requires
+page-level scroll — only inner regions scroll (editor body, result body, missing-frames list).
+Actions for the primary task stay in the viewport.
 
 ### 6.2 State-driven visibility, no routing
 

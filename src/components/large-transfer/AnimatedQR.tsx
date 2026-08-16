@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useStageSlot } from '../app/AppShell'
 import { QrDisplay } from '../app/OpticalStage/QrDisplay'
@@ -13,6 +13,7 @@ interface AnimatedQRProps {
   images: readonly string[]
   frameMs: number
   profileName: string
+  header?: ReactNode
   onFrameMsChange: (ms: number) => void
   onStop: () => void
 }
@@ -21,6 +22,7 @@ export function AnimatedQR({
   images,
   frameMs,
   profileName,
+  header,
   onFrameMsChange,
   onStop,
 }: AnimatedQRProps) {
@@ -62,7 +64,7 @@ export function AnimatedQR({
       error={false}
       errorLabel=""
       placeholderLabel=""
-      canvasRef={{ current: null }}
+      header={header}
       loop={{
         imageRef,
         frameLabel: `${index + 1} / ${total}`,
@@ -70,7 +72,7 @@ export function AnimatedQR({
           <>
             {profileName} · {t.loopingEvery(frameMs)}
             <br />
-            {t.transferHint} {t.brightnessHint}
+            {t.transferHint}
           </>
         ),
         fullscreen,
