@@ -6,10 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 QR Transfer: static SPA (Vite + React 19 + strict TypeScript + plain CSS) that transfers text and
 files between devices optically (screen → camera). No backend, no network requests, no content
-persistence — by design. The **only** thing persisted is the preferred transfer profile
-(`src/lib/settingsStorage.ts`, `localStorage`); never text, files or received content. Docs live
-in `docs/` (`technical-overview.md`, `qr-transfer-flow.md`, `large-transfer.md`,
-`frontend-architecture.md`).
+persistence — by design. Persistence is UI preferences only — theme, language, last-used transfer
+profile — **never** text, files or received content. Today that's
+`src/lib/settingsStorage.ts` (`localStorage`); the design-system refactor
+([`docs/specs/design-system-refactor/`](docs/specs/design-system-refactor/)) moves it to a single
+Zustand `persist` store, `src/store/preferences.ts` (key `qr-transfer:prefs`), which is the only
+thing allowed to touch `localStorage` once that lands. Docs live in `docs/`
+(`technical-overview.md`, `qr-transfer-flow.md`, `large-transfer.md`, `frontend-architecture.md`,
+`DESIGN_SYSTEM.md`, `specs/design-system-refactor/`).
 
 ## Commands
 
@@ -34,7 +38,9 @@ Two sections chosen by a navbar in `App.tsx` (`NavMenu`): **Quick QR** (tabs Gen
 `QRGenerator`, `QRScanner`) and **Large Transfer** (`components/large-transfer/`, lazy-loaded).
 `App` owns section/mode/theme/lang; strings come from the typed es/en dictionary in `src/i18n.ts`
 via `useI18n()` — every user-visible string must be added to **both** `en` and `es` (the `es`
-object is typed as `Messages`, so TS flags omissions).
+object is typed as `Messages`, so TS flags omissions). The design-system refactor's Stage 4
+replaces the Generate/Scan tabs with a Send/Receive segmented control shared by both sections (a
+`role` state, not a mode-specific tab set) — see `DESIGN_SYSTEM.md` §5.1 and the macro plan.
 
 ### Large Transfer
 
@@ -95,12 +101,25 @@ code.
 
 ### Styling
 
-A design-system refactor is underway per [`docs/frontend-architecture.md`](docs/frontend-architecture.md) —
-**CSS Modules** (no Tailwind, no CSS-in-JS, no Radix by default), design tokens split under
-`src/styles/tokens/`, reusable primitives under `src/components/primitives/` (folder-per-component:
-`Component.tsx` + `.module.css` + `index.ts`, extra files only when needed), animations in native
-CSS only, respecting `prefers-reduced-motion`. Read that doc before adding new UI. Until primitives
-land, the app still runs on the legacy single `src/styles.css` with CSS variables; light on
-`:root`, dark on `:root[data-theme='dark']` (includes `--cm-*` CodeMirror colors). Reuse existing
-classes (`.button`, `.button-small`, `.button-primary`, `.tabs`, `.panel`, `.hint`, `.error`,
-`.actions`) rather than inventing new global ones. Breakpoint 760 px.
+A design-system refactor is executing, stage by stage, per
+[`docs/specs/design-system-refactor/macro-plan.md`](docs/specs/design-system-refactor/macro-plan.md) —
+read that plan and [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) (token values, component specs)
+plus [`docs/frontend-architecture.md`](docs/frontend-architecture.md) (folder/CSS conventions)
+before touching any UI covered by an unstarted stage; check the plan's tracking table for what's
+already done.
+
+Target state: **CSS Modules** (no Tailwind, no CSS-in-JS, no Radix by default), design tokens
+split under `src/styles/tokens/`, reusable primitives under `src/components/primitives/` and
+app-scoped components under `src/components/app/` (folder-per-component: `Component.tsx` +
+`.module.css` + `index.ts`, extra files only when needed), CSS for micro-interactions + a `motion`
+kit for layout/presence transitions (Stage 10), self-hosted Inter + JetBrains Mono variable fonts,
+`lucide-react` icons, native `<dialog>` for the settings sheet/modal, a single **900px**
+breakpoint. Every color/spacing/radius/duration must resolve through a token — no hardcoded hex or
+raw px.
+
+Until each stage lands, the app still runs on the legacy single `src/styles.css` with CSS
+variables (light on `:root`, dark on `:root[data-theme='dark']`, includes `--cm-*` CodeMirror
+colors, breakpoint 760px) — reuse its existing classes (`.button`, `.button-small`,
+`.button-primary`, `.tabs`, `.panel`, `.hint`, `.error`, `.actions`) for anything not yet covered
+by a completed stage, rather than inventing new global ones. `styles.css` is deleted entirely in
+Stage 9.

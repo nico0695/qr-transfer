@@ -1,8 +1,10 @@
 # Frontend Architecture — Design System Standard
 
-> The convention to follow when building the design system (light/dark theme, reusable
-> primitives) planned for QR Transfer. This document defines the **standard**; it does not itself
-> define the palette or build any component — those come next, once this convention is agreed.
+> The convention followed when building the design system (light/dark theme, reusable
+> primitives) for QR Transfer, executed per the [design-system refactor macro
+> plan](specs/design-system-refactor/macro-plan.md). This document defines folder structure and
+> CSS strategy; token _values_ and component _behavior_ live in
+> [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md).
 
 ## Table of Contents
 
@@ -10,8 +12,10 @@
 - [Styling: CSS Modules](#styling-css-modules)
 - [Design tokens](#design-tokens)
 - [Component folder structure](#component-folder-structure)
+- [Hooks placement](#hooks-placement)
 - [Primitives vs feature components](#primitives-vs-feature-components)
 - [Initial primitives inventory](#initial-primitives-inventory)
+- [Demo page](#demo-page)
 - [Animation](#animation)
 - [Out of scope for now](#out-of-scope-for-now)
 
@@ -56,14 +60,32 @@ src/styles/
     spacing.css          # a spacing scale (today ad hoc rem values)
     radius.css            # border-radius scale
     shadows.css            # elevation scale
-    motion.css              # --duration-fast/--duration-base, --ease-standard...
+    motion.css              # --duration-fast/--duration-base/--duration-sheet, --easing-standard/--easing-out
+    z.css                   # --z-header/--z-sheet/--z-fullscreen
   base.css               # resets + body/html (top of today's styles.css)
   layout.css              # app-shell rules that aren't component-scoped (.app, .header, breakpoint)
 ```
 
 This is a minimal split, not one file per value — each file groups one kind of token. Every future
 component pulls values from these tokens instead of inventing new hex codes, rem values, or
-durations inline.
+durations inline. Token _values_ are defined in [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md) §2 — this
+file only defines where they live.
+
+Beyond `src/styles/`, the redesign also introduces:
+
+```
+src/store/preferences.ts   # Zustand `persist` store — theme, language, last-used profile only
+src/lib/theme/              # contrast.ts, accent.ts, breakpoints.ts (BREAKPOINT_DESKTOP = 900)
+src/lib/motion/              # optional, Stage 10 — animation presets built on `motion`
+src/components/app/           # App-scoped composed components (§5 of DESIGN_SYSTEM.md): AppHeader,
+                                # ContextLabel, TextEditor, Dropzone, FileCard, SummaryGrid, Feedback,
+                                # OpticalStage/{QrDisplay,CameraScanner}, ReceiveStatusPanel, ResultPanel,
+                                # SettingsSheet, ProfileOption, MobileViewSwitcher
+```
+
+`src/components/app/` follows the same folder-per-component convention as `primitives/` below
+(files only when needed) — it's a second, parallel component layer for app-specific composition,
+distinct from the cross-feature `primitives/` layer.
 
 ## Component folder structure
 
@@ -100,49 +122,71 @@ src/components/primitives/Dialog/
   index.ts                 # re-exports Dialog (+ Dialog.Header/Dialog.Body if composed that way)
 ```
 
+## Hooks placement
+
+A hook lives next to the feature it serves (e.g. `usePreparedPayload.ts` beside `SendFlow.tsx`,
+`useTransferScanner.ts` beside `TransferScanner.tsx`) unless it's genuinely shared by **two or
+more** features — only then does it move to `src/hooks/`. Don't pre-emptively centralize a hook
+used by one component. `react-refresh/only-export-components` still applies: a hook must not live
+in a `.tsx` file that also exports a component.
+
 ## Primitives vs feature components
 
-This structure applies to **`src/components/primitives/`** — reusable, cross-feature UI — only.
+The folder-per-component structure above applies to **`src/components/primitives/`** (reusable,
+cross-feature UI) and **`src/components/app/`** (app-scoped composed components, §5 of
+`DESIGN_SYSTEM.md`) — both are rebuilt fresh.
 
-Existing feature components (`SendFlow.tsx`, `TransferScanner.tsx`, `QRGenerator.tsx`, everything
-in `src/components/large-transfer/`, etc.) **stay as they are**, single-file. They migrate to
-primitives incrementally, one component at a time, only when they're touched for the redesign or
-they grow enough to need it. The app isn't expected to scale much further, so forcing a
-folder-per-file rewrite of ~20 stable feature components has no payoff — don't do it wholesale.
+Every screen is rewritten **screen-by-screen, per the macro plan's stages** (Stage 4 shell, Stage
+5 Quick QR, Stage 6 Large Transfer send, Stage 7 settings, Stage 8 Large Transfer receive) — not
+migrated incrementally as components happen to be touched. Existing feature components
+(`SendFlow.tsx`, `TransferScanner.tsx`, `QRGenerator.tsx`, everything in
+`src/components/large-transfer/`, etc.) are replaced by their corresponding `app/` component in
+the stage that covers them, and deleted in that same stage — not left running side by side with
+their replacement past the stage that introduces it.
 
 ## Initial primitives inventory
 
-Derived from today's ~90 CSS classes plus the one identified gap (no loading indicator exists).
-Building these is a **later pass** (once the palette/token values are defined) — this is the list
-that pass commits to:
+12 primitives, settled in the design-system refactor spec (`docs/specs/design-system-refactor/spec.md`).
+No `Skeleton` — no screen in this redesign needs a placeholder-shape loading state.
 
-| Primitive     | Replaces / covers                                                                       |
-| ------------- | --------------------------------------------------------------------------------------- |
-| `Button`      | `.button`, `.button-small`, `.button-primary`, generalizes `CopyButton`'s variant logic |
-| `Panel`       | `.panel`, `.panel-center`                                                               |
-| `Notice`      | `.notice`, `.error` — unified as variants (info/error/success)                          |
-| `Dialog`      | wraps the native `<dialog>` already in use — no new modal mechanism                     |
-| `Tabs`        | `.tabs`, `.tab`                                                                         |
-| `Select`      | `.select`, `.select-small`                                                              |
-| `ProgressBar` | `.progress`, `.progress-bar`, `.progress-fill`                                          |
-| `Spinner`     | **new** — no loading indicator exists today                                             |
-| `Skeleton`    | **new** — no skeleton/placeholder exists today                                          |
+| Primitive          | Replaces / covers                                                                       |
+| ------------------ | --------------------------------------------------------------------------------------- |
+| `Button`           | `.button`, `.button-small`, `.button-primary`, generalizes `CopyButton`'s variant logic |
+| `Input`            | `.select`, `.select-small`, plus new `Textarea`/`Range` surfaces (subcomponents)        |
+| `SegmentedControl` | **new** — Send/Receive, Text/File source, mobile view switcher                          |
+| `Tabs`             | `.tabs`, `.tab`                                                                         |
+| `StatusDot`        | **new** — live/status pulse indicator                                                   |
+| `Chip`             | **new** — missing-frame indexes, badges                                                 |
+| `Card`             | `.panel`, `.panel-center`                                                               |
+| `Icon`             | **new** — thin `lucide-react` wrapper, 28-icon inventory (`DESIGN_SYSTEM.md` §4.8)      |
+| `Feedback`         | `.notice`, `.error` — unified Notice/Error/Verified, `level` prop                       |
+| `Dialog`           | wraps the native `<dialog>` already in use — no new modal mechanism                     |
+| `ProgressBar`      | `.progress`, `.progress-bar`, `.progress-fill`                                          |
+| `Spinner`          | **new** — no loading indicator exists today                                             |
+
+## Demo page
+
+`src/components/demo/PrimitivesDemo.tsx`, lazy-loaded and mounted by `App` only when
+`location.search` includes `demo=primitives` (same query-param detection pattern already used for
+`debug`) — a grid of every primitive × variant × state, with a theme toggle and a reduced-motion
+toggle, for visual review without wiring up a real screen. Dev-only; not linked from the app UI.
 
 ## Animation
 
-**Decision: native CSS only — no Framer Motion, no anime.js.**
+**Decision: CSS for micro-interactions everywhere; `motion` for layout/presence transitions,
+added late (Stage 10).**
 
-The app already has the right precedent: `.scan-guide-hit` is a `@keyframes` fade disabled under
-`prefers-reduced-motion`. Hover states, a spinner, and a skeleton shimmer are all straightforward
-in CSS and don't justify a runtime animation library — this app has no product need for gesture-
-driven or orchestrated multi-step animation. Every animation must use the `motion.css` duration/
-easing tokens and respect `prefers-reduced-motion: reduce`, matching the existing pattern.
+Hover states, the spinner, and simple transitions stay native CSS — `.scan-guide-hit`'s
+`@keyframes` fade (disabled under `prefers-reduced-motion`) remains the pattern, using the
+`motion.css` duration/easing tokens. Pane switches, dialog/sheet enter-exit, and list stagger get
+a small `motion` (Framer Motion's successor, ~loadable on demand) kit in `src/lib/motion/`,
+introduced once the redesign's static screens exist (Stage 10, not earlier) — see the macro plan
+for the exact preset list. Every animation, CSS or `motion`, must respect
+`prefers-reduced-motion: reduce`.
 
 ## Out of scope for now
 
-This document defines the standard only. Not part of this pass:
-
-- The actual color palette, spacing/typography scale, and other token _values_.
-- Building any of the primitives listed above.
-- Migrating any existing component to `primitives/` or to CSS Modules.
-- Adding the Radix exception carve-out to any real component (no primitive needs it yet).
+- Migrating any component **outside** the stages that explicitly rebuild it (no ad hoc drive-by
+  refactors of untouched screens).
+- Adding the Radix exception carve-out to any real component (no primitive needs it).
+- The accent picker UI, landing page, and routing — see the macro plan's "What we are NOT doing".

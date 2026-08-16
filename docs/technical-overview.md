@@ -164,9 +164,10 @@ terminates the decode worker.
   frames use `scale: 6` PNGs with `image-rendering: pixelated`.
 - **Theming**: light palette on `:root` and dark on `:root[data-theme='dark']`, all CSS variables
   (including the CodeMirror highlight colors). Initial theme follows `prefers-color-scheme`; initial
-  language, `navigator.language`. A design-system refactor (CSS Modules, token split, reusable
-  primitives) is planned — see [`frontend-architecture.md`](./frontend-architecture.md) for the
-  standard to follow.
+  language, `navigator.language`. A design-system refactor is executing stage by stage — token
+  values and component specs in [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md), folder/CSS conventions in
+  [`frontend-architecture.md`](./frontend-architecture.md), and the stage sequencing in
+  [`specs/design-system-refactor/macro-plan.md`](./specs/design-system-refactor/macro-plan.md).
 - **Almost no persistence**: content lives only in memory (draft, file, speed survive only while
   the Large Transfer section is mounted); the sole stored value is the preferred transfer profile.
 - **Content safety**: scanned/received text is stored as a string and rendered as plain text or as
