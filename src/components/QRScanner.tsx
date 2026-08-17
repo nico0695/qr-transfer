@@ -1,8 +1,8 @@
 import { AnimatePresence } from 'motion/react'
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Html5Qrcode, type CameraDevice } from 'html5-qrcode'
-import { useStageSlot } from './app/AppShell'
+import { useShellLayout, useStageSlot } from './app/AppShell'
 import { CameraScanner } from './app/OpticalStage/CameraScanner'
 import { ResultPanel } from './app/ResultPanel'
 import { Button } from './primitives/Button'
@@ -26,6 +26,7 @@ type ErrorKey = CameraErrorKey | 'errorEmptyQr'
 export default function QRScanner() {
   const t = useI18n()
   const stageNode = useStageSlot()
+  const { setView } = useShellLayout()
   const [cameras, setCameras] = useState<CameraDevice[]>([])
   const [selection, setSelection] = useState<CameraSelection | null>(null)
   const [status, setStatus] = useState<Status>('starting')
@@ -110,6 +111,11 @@ export default function QRScanner() {
     setStatus('starting')
     setSession((value) => value + 1)
   }
+
+  useLayoutEffect(() => {
+    const terminal = status === 'done' || status === 'error'
+    setView(terminal ? 'compose' : 'stage')
+  }, [status, setView])
 
   const showCamera = status === 'starting' || status === 'scanning'
 

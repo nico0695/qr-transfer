@@ -23,10 +23,11 @@ Every screen shares one shell (docs/DESIGN_SYSTEM.md §5.1, §5.2, §5.14, §6.1
 2. **`AppShell`** — `100dvh`, no page scroll. Default `split` layout: a `compose` pane (1.35fr)
    and a `stage` pane (`minmax(400px, var(--stage-max))`) side by side at ≥900px; below that, only
    one pane is visible at a time, toggled by `MobileViewSwitcher` (fixed bottom bar, safe-area
-   padding). Large Transfer send switches the shell to `compose-hero` (editing, compose centered at
-   `--compose-max`) or `stage-hero` (preparing / looping, stage full width) and hides the switcher.
-   `ContextLabel` (a live-status dot + mode · role · constraint, uppercase micro-label) sits at
-   the top of the compose pane.
+   padding). Receive flows keep `split` and drive `view` from phase (camera → `stage`, result/error
+   → `compose`) so the switcher is optional, not required. Large Transfer send switches the shell
+   to `compose-hero` (editing, compose centered at `--compose-max`) or `stage-hero` (preparing /
+   looping, stage full width) and hides the switcher. `ContextLabel` (a live-status dot + mode ·
+   role · constraint, uppercase micro-label) sits at the top of the compose pane.
 3. **Screen content** — for now, Quick QR and Large Transfer render entirely inside the `compose`
    pane, unchanged from before this stage; the `stage` pane is empty. Stages 5–8 split each
    screen's own QR-display/camera portion into `stage`.
@@ -73,5 +74,6 @@ docs/DESIGN_SYSTEM.md §2.7, superseding the old 760px/three-tier scheme):
 | `ctxQuick` / `ctxLarge`          | Quick QR / Large Transfer (context label)                        |
 | `roleSend` / `roleReceive`       | Send / Receive (shared role control + context label)             |
 | `limitChars(n)`                  | Up to {n} characters (context label constraint, Quick QR · Send) |
-| `viewCompose` / `viewStage`      | Content / Stage (mobile view switcher labels)                    |
+| `viewCompose` / `viewStage`      | Content / Stage (mobile view switcher labels, Send)              |
+| `viewResult` / `viewCamera`      | Result / Camera (mobile view switcher labels, Receive)           |
 | `switchToDark` / `switchToLight` | Switch to dark mode / Switch to light mode (aria-label only)     |

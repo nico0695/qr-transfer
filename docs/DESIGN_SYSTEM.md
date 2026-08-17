@@ -608,7 +608,7 @@ Title: `--fs-ui`, 700 weight, status color. Body: `--fs-ui-sm` (12.5px), `--text
 
 - Fixed bottom bar, `--surface` background, `border-top: 1px solid var(--line-soft)`, safe-area bottom padding.
 - Two equal-width buttons (icon + label), active state = `--surface-active` background + `--text-strong`.
-- Only rendered below the desktop breakpoint **and** when the shell is in `split` layout. Hero layouts (Large Transfer send) have a single pane per phase, so the switcher is hidden.
+- Only rendered below the desktop breakpoint **and** when the shell is in `split` layout. Hero layouts (Large Transfer send) have a single pane per phase, so the switcher is hidden. Receive stays in `split`; the active mobile pane follows the scanner phase (camera → stage, result/error → compose). Labels are role-specific: Content / Stage on Send, Result / Camera on Receive.
 
 ### 5.15 Sending strip (Large Transfer send · preparing / looping)
 
@@ -647,10 +647,11 @@ compose-hero (editing)                    stage-hero (preparing / looping)
 └────────────────────────────────────┘    └──────────────────────────────────────────┘
 ```
 
-Below 900px `split` collapses to a single column with the bottom view switcher (5.14). Hero
-layouts have no switcher — the phase change _is_ the pane change. Neither pane ever requires
-page-level scroll — only inner regions scroll (editor body, result body, missing-frames list).
-Actions for the primary task stay in the viewport.
+Below 900px `split` collapses to a single column with the bottom view switcher (5.14). Receive
+keeps that switcher but sets the initial/active pane from phase so the user does not have to
+discover it. Hero layouts have no switcher — the phase change _is_ the pane change. Neither pane
+ever requires page-level scroll — only inner regions scroll (editor body, result body,
+missing-frames list). Actions for the primary task stay in the viewport.
 
 ### 6.2 State-driven visibility, no routing
 

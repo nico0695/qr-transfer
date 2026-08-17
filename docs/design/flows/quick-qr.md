@@ -58,6 +58,10 @@ camera), a viewfinder with corner brackets (`--scan-guide`) and a sweep line (di
 `ResultPanel` (compose pane, once decoded): built on the `Feedback` primitive (`level="verified"`),
 Copy/Scan-again as `Button`s.
 
+Below 900px, `QRScanner` drives `view` from status: `starting` / `scanning` open the `stage`;
+`done` / `error` switch to `compose`. "Scan again" / "Try again" return to `stage`. Desktop still
+shows both columns at once.
+
 | State           | Trigger                       | Desktop                                                        | Mobile                                                        |
 | --------------- | ----------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------- |
 | Starting        | Camera permission requested   | ![](../screens/20-quick-qr-scan/01-starting.desktop.light.png) | ![](../screens/20-quick-qr-scan/01-starting.mobile.light.png) |

@@ -43,6 +43,8 @@ const en = {
   limitChars: (n: number) => `Up to ${n} characters`,
   viewCompose: 'Content',
   viewStage: 'Stage',
+  viewResult: 'Result',
+  viewCamera: 'Camera',
   viewGroupLabel: 'View',
   // Large transfer — common
   cancel: 'Cancel',
@@ -180,6 +182,8 @@ const es: Messages = {
   limitChars: (n: number) => `Hasta ${n} caracteres`,
   viewCompose: 'Contenido',
   viewStage: 'Vista',
+  viewResult: 'Resultado',
+  viewCamera: 'Cámara',
   viewGroupLabel: 'Vista',
   // Large transfer — common
   cancel: 'Cancelar',
