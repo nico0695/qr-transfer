@@ -1,5 +1,6 @@
 import { createPortal } from 'react-dom'
-import { useStageSlot } from '../app/AppShell'
+import { useLayoutEffect } from 'react'
+import { useShellLayout, useStageSlot } from '../app/AppShell'
 import { CameraScanner } from '../app/OpticalStage/CameraScanner'
 import { ReceiveStatusPanel, type NonTerminalState } from '../app/ReceiveStatusPanel'
 import { Button } from '../primitives/Button'
@@ -27,8 +28,14 @@ const TITLE_BY_STATUS: Record<
 export function TransferScanner() {
   const t = useI18n()
   const stageNode = useStageSlot()
+  const { setView } = useShellLayout()
   const { state, engine, cameras, selection, stats, selectCamera, restart } = useTransferScanner()
   const debug = DEBUG_ENABLED && stats !== null && <ScanDebug stats={stats} />
+
+  useLayoutEffect(() => {
+    const terminal = state.status === 'complete' || state.status === 'error'
+    setView(terminal ? 'compose' : 'stage')
+  }, [state.status, setView])
 
   if (state.status === 'complete') {
     // The overlay deliberately survives completion: the final numbers are the ones worth having,

@@ -17,10 +17,15 @@
 
 ## Entry point
 
-NavMenu → "Large Transfer" → "Receive" tab.
+Header mode `Tabs` → "Large Transfer" → role `SegmentedControl` → "Receive".
 State shape (`useTransferScanner.ts`): `idle → scanning → receiving → assembling →
 complete | error`. See `flow-diagrams.md` for the full machine, including which errors are
 recoverable ("Try again" restarts the camera) and which aren't.
+
+Below 900px the shell stays in `split` (both panes mounted, bottom switcher visible) but
+`TransferScanner` drives `view` from the phase: scanning states open the `stage` (camera);
+`complete` / `error` switch to `compose` (result or `Feedback`). "Scan another" / "Try again"
+return to `stage`. Desktop still shows both columns at once.
 
 ## Scanning
 

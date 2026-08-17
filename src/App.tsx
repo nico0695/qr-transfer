@@ -40,6 +40,17 @@ function QrTransferApp() {
   const [mode, setMode] = useState<AppMode>('quick')
   const [role, setRole] = useState<AppRole>('send')
   const [view, setView] = useState<PaneView>('compose')
+
+  const handleModeChange = (next: AppMode) => {
+    setMode(next)
+    setView(role === 'receive' ? 'stage' : 'compose')
+  }
+
+  const handleRoleChange = (next: AppRole) => {
+    setRole(next)
+    setView(next === 'receive' ? 'stage' : 'compose')
+  }
+
   const theme = usePreferences((s) => s.theme)
   const setTheme = usePreferences((s) => s.setTheme)
   const lang = usePreferences((s) => s.lang)
@@ -76,9 +87,9 @@ function QrTransferApp() {
         header={
           <AppHeader
             mode={mode}
-            onModeChange={setMode}
+            onModeChange={handleModeChange}
             role={role}
-            onRoleChange={setRole}
+            onRoleChange={handleRoleChange}
             roleGroupLabel={t.roleGroupLabel}
             theme={theme}
             onThemeToggle={() => setTheme(theme === 'light' ? 'dark' : 'light')}
@@ -91,8 +102,8 @@ function QrTransferApp() {
         }
         view={view}
         onViewChange={setView}
-        composeLabel={t.viewCompose}
-        stageLabel={t.viewStage}
+        composeLabel={role === 'receive' ? t.viewResult : t.viewCompose}
+        stageLabel={role === 'receive' ? t.viewCamera : t.viewStage}
         viewGroupLabel={t.viewGroupLabel}
         compose={
           <>
